@@ -1,0 +1,8 @@
+---
+buildifier: 7.3.1
+tasks:
+  buildfarm_admin_test:
+    name: "BF Admin Test"
+    platform: ubuntu1804
+    shell_commands:
+    - ./.bazelci/test_bfadmin.sh
