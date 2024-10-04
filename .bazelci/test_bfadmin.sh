@@ -2,4 +2,5 @@
 # This script runs a basic buildfarm admin test
 cd main;
 
-./mvnw clean package
+echo "Running buildfarm admin tests"
+./mvnw clean test package
