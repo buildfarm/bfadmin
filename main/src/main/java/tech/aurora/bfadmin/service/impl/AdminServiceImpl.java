@@ -105,19 +105,26 @@ public class AdminServiceImpl implements AdminService {
   public ClusterInfo getClusterInfo(String clusterId) {
     ClusterInfo clusterInfo = new ClusterInfo();
     clusterInfo.setClusterId(clusterId);
-    Asg serverAsg = new Asg();
-    serverAsg.setGroupType("server");
-    serverAsg.setAsg(getAutoScalingGroup(getAsgNamesFromHosts(clusterId, "server").get(0)));
-    clusterInfo.setServers(serverAsg);
-    List<Asg> workerAsgs = new ArrayList<>();
-    for (String asgName : getAsgNamesFromHosts(clusterId, "worker")) {
-      Asg workerAsg = new Asg();
-      workerAsg.setGroupType("worker");
-      workerAsg.setAsg(getAutoScalingGroup(asgName));
-      workerAsg.setWorkerType(getAsgTagValue("buildfarm.worker_type", workerAsg.getAsg().getTags()));
-      workerAsgs.add(workerAsg);
+    try {
+      Asg serverAsg = new Asg();
+      serverAsg.setGroupType("server");
+      serverAsg.setAsg(getAutoScalingGroup(getAsgNamesFromHosts(clusterId, "server").get(0)));
+      clusterInfo.setServers(serverAsg);
+      List<Asg> workerAsgs = new ArrayList<>();
+      for (String asgName : getAsgNamesFromHosts(clusterId, "worker")) {
+        Asg workerAsg = new Asg();
+        workerAsg.setGroupType("worker");
+        workerAsg.setAsg(getAutoScalingGroup(asgName));
+        workerAsg.setWorkerType(getAsgTagValue("buildfarm.worker_type", workerAsg.getAsg().getTags()));
+        workerAsgs.add(workerAsg);
+      }
+      clusterInfo.setWorkers(workerAsgs);
+    } catch (Exception e) {
+      logger.warn("Failed to retrieve cluster information from AWS: {}. Returning empty cluster info.", e.getMessage());
+      // Return basic cluster info for demo mode
+      clusterInfo.setServers(new Asg());
+      clusterInfo.setWorkers(new ArrayList<>());
     }
-    clusterInfo.setWorkers(workerAsgs);
     return clusterInfo;
   }
 
@@ -125,8 +132,14 @@ public class AdminServiceImpl implements AdminService {
   public ClusterDetails getClusterDetails() {
     ClusterDetails clusterDetails = new ClusterDetails();
     clusterDetails.setClusterId(clusterId);
-    clusterDetails.setServers(getInstances(clusterId,"server", true));
-    clusterDetails.setWorkers(getInstances(clusterId,"worker", true));
+    try {
+      clusterDetails.setServers(getInstances(clusterId,"server", true));
+      clusterDetails.setWorkers(getInstances(clusterId,"worker", true));
+    } catch (Exception e) {
+      logger.warn("Failed to retrieve cluster details from AWS: {}. Returning empty cluster details.", e.getMessage());
+      clusterDetails.setServers(new ArrayList<>());
+      clusterDetails.setWorkers(new ArrayList<>());
+    }
     return clusterDetails;
   }
 

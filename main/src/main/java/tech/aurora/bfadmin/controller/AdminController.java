@@ -50,8 +50,13 @@ public class AdminController {
   public String getDashboard(Model model) {
     if (ui) {
       generateSecurityKey();
-      model.addAttribute("clusterInfo", clusterInfo);
-      model.addAttribute("clusterDetails", adminService.getClusterDetails());
+      model.addAttribute("clusterInfo", clusterInfo != null ? clusterInfo : new ClusterInfo());
+      try {
+        model.addAttribute("clusterDetails", adminService.getClusterDetails());
+      } catch (Exception e) {
+        logger.warn("Failed to get cluster details for dashboard: {}", e.getMessage());
+        model.addAttribute("clusterDetails", null);
+      }
       model.addAttribute("awsRegion", region);
       model.addAttribute("securityKey", SecurityConfig.securityKey);
       return "dashboard";
@@ -66,11 +71,19 @@ public class AdminController {
   @PostConstruct
   public void init() {
     logger.info("Initializing aws sdk for region {}", region);
-    ec2 = AmazonEC2ClientBuilder.standard().withRegion(region).build();
-    clusterInfo = adminService.getClusterInfo();
-    generateSecurityKey();
-    logger.info("Found Buildfarm deployment in AWS account: clusterInfo [ number of servers: {}, number of worker groups: {}, grpc endpoint: {}:{}",
-            clusterInfo.getServers().getAsg().getInstances().size(), clusterInfo.getWorkers().size(), deploymentDomain, deploymentPort);
+    try {
+      ec2 = AmazonEC2ClientBuilder.standard().withRegion(region).build();
+      clusterInfo = adminService.getClusterInfo();
+      generateSecurityKey();
+      logger.info("Found Buildfarm deployment in AWS account: clusterInfo [ number of servers: {}, number of worker groups: {}, grpc endpoint: {}:{}",
+              clusterInfo.getServers().getAsg().getInstances().size(), clusterInfo.getWorkers().size(), deploymentDomain, deploymentPort);
+    } catch (Exception e) {
+      logger.warn("Failed to initialize AWS connection: {}. Application will start without AWS integration.", e.getMessage());
+      generateSecurityKey();
+      // Initialize empty cluster info for demo mode
+      clusterInfo = new ClusterInfo();
+      clusterInfo.setClusterId("demo-cluster");
+    }
   }
 
   public String getBaseClusterId() {
