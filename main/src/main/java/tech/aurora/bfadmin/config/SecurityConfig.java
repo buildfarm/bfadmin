@@ -1,6 +1,7 @@
 package tech.aurora.bfadmin.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -9,6 +10,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -26,20 +29,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
-        ApiKeyAuthFilter filter = new ApiKeyAuthFilter(principalRequestHeader);
-        filter.setAuthenticationManager(authentication -> {
-            if (principalRequestValue.equals(authentication.getPrincipal().toString()) || securityKey.equals(authentication.getPrincipal().toString())) {
-                authentication.setAuthenticated(true);
-            } else {
-                throw new BadCredentialsException("Permission denied.");
-            }
-            return authentication;
-        });
-        httpSecurity.
-                antMatcher("/admin/**").
-                csrf().disable().
-                sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
-                and().addFilter(filter).authorizeRequests().anyRequest().authenticated();
+        httpSecurity
+                .requestMatcher(new AntPathRequestMatcher("/api/**"))
+                .authorizeRequests(authz -> authz.anyRequest().authenticated())
+                .addFilterBefore(apiKeyAuthFilter(), BasicAuthenticationFilter.class)
+                .csrf().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+    }
+
+    @Bean
+    public ApiKeyAuthFilter apiKeyAuthFilter() {
+        return new ApiKeyAuthFilter(principalRequestHeader);
     }
 
     private class ApiKeyAuthFilter extends AbstractPreAuthenticatedProcessingFilter {
