@@ -15,9 +15,6 @@ $(document).ready(function() {
     e.preventDefault();
     $.ajax({
       type: "POST",
-      beforeSend: function(request) {
-        request.setRequestHeader("SecurityKey", securityKey);
-      },
       url: $(this).attr("href"),
       success: function() {
         $('.toastSuccess').toast('show');
@@ -37,9 +34,6 @@ $(document).ready(function() {
     if (confirm("Are you sure?")) {
       $.ajax({
         type: "POST",
-        beforeSend: function(request) {
-          request.setRequestHeader("SecurityKey", securityKey);
-        },
         url: $(this).attr("href"),
         success: function() {
           $('.toastSuccess').toast('show');
@@ -58,9 +52,6 @@ $(document).ready(function() {
     e.preventDefault();
     $.ajax({
       type: "POST",
-      beforeSend: function(request) {
-        request.setRequestHeader("SecurityKey", securityKey);
-      },
       url: $(this).attr("href") + $(this).closest(".actionable-container").find(".actionable-value").val(),
       success: function() {
         $('.toastSuccess').toast('show');
@@ -78,9 +69,6 @@ $(document).ready(function() {
     e.preventDefault();
     $.ajax({
       type: "POST",
-      beforeSend: function(request) {
-        request.setRequestHeader("SecurityKey", securityKey);
-      },
       url: $(this).attr("href"),
       data: {payload : $(this).closest(".actionable-container").find(".actionable-value").val()},
       success: function() {

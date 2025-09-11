@@ -4,10 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.converter.protobuf.ProtobufHttpMessageConverter;
+// import org.springframework.http.converter.protobuf.ProtobufHttpMessageConverter; // Protobuf removed
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Arrays;
 
 @ServletComponentScan
 @SpringBootApplication
@@ -18,12 +16,14 @@ public class BuildfarmAdmin {
   }
 
   @Bean
-  RestTemplate restTemplate(ProtobufHttpMessageConverter hmc) {
-    return new RestTemplate(Arrays.asList(hmc));
+  RestTemplate restTemplate() {
+    // Protobuf converter removed
+    return new RestTemplate();
   }
 
-  @Bean
-  ProtobufHttpMessageConverter protobufHttpMessageConverter() {
-    return new ProtobufHttpMessageConverter();
-  }
+  // Protobuf converter bean removed
+  // @Bean
+  // ProtobufHttpMessageConverter protobufHttpMessageConverter() {
+  //   return new ProtobufHttpMessageConverter();
+  // }
 }
