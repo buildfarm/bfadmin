@@ -104,6 +104,17 @@ run_application() {
     print_info "Java options: $JAVA_OPTS"
     print_info "Port: $DEFAULT_PORT"
     
+    # Check for external properties file
+    EXTERNAL_CONFIG="$HOME/bfadmin.properties"
+    if [ -f "$EXTERNAL_CONFIG" ]; then
+        print_info "Using external configuration: $EXTERNAL_CONFIG"
+        SPRING_CONFIG_ARGS="--spring.config.location=file:$EXTERNAL_CONFIG"
+    else
+        print_warning "External configuration not found at $EXTERNAL_CONFIG"
+        print_info "Using default application.properties"
+        SPRING_CONFIG_ARGS=""
+    fi
+    
     cd "$MAIN_DIR"
     
     print_info "Application will be available at: http://localhost:$DEFAULT_PORT"
@@ -111,7 +122,7 @@ run_application() {
     print_info "----------------------------------------"
     
     # Run the application
-    exec java $JAVA_OPTS -jar "$JAR_FILE"
+    exec java $JAVA_OPTS -jar "$JAR_FILE" --server.port=$DEFAULT_PORT $SPRING_CONFIG_ARGS
 }
 
 # Function to show usage

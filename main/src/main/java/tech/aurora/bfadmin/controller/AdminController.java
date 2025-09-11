@@ -28,8 +28,21 @@ public class AdminController {
   public String getDashboard(Model model) {
     if (ui) {
       String helloMessage = adminService.getHelloMessage();
+      
+      // Get enhanced system status
+      java.util.Map<String, Object> systemStatus = adminService.getSystemStatus();
+      
+      // Get table data for workers
+      java.util.List<java.util.Map<String, Object>> executeWorkersTable = adminService.getExecuteWorkersTable();
+      java.util.List<java.util.Map<String, Object>> storageWorkersTable = adminService.getStorageWorkersTable();
+      
       model.addAttribute("helloMessage", helloMessage);
-      logger.info("Dashboard accessed, showing hello message: {}", helloMessage);
+      model.addAttribute("systemStatus", systemStatus);
+      model.addAttribute("executeWorkersTable", executeWorkersTable);
+      model.addAttribute("storageWorkersTable", storageWorkersTable);
+      
+      logger.info("Dashboard accessed, system status: {}, {} execute workers, {} storage workers", 
+                  systemStatus.get("systemHealthText"), executeWorkersTable.size(), storageWorkersTable.size());
       return "dashboard";
     } else {
       model.addAttribute("status", "999");

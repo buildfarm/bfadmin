@@ -28,3 +28,10 @@ docker run -p 8080:8080 -v $HOME:/var/lib -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACC
 ```
 ./mvnw org.owasp:dependency-check-maven:check
 ```
+
+### Run
+
+```
+./mvnw clean package -DskipTests
+java -jar target/bfadmin.jar --spring.config.location=file:~/bfadmin.properties --server.port=8080
+```

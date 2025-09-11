@@ -1,0 +1,153 @@
+package tech.aurora.bfadmin.config;
+
+import io.lettuce.core.SslOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisClusterConfiguration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+
+@Configuration
+@ConditionalOnProperty(name = "valkey.cluster.enabled", havingValue = "true", matchIfMissing = false)
+public class ValkeyConfig {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ValkeyConfig.class);
+    
+    @Value("${valkey.cluster.nodes:localhost:7000}")
+    private String clusterNodes;
+    
+    @Value("${valkey.connection.timeout:2000}")
+    private long connectionTimeout;
+    
+    @Value("${valkey.connection.pool.max-active:8}")
+    private int maxActive;
+    
+    @Value("${valkey.connection.pool.max-idle:8}")
+    private int maxIdle;
+    
+    @Value("${valkey.connection.pool.min-idle:0}")
+    private int minIdle;
+    
+    @Value("${valkey.cluster.username:}")
+    private String username;
+    
+    @Value("${valkey.cluster.password:}")
+    private String password;
+    
+    @Value("${valkey.cluster.ssl.enabled:false}")
+    private boolean sslEnabled;
+    
+    @Value("${valkey.cluster.ssl.verify-peer:true}")
+    private boolean sslVerifyPeer;
+    
+    @Bean
+    public RedisConnectionFactory valkeyConnectionFactory() {
+        try {
+            List<String> nodes = Arrays.asList(clusterNodes.split(","));
+            logger.info("Configuring Valkey cluster with nodes: {}", nodes);
+            
+            RedisClusterConfiguration clusterConfiguration = new RedisClusterConfiguration(nodes);
+            
+            // Set authentication if provided
+            if (username != null && !username.trim().isEmpty()) {
+                logger.info("Configuring Valkey cluster with username authentication");
+                clusterConfiguration.setUsername(username);
+            }
+            if (password != null && !password.trim().isEmpty()) {
+                logger.info("Configuring Valkey cluster with password authentication");
+                clusterConfiguration.setPassword(password);
+            }
+            
+            // Configure connection pool
+            GenericObjectPoolConfig<?> poolConfig = new GenericObjectPoolConfig<>();
+            poolConfig.setMaxTotal(maxActive);
+            poolConfig.setMaxIdle(maxIdle);
+            poolConfig.setMinIdle(minIdle);
+            
+            LettucePoolingClientConfiguration clientConfiguration;
+            
+            // Configure SSL/TLS if enabled
+            if (sslEnabled) {
+                logger.info("Configuring Valkey cluster with SSL/TLS encryption");
+                
+                SslOptions sslOptions;
+                if (!sslVerifyPeer) {
+                    logger.info("SSL peer verification disabled");
+                    sslOptions = SslOptions.builder()
+                            .jdkSslProvider()
+                            .build();
+                } else {
+                    sslOptions = SslOptions.builder().build();
+                }
+                
+                clientConfiguration = LettucePoolingClientConfiguration.builder()
+                        .poolConfig(poolConfig)
+                        .commandTimeout(Duration.ofMillis(connectionTimeout))
+                        .useSsl()
+                        .build();
+                        
+                logger.info("SSL configuration applied successfully");
+            } else {
+                clientConfiguration = LettucePoolingClientConfiguration.builder()
+                        .poolConfig(poolConfig)
+                        .commandTimeout(Duration.ofMillis(connectionTimeout))
+                        .build();
+            }
+            
+            LettuceConnectionFactory factory = new LettuceConnectionFactory(clusterConfiguration, clientConfiguration);
+            factory.setValidateConnection(true);
+            
+            logger.info("Valkey cluster connection factory configured successfully");
+            return factory;
+        } catch (Exception e) {
+            logger.error("Failed to configure Valkey cluster connection factory", e);
+            throw new RuntimeException("Unable to configure Valkey cluster", e);
+        }
+    }
+    
+    @Bean
+    public RedisTemplate<String, Object> valkeyTemplate(RedisConnectionFactory valkeyConnectionFactory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(valkeyConnectionFactory);
+        
+        // Use String serializer for keys
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        
+        // Use JSON serializer for values
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        
+        template.setDefaultSerializer(new GenericJackson2JsonRedisSerializer());
+        template.afterPropertiesSet();
+        
+        logger.info("Valkey RedisTemplate configured successfully");
+        return template;
+    }
+    
+    // Fallback configuration for when cluster is disabled
+    @Configuration
+    @ConditionalOnProperty(name = "valkey.cluster.enabled", havingValue = "false", matchIfMissing = true)
+    static class ValkeyDisabledConfig {
+        
+        private static final Logger logger = LoggerFactory.getLogger(ValkeyDisabledConfig.class);
+        
+        public ValkeyDisabledConfig() {
+            logger.info("Valkey cluster is disabled. No connection will be established.");
+        }
+    }
+}
