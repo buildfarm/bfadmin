@@ -1,6 +1,6 @@
 package tech.aurora.bfadmin.model;
 
-import com.amazonaws.services.autoscaling.model.AutoScalingGroup;
+import software.amazon.awssdk.services.autoscaling.model.AutoScalingGroup;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

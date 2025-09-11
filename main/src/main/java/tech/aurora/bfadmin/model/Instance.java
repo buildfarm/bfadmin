@@ -18,14 +18,14 @@ public class Instance implements Serializable {
   private static final long serialVersionUID = 4343106139005494435L;
   private static final Logger logger = LoggerFactory.getLogger(Instance.class);
 
-  private com.amazonaws.services.ec2.model.Instance ec2Instance;
+  private software.amazon.awssdk.services.ec2.model.Instance ec2Instance;
   private Long containerStartTime;
   private String clusterId;
   private String groupType;
   private String workerType = "";
 
   public String getUptimeStr() {
-    return getFormattedTimestamp(ec2Instance.getLaunchTime().getTime() / 1000);
+    return getFormattedTimestamp(ec2Instance.launchTime().getEpochSecond());
   }
 
   public String getContainerUptimeStr() {
@@ -38,7 +38,7 @@ public class Instance implements Serializable {
   }
 
   public Long getUptimeInHours() {
-    return getTimestampInHours(ec2Instance.getLaunchTime().getTime() / 1000);
+    return getTimestampInHours(ec2Instance.launchTime().getEpochSecond());
   }
 
   public Long getContainerUptimeInHours() {
@@ -46,11 +46,11 @@ public class Instance implements Serializable {
   }
 
   public String getFormattedLaunchTime() {
-    return new SimpleDateFormat("MMM dd hh:mm").format(ec2Instance.getLaunchTime());
+    return new SimpleDateFormat("MMM dd hh:mm").format(java.util.Date.from(ec2Instance.launchTime()));
   }
 
   public String getLifecycle() {
-    return ec2Instance.getInstanceLifecycle() != null ? ec2Instance.getInstanceLifecycle() : "on demand";
+    return ec2Instance.instanceLifecycle() != null ? ec2Instance.instanceLifecycle().toString() : "on demand";
   }
 
   private String getFormattedTimestamp(Long timestamp) {

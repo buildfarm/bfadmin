@@ -1,7 +1,7 @@
 package tech.aurora.bfadmin.controller;
 
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.regions.Region;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,7 +38,7 @@ public class AdminController {
   @Value("${ui.enable}")
   private boolean ui;
 
-  private AmazonEC2 ec2;
+  private Ec2Client ec2;
   private ClusterInfo clusterInfo;
 
   @RequestMapping("/")
@@ -72,11 +72,11 @@ public class AdminController {
   public void init() {
     logger.info("Initializing aws sdk for region {}", region);
     try {
-      ec2 = AmazonEC2ClientBuilder.standard().withRegion(region).build();
+      ec2 = Ec2Client.builder().region(Region.of(region)).build();
       clusterInfo = adminService.getClusterInfo();
       generateSecurityKey();
       logger.info("Found Buildfarm deployment in AWS account: clusterInfo [ number of servers: {}, number of worker groups: {}, grpc endpoint: {}:{}",
-              clusterInfo.getServers().getAsg().getInstances().size(), clusterInfo.getWorkers().size(), deploymentDomain, deploymentPort);
+              clusterInfo.getServers().getAsg().instances().size(), clusterInfo.getWorkers().size(), deploymentDomain, deploymentPort);
     } catch (Exception e) {
       logger.warn("Failed to initialize AWS connection: {}. Application will start without AWS integration.", e.getMessage());
       generateSecurityKey();
