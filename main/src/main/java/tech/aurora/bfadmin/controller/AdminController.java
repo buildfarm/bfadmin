@@ -36,13 +36,17 @@ public class AdminController {
       java.util.List<java.util.Map<String, Object>> executeWorkersTable = adminService.getExecuteWorkersTable();
       java.util.List<java.util.Map<String, Object>> storageWorkersTable = adminService.getStorageWorkersTable();
       
+      // Get table data for servers
+      java.util.List<java.util.Map<String, Object>> serversTable = adminService.getServersTable();
+      
       model.addAttribute("helloMessage", helloMessage);
       model.addAttribute("systemStatus", systemStatus);
       model.addAttribute("executeWorkersTable", executeWorkersTable);
       model.addAttribute("storageWorkersTable", storageWorkersTable);
+      model.addAttribute("serversTable", serversTable);
       
-      logger.info("Dashboard accessed, system status: {}, {} execute workers, {} storage workers", 
-                  systemStatus.get("systemHealthText"), executeWorkersTable.size(), storageWorkersTable.size());
+      logger.info("Dashboard accessed, system status: {}, {} execute workers, {} storage workers, {} servers", 
+                  systemStatus.get("systemHealthText"), executeWorkersTable.size(), storageWorkersTable.size(), serversTable.size());
       return "dashboard";
     } else {
       model.addAttribute("status", "999");

@@ -157,6 +157,34 @@ public class AdminServiceImpl implements AdminService {
   }
 
   @Override
+  public java.util.List<java.util.Map<String, Object>> getServersTable() {
+    logger.info("Servers table requested");
+    try {
+      // Cast to ValkeyService to access the new method
+      tech.aurora.bfadmin.service.ValkeyService valkeyServiceImpl = 
+        (tech.aurora.bfadmin.service.ValkeyService) valkeyService;
+      
+      // First, let's check what server-related keys exist
+      Set<String> serverKeys = valkeyServiceImpl.getKeys("*server*");
+      logger.info("🔍 Keys containing 'server': {}", serverKeys);
+      
+      Set<String> capitalServerKeys = valkeyServiceImpl.getKeys("*Server*");  
+      logger.info("🔍 Keys containing 'Server': {}", capitalServerKeys);
+      
+      Set<String> allKeys = valkeyServiceImpl.getKeys("*");
+      java.util.List<String> serverRelatedKeys = allKeys.stream()
+        .filter(key -> key.toLowerCase().contains("server") || key.contains("Server"))
+        .collect(java.util.stream.Collectors.toList());
+      logger.info("🔍 All server-related keys found: {}", serverRelatedKeys);
+      
+      return valkeyServiceImpl.getServersAsTable("Servers*");
+    } catch (Exception e) {
+      logger.error("Failed to get servers table from Valkey", e);
+      return new java.util.ArrayList<>();
+    }
+  }
+
+  @Override
   public java.util.Map<String, Object> getSystemStatus() {
     logger.info("System status requested");
     java.util.Map<String, Object> status = new java.util.HashMap<>();

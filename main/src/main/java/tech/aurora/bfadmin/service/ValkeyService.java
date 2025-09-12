@@ -350,6 +350,81 @@ public class ValkeyService implements ValkeyServiceInterface {
         return workers;
     }
     
+    public java.util.List<java.util.Map<String, Object>> getServersAsTable(String pattern) {
+        java.util.List<java.util.Map<String, Object>> servers = new java.util.ArrayList<>();
+        
+        try {
+            Set<String> serverKeys = getKeys(pattern);
+            logger.info("🔍 Fetching Servers keys from Redis with pattern: {}", pattern);
+            logger.info("🔑 Found {} server keys matching pattern '{}': {}", serverKeys.size(), pattern, serverKeys);
+            
+            for (String key : serverKeys) {
+                try {
+                    String keyType = getKeyType(key);
+                    logger.info("Processing key: {} of type: {}", key, keyType);
+                    
+                    if ("hash".equals(keyType)) {
+                        // Get all hash fields - these should be individual server entries
+                        Object hashData = getValueByType(key);
+                        if (hashData instanceof java.util.Map) {
+                            @SuppressWarnings("unchecked")
+                            java.util.Map<String, String> hash = (java.util.Map<String, String>) hashData;
+                            
+                            logger.info("Hash contains {} entries", hash.size());
+                            
+                            // Each hash field represents a server
+                            for (java.util.Map.Entry<String, String> entry : hash.entrySet()) {
+                                String serverKey = entry.getKey();
+                                String serverJson = entry.getValue();
+                                
+                                try {
+                                    logger.info("📄 Server JSON for key '{}': {}", serverKey, serverJson);
+                                    // Parse the JSON for each individual server
+                                    java.util.Map<String, Object> serverData = parseServerJson(serverKey, serverJson);
+                                    if (serverData != null) {
+                                        servers.add(serverData);
+                                        logger.info("✅ Successfully parsed server: {}", serverData);
+                                    }
+                                } catch (Exception e) {
+                                    logger.error("Error parsing server JSON for key {}: {}", serverKey, serverJson, e);
+                                    // Add error entry for this specific server
+                                    java.util.Map<String, Object> errorData = new java.util.HashMap<>();
+                                    errorData.put("serverId", serverKey);
+                                    errorData.put("endpoint", "Parse Error");
+                                    errorData.put("expireAt", "N/A");
+                                    errorData.put("serverType", "Error");
+                                    errorData.put("firstRegisteredAt", "N/A");
+                                    errorData.put("status", "Error");
+                                    servers.add(errorData);
+                                }
+                            }
+                        }
+                    } else if ("string".equals(keyType)) {
+                        // If it's a string, try to parse as JSON directly
+                        Object stringData = getValueByType(key);
+                        if (stringData != null) {
+                            logger.info("📄 Server string data for key '{}': {}", key, stringData.toString());
+                            java.util.Map<String, Object> serverData = parseServerJson(key, stringData.toString());
+                            if (serverData != null) {
+                                servers.add(serverData);
+                                logger.info("✅ Successfully parsed server from string: {}", serverData);
+                            }
+                        }
+                    } else {
+                        logger.warn("Unexpected key type '{}' for server key: {}", keyType, key);
+                    }
+                } catch (Exception e) {
+                    logger.error("Error processing server key: {}", key, e);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Failed to get servers as table for pattern: {}", pattern, e);
+        }
+        
+        logger.info("Returning {} servers for pattern: {}", servers.size(), pattern);
+        return servers;
+    }
+    
     /**
      * Parse individual worker JSON data
      */
@@ -390,6 +465,69 @@ public class ValkeyService implements ValkeyServiceInterface {
         } catch (Exception e) {
             logger.error("Error parsing worker JSON for {}: {}", workerId, workerJson, e);
             return null;
+        }
+    }
+    
+    /**
+     * Parse individual server JSON data
+     */
+    private java.util.Map<String, Object> parseServerJson(String serverId, String serverJson) {
+        try {
+            logger.info("Server json: {}", serverJson);
+            // Use simple JSON parsing for the server data
+            java.util.Map<String, Object> serverData = new java.util.HashMap<>();
+            serverData.put("serverId", serverId);
+            
+            if (serverJson != null && !serverJson.trim().isEmpty()) {
+                // Simple JSON parsing to extract fields - servers have different field names
+                String name = extractJsonField(serverJson, "name");
+                String type = extractJsonField(serverJson, "type");
+                String firstRegisteredAt = extractJsonField(serverJson, "firstRegisteredAt");
+                String lastRegisteredAt = extractJsonField(serverJson, "lastRegisteredAt");
+                
+                // Map server fields to table format
+                serverData.put("endpoint", name != null ? name : serverId); // Use name or serverId as endpoint
+                serverData.put("serverType", mapServerType(type));
+                serverData.put("firstRegisteredAt", formatTimestamp(firstRegisteredAt));
+                serverData.put("expireAt", lastRegisteredAt != null ? formatTimestamp(lastRegisteredAt) : "N/A");
+                serverData.put("groupName", "default"); // Servers don't seem to have groups
+                serverData.put("status", "Active"); // Servers in the registry are considered active
+                
+                logger.debug("Parsed server {}: name={}, type={}, firstReg={}, lastReg={}", 
+                           serverId, name, type, firstRegisteredAt, lastRegisteredAt);
+            } else {
+                serverData.put("endpoint", serverId);
+                serverData.put("serverType", "Unknown");
+                serverData.put("firstRegisteredAt", "N/A");
+                serverData.put("expireAt", "N/A");
+                serverData.put("groupName", "default");
+                serverData.put("status", "Unknown");
+            }
+            
+            return serverData;
+        } catch (Exception e) {
+            logger.error("Error parsing server JSON for {}: {}", serverId, serverJson, e);
+            return null;
+        }
+    }
+    
+    /**
+     * Map server type from Redis data to display format
+     */
+    private String mapServerType(String type) {
+        if (type == null) {
+            return "Unknown";
+        }
+        
+        switch (type.toLowerCase()) {
+            case "shard":
+                return "Scheduler";
+            case "cas":
+                return "CAS";
+            case "buildfarm":
+                return "BuildFarm";
+            default:
+                return type; // Return as-is if not recognized
         }
     }
     
@@ -466,12 +604,7 @@ public class ValkeyService implements ValkeyServiceInterface {
             long currentMillis = System.currentTimeMillis();
             
             if (expireMillis > currentMillis) {
-                long minutesLeft = (expireMillis - currentMillis) / (1000 * 60);
-                if (minutesLeft > 60) {
-                    return "Active (" + (minutesLeft / 60) + "h left)";
-                } else {
-                    return "Active (" + minutesLeft + "m left)";
-                }
+                return "Active";
             } else {
                 return "Expired";
             }

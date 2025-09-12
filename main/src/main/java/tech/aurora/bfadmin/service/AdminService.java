@@ -16,5 +16,7 @@ public interface AdminService {
   
   java.util.List<java.util.Map<String, Object>> getStorageWorkersTable();
   
+  java.util.List<java.util.Map<String, Object>> getServersTable();
+  
   java.util.Map<String, Object> getSystemStatus();
 }

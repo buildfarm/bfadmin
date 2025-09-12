@@ -197,6 +197,76 @@
         .stats-card.red {
             background: linear-gradient(135deg, var(--accent-red), #dc2626);
         }
+        
+        /* Responsive content scaling for cards */
+        @media (max-width: 1200px) {
+            .stats-card .stats-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            .stats-content h3 {
+                font-size: 1.75rem !important;
+            }
+            .stats-card .stats-content p {
+                font-size: 0.8rem !important;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .stats-card .stats-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+            }
+            .stats-content h3 {
+                font-size: 1.5rem !important;
+            }
+            .stats-card .stats-content p {
+                font-size: 0.75rem !important;
+            }
+            .stats-card .card-body {
+                padding: 0.75rem !important;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-card .stats-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+            .stats-content h3 {
+                font-size: 1.25rem !important;
+            }
+            .stats-card .stats-content p {
+                font-size: 0.7rem !important;
+            }
+            .stats-card .ms-3 {
+                margin-left: 0.5rem !important;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .stats-card .stats-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+                border-radius: 8px;
+            }
+            .stats-content h3 {
+                font-size: 1.1rem !important;
+            }
+            .stats-card .stats-content p {
+                font-size: 0.65rem !important;
+            }
+            .stats-card .card-body {
+                padding: 0.5rem !important;
+            }
+            .stats-card .ms-3 {
+                margin-left: 0.25rem !important;
+            }
+        }
 
         .stats-icon {
             width: 60px;
@@ -258,6 +328,36 @@
             background: rgba(139, 92, 246, 0.1);
             color: var(--accent-purple);
             border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        /* Server type badges */
+        .server-type {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .server-type-Scheduler {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-purple);
+        }
+
+        .server-type-CAS {
+            background: rgba(14, 165, 233, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .server-type-BuildFarm {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .server-type-Unknown {
+            background: rgba(139, 149, 158, 0.15);
+            color: var(--text-secondary);
         }
 
         /* Tables */
@@ -428,10 +528,64 @@
 
         /* System status grid */
         .status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 15px;
             margin-bottom: 30px;
+            overflow-x: auto;
+        }
+        
+        /* Responsive card sizing for 5 cards */
+        .status-grid .stats-card {
+            flex: 1 1 calc(20% - 12px);
+            min-width: 0;
+            max-width: none;
+        }
+        
+        /* Media queries for responsive scaling */
+        @media (max-width: 1400px) {
+            .status-grid {
+                gap: 12px;
+            }
+            .status-grid .stats-card {
+                flex: 1 1 calc(20% - 9.6px);
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .status-grid {
+                gap: 10px;
+            }
+            .status-grid .stats-card {
+                flex: 1 1 calc(20% - 8px);
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .status-grid {
+                gap: 8px;
+            }
+            .status-grid .stats-card {
+                flex: 1 1 calc(20% - 6.4px);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .status-grid {
+                gap: 6px;
+            }
+            .status-grid .stats-card {
+                flex: 1 1 calc(20% - 4.8px);
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .status-grid {
+                gap: 4px;
+            }
+            .status-grid .stats-card {
+                flex: 1 1 calc(20% - 3.2px);
+            }
         }
 
         .status-item {
@@ -740,6 +894,20 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="card stats-card purple fade-in">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon">
+                                <i class="bi bi-server"></i>
+                            </div>
+                            <div class="ms-3 stats-content">
+                                <h3 th:text="${serversTable != null ? serversTable.size() : 0}">0</h3>
+                                <p>Servers</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Error Alert -->
@@ -782,20 +950,16 @@
                         <table class="table table-hover mb-0" id="executeWorkerTable" th:if="${!executeWorkersTable.empty}">
                             <thead>
                                 <tr>
-                                    <th class="sortable-header" data-column="workerId"><i class="bi bi-tag"></i> Worker ID</th>
                                     <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
                                     <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
                                     <th class="sortable-header" data-column="workerType"><i class="bi bi-gear"></i> Type</th>
                                     <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
-                                    <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Expires At</th>
+                                    <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Last Seen</th>
                                     <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr th:each="worker : ${executeWorkersTable}">
-                                    <td>
-                                        <span class="worker-id" th:text="${worker.workerId}">worker-id</span>
-                                    </td>
                                     <td>
                                         <span class="status-badge status-secondary" th:text="${worker.groupName != null ? worker.groupName : 'default'}">default</span>
                                     </td>
@@ -811,8 +975,7 @@
                                     <td>
                                         <span class="status-badge" 
                                               th:classappend="${worker.status.startsWith('Active') ? 'status-success' : (worker.status == 'Expired' ? 'status-danger' : 'status-warning')}">
-                                            <i th:class="${worker.status.startsWith('Active') ? 'bi bi-check-circle' : (worker.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i>
-                                            <span th:text="${worker.status}">Active</span>
+                                            <i th:class="${worker.status.startsWith('Active') ? 'bi bi-check-circle' : (worker.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${worker.status}">Active</span>
                                         </span>
                                     </td>
                                     <td>
@@ -882,20 +1045,16 @@
                         <table class="table table-hover mb-0" id="storageWorkerTable" th:if="${!storageWorkersTable.empty}">
                             <thead>
                                 <tr>
-                                    <th class="sortable-header" data-column="workerId"><i class="bi bi-tag"></i> Worker ID</th>
                                     <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
                                     <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
                                     <th class="sortable-header" data-column="workerType"><i class="bi bi-gear"></i> Type</th>
                                     <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
-                                    <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Expires At</th>
+                                    <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Last Seen</th>
                                     <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr th:each="worker : ${storageWorkersTable}">
-                                    <td>
-                                        <span class="worker-id" th:text="${worker.workerId}">worker-id</span>
-                                    </td>
                                     <td>
                                         <span class="status-badge status-secondary" th:text="${worker.groupName != null ? worker.groupName : 'default'}">default</span>
                                     </td>
@@ -911,8 +1070,7 @@
                                     <td>
                                         <span class="status-badge" 
                                               th:classappend="${worker.status.startsWith('Active') ? 'status-success' : (worker.status == 'Expired' ? 'status-danger' : 'status-warning')}">
-                                            <i th:class="${worker.status.startsWith('Active') ? 'bi bi-check-circle' : (worker.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i>
-                                            <span th:text="${worker.status}">Active</span>
+                                            <i th:class="${worker.status.startsWith('Active') ? 'bi bi-check-circle' : (worker.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${worker.status}">Active</span>
                                         </span>
                                     </td>
                                     <td>
@@ -943,6 +1101,105 @@
                         
                         <div class="alert alert-info m-3" th:if="${storageWorkersTable.empty}">
                             <i class="bi bi-info-circle"></i> No storage workers found
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Servers Table -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <span><i class="bi bi-server"></i> Servers</span>
+                        <span class="status-badge status-info" th:text="${serversTable.size()} + ' Servers'">0 Servers</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Servers Table Controls -->
+                    <div class="table-controls" th:if="${serversTable != null and serversTable.size() > 0}">
+                        <div class="table-search">
+                            <i class="bi bi-search"></i>
+                            <input type="text" id="serversSearch" placeholder="Search servers..." />
+                        </div>
+                        <div class="table-info">
+                            <span id="serversCount" th:text="${serversTable.size()}">0</span> servers
+                        </div>
+                        <div class="page-size-selector">
+                            <span>Show:</span>
+                            <select id="serversPageSize">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                            <span>per page</span>
+                        </div>
+                    </div>
+                        
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="serversTable" th:if="${serversTable != null and serversTable.size() > 0}">
+                            <thead>
+                                <tr>
+                                    <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
+                                    <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
+                                    <th class="sortable-header" data-column="serverType"><i class="bi bi-gear"></i> Type</th>
+                                    <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
+                                    <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Last Seen</th>
+                                    <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="server : ${serversTable}">
+                                    <td>
+                                        <span class="status-badge status-secondary" th:text="${server.groupName != null ? server.groupName : 'default'}">default</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-info" th:text="${server.endpoint}">endpoint</span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge" 
+                                              th:classappend="${server.serverType == 'Scheduler' ? 'status-info' : (server.serverType == 'CAS' ? 'status-primary' : 'status-success')}">
+                                            <i th:class="${server.serverType == 'Scheduler' ? 'bi bi-gear' : (server.serverType == 'CAS' ? 'bi bi-database' : 'bi bi-server')}"></i> 
+                                            <span th:text="${server.serverType}">Scheduler</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge" 
+                                              th:classappend="${server.status.startsWith('Active') ? 'status-success' : (server.status == 'Expired' ? 'status-danger' : 'status-warning')}">
+                                            <i th:class="${server.status.startsWith('Active') ? 'bi bi-check-circle' : (server.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${server.status}">Active</span>
+                                        </span>
+                                    </td>
+                                    <td><small class="text-muted" th:text="${server.expireAt}">2024-01-01 11:00:00</small></td>
+                                    <td><small class="text-muted" th:text="${server.firstRegisteredAt}">2024-01-01 10:00:00</small></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Servers Pagination Controls -->
+                        <div class="pagination-controls" th:if="${serversTable != null and serversTable.size() > 0}">
+                            <div class="pagination-info">
+                                <span id="serversInfo">Showing 1 to 25 of <span th:text="${serversTable.size()}">0</span> servers</span>
+                            </div>
+                            <div class="pagination-buttons">
+                                <button id="serversFirstBtn" class="pagination-btn" onclick="serversCurrentPage=1; renderServersTable();">
+                                    <i class="bi bi-chevron-double-left"></i> First
+                                </button>
+                                <button id="serversPrevBtn" class="pagination-btn" onclick="changeServersPage(-1)">
+                                    <i class="bi bi-chevron-left"></i> Previous
+                                </button>
+                                <span id="serversPageNumbers" class="page-numbers"></span>
+                                <button id="serversNextBtn" class="pagination-btn" onclick="changeServersPage(1)">
+                                    Next <i class="bi bi-chevron-right"></i>
+                                </button>
+                                <button id="serversLastBtn" class="pagination-btn" onclick="serversCurrentPage=Math.ceil(serversData.length/window.serversPageSize); renderServersTable();">
+                                    Last <i class="bi bi-chevron-double-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info m-3" th:if="${serversTable == null or serversTable.size() == 0}">
+                            <i class="bi bi-info-circle"></i> No servers found
                         </div>
                     </div>
                 </div>
@@ -1032,14 +1289,23 @@
         // Table Management Variables
         let executeWorkerData = [];
         let storageWorkerData = [];
+        let serversData = [];
         let executeWorkerCurrentPage = 1;
         let storageWorkerCurrentPage = 1;
+        let serversCurrentPage = 1;
         let executeWorkerPageSize = 10;
         let storageWorkerPageSize = 10;
+        let serversPageSize = 25;
+        
+        // Initialize window variables for pagination
+        window.serversPageSize = 25;
+        
         let executeWorkerSortColumn = '';
         let executeWorkerSortDirection = 'asc';
         let storageWorkerSortColumn = '';
         let storageWorkerSortDirection = 'asc';
+        let serversSortColumn = '';
+        let serversSortDirection = 'asc';
 
         // Initialize table functionality
         function initializeTableFunctionality() {
@@ -1052,12 +1318,14 @@
             // Initial render
             renderExecuteWorkerTable();
             renderStorageWorkerTable();
+            renderServersTable();
         }
 
         // Extract worker data from existing HTML tables
         function extractTableData() {
             const executeTable = document.getElementById('executeWorkerTable');
             const storageTable = document.getElementById('storageWorkerTable');
+            const serversTable = document.getElementById('serversTable');
 
             if (executeTable) {
                 executeWorkerData = extractWorkerDataFromTable(executeTable);
@@ -1065,6 +1333,10 @@
 
             if (storageTable) {
                 storageWorkerData = extractWorkerDataFromTable(storageTable);
+            }
+
+            if (serversTable) {
+                serversData = extractServerDataFromTable(serversTable);
             }
         }
 
@@ -1074,17 +1346,46 @@
 
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
-                if (cells.length >= 7) {
+                if (cells.length >= 6) {
+                    // Remove content in parentheses from status
+                    const cleanStatus = cells[3].textContent.trim().replace(/\([^)]*\)/g, '').trim();
                     data.push({
-                        workerId: cells[0].textContent.trim(),
-                        groupName: cells[1].textContent.trim(),
-                        endpoint: cells[2].textContent.trim(),
-                        workerType: cells[3].textContent.trim(),
-                        status: cells[4].textContent.trim(),
-                        expireAt: cells[5].textContent.trim(),
-                        firstRegisteredAt: cells[6].textContent.trim(),
+                        groupName: cells[0].textContent.trim(),
+                        endpoint: cells[1].textContent.trim(),
+                        workerType: cells[2].textContent.trim(),
+                        status: cleanStatus,
+                        expireAt: cells[4].textContent.trim(),
+                        firstRegisteredAt: cells[5].textContent.trim(),
                         originalHtml: row.innerHTML
                     });
+                }
+            });
+
+            return data;
+        }
+
+        function extractServerDataFromTable(table) {
+            const rows = table.querySelectorAll('tbody tr');
+            const data = [];
+
+            rows.forEach((row, index) => {
+                const cells = row.querySelectorAll('td');
+                
+                if (cells.length >= 6) {
+                    // Remove content in parentheses from status
+                    const cleanStatus = cells[3].textContent.trim().replace(/\([^)]*\)/g, '').trim();
+                    const serverData = {
+                        groupName: cells[0].textContent.trim(),
+                        endpoint: cells[1].textContent.trim(),
+                        serverType: cells[2].textContent.trim(),
+                        status: cleanStatus,
+                        expireAt: cells[4].textContent.trim(),
+                        firstRegisteredAt: cells[5].textContent.trim(),
+                        originalHtml: row.innerHTML
+                    };
+                    data.push(serverData);
+                } else {
+                    // Row has insufficient cells
                 }
             });
 
@@ -1131,16 +1432,36 @@
                 });
             }
 
+            // Servers event listeners
+            const serversSearch = document.getElementById('serversSearch');
+            const serversPageSize = document.getElementById('serversPageSize');
+
+            if (serversSearch) {
+                serversSearch.addEventListener('input', function() {
+                    serversCurrentPage = 1;
+                    renderServersTable();
+                });
+            }
+
+            if (serversPageSize) {
+                serversPageSize.addEventListener('change', function() {
+                    window.serversPageSize = parseInt(this.value);
+                    serversCurrentPage = 1;
+                    renderServersTable();
+                });
+            }
+
             // Sorting functionality
             setupSortingListeners('executeWorkerTable', 'execute');
             setupSortingListeners('storageWorkerTable', 'storage');
+            setupSortingListeners('serversTable', 'servers');
         }
 
         function setupSortingListeners(tableId, type) {
             const table = document.getElementById(tableId);
             if (!table) return;
 
-            const headers = table.querySelectorAll('.sortable-header');
+            const headers = table.querySelectorAll('.sortable');
             headers.forEach(header => {
                 header.addEventListener('click', function() {
                     const column = this.getAttribute('data-column');
@@ -1159,7 +1480,7 @@
                 }
                 updateSortHeaders('executeWorkerTable', column, executeWorkerSortDirection);
                 renderExecuteWorkerTable();
-            } else {
+            } else if (type === 'storage') {
                 if (storageWorkerSortColumn === column) {
                     storageWorkerSortDirection = storageWorkerSortDirection === 'asc' ? 'desc' : 'asc';
                 } else {
@@ -1168,6 +1489,15 @@
                 }
                 updateSortHeaders('storageWorkerTable', column, storageWorkerSortDirection);
                 renderStorageWorkerTable();
+            } else if (type === 'servers') {
+                if (serversSortColumn === column) {
+                    serversSortDirection = serversSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    serversSortColumn = column;
+                    serversSortDirection = 'asc';
+                }
+                updateSortHeaders('serversTable', column, serversSortDirection);
+                renderServersTable();
             }
         }
 
@@ -1175,7 +1505,7 @@
             const table = document.getElementById(tableId);
             if (!table) return;
 
-            const headers = table.querySelectorAll('.sortable-header');
+            const headers = table.querySelectorAll('.sortable');
             headers.forEach(header => {
                 header.classList.remove('sorted-asc', 'sorted-desc');
                 if (header.getAttribute('data-column') === activeColumn) {
@@ -1188,7 +1518,6 @@
         function renderExecuteWorkerTable() {
             const searchTerm = document.getElementById('executeWorkerSearch')?.value.toLowerCase() || '';
             let filteredData = executeWorkerData.filter(worker => 
-                worker.workerId.toLowerCase().includes(searchTerm) ||
                 worker.groupName.toLowerCase().includes(searchTerm) ||
                 worker.endpoint.toLowerCase().includes(searchTerm) ||
                 worker.status.toLowerCase().includes(searchTerm)
@@ -1234,7 +1563,6 @@
         function renderStorageWorkerTable() {
             const searchTerm = document.getElementById('storageWorkerSearch')?.value.toLowerCase() || '';
             let filteredData = storageWorkerData.filter(worker => 
-                worker.workerId.toLowerCase().includes(searchTerm) ||
                 worker.groupName.toLowerCase().includes(searchTerm) ||
                 worker.endpoint.toLowerCase().includes(searchTerm) ||
                 worker.status.toLowerCase().includes(searchTerm)
@@ -1276,26 +1604,125 @@
             updatePaginationInfo('storage', startIndex + 1, endIndex, totalItems, totalPages);
         }
 
+        // Render Servers Table
+        function renderServersTable() {
+            const searchTerm = document.getElementById('serversSearch')?.value.toLowerCase() || '';
+            
+            let filteredData = serversData.filter(server => 
+                server.groupName.toLowerCase().includes(searchTerm) ||
+                server.endpoint.toLowerCase().includes(searchTerm) ||
+                server.serverType.toLowerCase().includes(searchTerm) ||
+                server.status.toLowerCase().includes(searchTerm)
+            );
+
+            // Apply sorting
+            if (serversSortColumn) {
+                filteredData.sort((a, b) => {
+                    let aVal = a[serversSortColumn].toLowerCase();
+                    let bVal = b[serversSortColumn].toLowerCase();
+                    if (serversSortDirection === 'asc') {
+                        return aVal.localeCompare(bVal);
+                    } else {
+                        return bVal.localeCompare(aVal);
+                    }
+                });
+            }
+
+            // Apply pagination
+            const totalItems = filteredData.length;
+            const totalPages = Math.ceil(totalItems / window.serversPageSize);
+            const startIndex = (serversCurrentPage - 1) * window.serversPageSize;
+            const endIndex = Math.min(startIndex + window.serversPageSize, totalItems);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            // Update table
+            const table = document.getElementById('serversTable');
+            if (table) {
+                const tbody = table.querySelector('tbody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    pageData.forEach((server, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = server.originalHtml;
+                        tbody.appendChild(row);
+                    });
+                }
+            }
+
+            // Update pagination info - only if pagination elements exist
+            const infoElement = document.getElementById('serversInfo');
+            if (infoElement) {
+                updatePaginationInfo('servers', startIndex + 1, endIndex, totalItems, totalPages);
+            }
+        }
+
         // Update pagination info and controls
-        function updatePaginationInfo(type, start, end, total, totalPages) {
-            const prefix = type === 'execute' ? 'executeWorker' : 'storageWorker';
-            const currentPage = type === 'execute' ? executeWorkerCurrentPage : storageWorkerCurrentPage;
+        function updatePaginationInfo(type, start, end, total, totalPages) {            
+            // Defensive check - ensure we have valid parameters
+            if (!type || total === undefined || total === null) {
+                return;
+            }
+            
+            let prefix, currentPage;
+            if (type === 'execute') {
+                prefix = 'executeWorker';
+                currentPage = executeWorkerCurrentPage;
+            } else if (type === 'storage') {
+                prefix = 'storageWorker';
+                currentPage = storageWorkerCurrentPage;
+            } else if (type === 'servers') {
+                prefix = 'servers';
+                currentPage = serversCurrentPage;
+            } else {
+                return;
+            }
 
-            // Update info text
-            document.getElementById(prefix + 'Start').textContent = total > 0 ? start : 0;
-            document.getElementById(prefix + 'End').textContent = end;
-            document.getElementById(prefix + 'Total').textContent = total;
-            document.getElementById(prefix + 'Count').textContent = total;
+            // Update info text - handle different element structures
+            if (type === 'servers') {
+                const infoElement = document.getElementById('serversInfo');
+                if (infoElement) {
+                    infoElement.textContent = `Showing ${start} to ${end} of ${total} servers`;
+                }
+                const countElement = document.getElementById('serversCount');
+                if (countElement) {
+                    countElement.textContent = total;
+                }
+            } else {
+                // For worker tables
+                const startEl = document.getElementById(prefix + 'Start');
+                const endEl = document.getElementById(prefix + 'End');
+                const totalEl = document.getElementById(prefix + 'Total');
+                const countEl = document.getElementById(prefix + 'Count');
+                
+                if (startEl) startEl.textContent = total > 0 ? start : 0;
+                if (endEl) endEl.textContent = end;
+                if (totalEl) totalEl.textContent = total;
+                if (countEl) countEl.textContent = total;
+            }
 
-            // Update pagination buttons
-            const prevBtn = document.getElementById(prefix + 'PrevBtn');
-            const nextBtn = document.getElementById(prefix + 'NextBtn');
+            // Update pagination buttons - handle different button naming for servers
+            let prevBtn, nextBtn, firstBtn, lastBtn, pageNumbersSpan;
+            
+            if (type === 'servers') {
+                prevBtn = document.getElementById('serversPrevBtn');
+                nextBtn = document.getElementById('serversNextBtn');
+                firstBtn = document.getElementById('serversFirstBtn');
+                lastBtn = document.getElementById('serversLastBtn');
+                pageNumbersSpan = document.getElementById('serversPageNumbers');
+            } else {
+                prevBtn = document.getElementById(prefix + 'PrevBtn');
+                nextBtn = document.getElementById(prefix + 'NextBtn');
+                firstBtn = document.getElementById(prefix + 'FirstBtn');
+                lastBtn = document.getElementById(prefix + 'LastBtn');
+                pageNumbersSpan = document.getElementById(prefix + 'PageNumbers');
+            }
 
             if (prevBtn) prevBtn.disabled = currentPage <= 1;
             if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+            if (firstBtn) firstBtn.disabled = currentPage <= 1;
+            if (lastBtn) lastBtn.disabled = currentPage >= totalPages;
 
             // Generate page numbers
-            const pageNumbersSpan = document.getElementById(prefix + 'PageNumbers');
             if (pageNumbersSpan) {
                 pageNumbersSpan.innerHTML = '';
                 for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
@@ -1306,9 +1733,12 @@
                         if (type === 'execute') {
                             executeWorkerCurrentPage = i;
                             renderExecuteWorkerTable();
-                        } else {
+                        } else if (type === 'storage') {
                             storageWorkerCurrentPage = i;
                             renderStorageWorkerTable();
+                        } else if (type === 'servers') {
+                            serversCurrentPage = i;
+                            renderServersTable();
                         }
                     };
                     pageNumbersSpan.appendChild(pageBtn);
@@ -1337,6 +1767,17 @@
             if (storageWorkerCurrentPage > totalPages) storageWorkerCurrentPage = totalPages;
 
             renderStorageWorkerTable();
+        }
+
+        function changeServersPage(direction) {
+            const totalItems = serversData.length;
+            const totalPages = Math.ceil(totalItems / window.serversPageSize);
+
+            serversCurrentPage += direction;
+            if (serversCurrentPage < 1) serversCurrentPage = 1;
+            if (serversCurrentPage > totalPages) serversCurrentPage = totalPages;
+
+            renderServersTable();
         }
     </script>
 </body>
