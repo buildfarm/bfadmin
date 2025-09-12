@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1f2937;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#111827;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="serverPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="dashGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="64" height="64" rx="8" fill="url(#bg)" stroke="#374151" stroke-width="1"/>
+  
+  <!-- Server Stack (BuildFarm concept) -->
+  <rect x="12" y="16" width="24" height="4" rx="2" fill="url(#serverPurple)"/>
+  <rect x="12" y="22" width="24" height="4" rx="2" fill="url(#serverPurple)" opacity="0.8"/>
+  <rect x="12" y="28" width="24" height="4" rx="2" fill="url(#serverPurple)" opacity="0.6"/>
+  
+  <!-- Dashboard Arc -->
+  <path d="M 16 44 A 16 16 0 0 1 48 44" stroke="url(#dashGreen)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- Gauge Needle -->
+  <line x1="32" y1="44" x2="40" y2="36" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Center Hub -->
+  <circle cx="32" cy="44" r="3" fill="#f59e0b"/>
+  
+  <!-- Status LEDs -->
+  <circle cx="38" cy="18" r="2" fill="#10b981"/>
+  <circle cx="38" cy="24" r="2" fill="#10b981"/>
+  <circle cx="38" cy="30" r="2" fill="#ef4444"/>
+  
+  <!-- Subtle highlight -->
+  <rect x="12" y="16" width="24" height="1" rx="0.5" fill="#a78bfa" opacity="0.5"/>
+</svg>
