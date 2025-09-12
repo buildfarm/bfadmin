@@ -355,6 +355,7 @@ public class ValkeyService implements ValkeyServiceInterface {
      */
     private java.util.Map<String, Object> parseWorkerJson(String workerId, String workerJson) {
         try {
+            logger.info("Worker json: {}", workerJson);
             // Use simple JSON parsing for the worker data
             java.util.Map<String, Object> workerData = new java.util.HashMap<>();
             workerData.put("workerId", workerId);
@@ -365,20 +366,23 @@ public class ValkeyService implements ValkeyServiceInterface {
                 String expireAt = extractJsonField(workerJson, "expireAt");
                 String workerType = extractJsonField(workerJson, "workerType");
                 String firstRegisteredAt = extractJsonField(workerJson, "firstRegisteredAt");
+                String groupName = extractJsonField(workerJson, "groupName");
                 
                 workerData.put("endpoint", endpoint != null ? endpoint : "N/A");
                 workerData.put("expireAt", formatTimestamp(expireAt));
                 workerData.put("workerType", parseWorkerType(workerType));
                 workerData.put("firstRegisteredAt", formatTimestamp(firstRegisteredAt));
+                workerData.put("groupName", groupName != null ? groupName : "default");
                 workerData.put("status", calculateStatus(expireAt));
                 
-                logger.debug("Parsed worker {}: endpoint={}, type={}, status={}", 
-                           workerId, endpoint, workerType, workerData.get("status"));
+                logger.debug("Parsed worker {}: endpoint={}, type={}, group={}, status={}", 
+                           workerId, endpoint, workerType, groupName, workerData.get("status"));
             } else {
                 workerData.put("endpoint", "N/A");
                 workerData.put("expireAt", "N/A");
                 workerData.put("workerType", "Unknown");
                 workerData.put("firstRegisteredAt", "N/A");
+                workerData.put("groupName", "default");
                 workerData.put("status", "Unknown");
             }
             

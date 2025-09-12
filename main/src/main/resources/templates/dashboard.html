@@ -254,6 +254,12 @@
             border: 1px solid rgba(14, 165, 233, 0.2);
         }
 
+        .status-secondary {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-purple);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
         /* Tables */
         .table {
             background: transparent;
@@ -637,6 +643,7 @@
                             <thead>
                                 <tr>
                                     <th><i class="bi bi-tag"></i> Worker ID</th>
+                                    <th><i class="bi bi-collection"></i> Group</th>
                                     <th><i class="bi bi-globe"></i> Endpoint</th>
                                     <th><i class="bi bi-gear"></i> Type</th>
                                     <th><i class="bi bi-activity"></i> Status</th>
@@ -648,6 +655,9 @@
                                 <tr th:each="worker : ${executeWorkersTable}">
                                     <td>
                                         <span class="worker-id" th:text="${worker.workerId}">worker-id</span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-secondary" th:text="${worker.groupName != null ? worker.groupName : 'default'}">default</span>
                                     </td>
                                     <td>
                                         <span class="text-info" th:text="${worker.endpoint}">endpoint</span>
@@ -695,6 +705,7 @@
                             <thead>
                                 <tr>
                                     <th><i class="bi bi-tag"></i> Worker ID</th>
+                                    <th><i class="bi bi-collection"></i> Group</th>
                                     <th><i class="bi bi-globe"></i> Endpoint</th>
                                     <th><i class="bi bi-gear"></i> Type</th>
                                     <th><i class="bi bi-activity"></i> Status</th>
@@ -706,6 +717,9 @@
                                 <tr th:each="worker : ${storageWorkersTable}">
                                     <td>
                                         <span class="worker-id" th:text="${worker.workerId}">worker-id</span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-secondary" th:text="${worker.groupName != null ? worker.groupName : 'default'}">default</span>
                                     </td>
                                     <td>
                                         <span class="text-info" th:text="${worker.endpoint}">endpoint</span>
