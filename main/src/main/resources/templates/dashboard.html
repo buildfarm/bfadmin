@@ -511,6 +511,125 @@
             border-color: var(--accent-red);
             background: rgba(239, 68, 68, 0.1);
         }
+
+        /* Pagination and Sorting Styles */
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table-search input {
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            width: 200px;
+        }
+
+        .table-search input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .table-info {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: color 0.2s;
+        }
+
+        .sortable-header:hover {
+            color: var(--accent-blue);
+        }
+
+        .sortable-header.sorted-asc::after {
+            content: " ↑";
+            color: var(--accent-blue);
+        }
+
+        .sortable-header.sorted-desc::after {
+            content: " ↓";
+            color: var(--accent-blue);
+        }
+
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .pagination-info {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .pagination-btn {
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .pagination-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .page-size-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .page-size-selector select {
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 4px 8px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
     </style>
 </head>
 <body>
@@ -638,17 +757,38 @@
                     </h5>
                 </div>
                 <div class="card-body p-0">
+                    <!-- Table Controls -->
+                    <div class="table-controls" th:if="${!executeWorkersTable.empty}">
+                        <div class="table-search">
+                            <i class="bi bi-search"></i>
+                            <input type="text" id="executeWorkerSearch" placeholder="Search workers..." />
+                        </div>
+                        <div class="table-info">
+                            <span id="executeWorkerCount" th:text="${executeWorkersTable.size()}">0</span> workers
+                        </div>
+                        <div class="page-size-selector">
+                            <span>Show:</span>
+                            <select id="executeWorkerPageSize">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                            <span>per page</span>
+                        </div>
+                    </div>
+                    
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0" th:if="${!executeWorkersTable.empty}">
+                        <table class="table table-hover mb-0" id="executeWorkerTable" th:if="${!executeWorkersTable.empty}">
                             <thead>
                                 <tr>
-                                    <th><i class="bi bi-tag"></i> Worker ID</th>
-                                    <th><i class="bi bi-collection"></i> Group</th>
-                                    <th><i class="bi bi-globe"></i> Endpoint</th>
-                                    <th><i class="bi bi-gear"></i> Type</th>
-                                    <th><i class="bi bi-activity"></i> Status</th>
-                                    <th><i class="bi bi-clock"></i> Expires At</th>
-                                    <th><i class="bi bi-calendar-plus"></i> Registered</th>
+                                    <th class="sortable-header" data-column="workerId"><i class="bi bi-tag"></i> Worker ID</th>
+                                    <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
+                                    <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
+                                    <th class="sortable-header" data-column="workerType"><i class="bi bi-gear"></i> Type</th>
+                                    <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
+                                    <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Expires At</th>
+                                    <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -684,6 +824,23 @@
                                 </tr>
                             </tbody>
                         </table>
+                        
+                        <!-- Execute Worker Pagination Controls -->
+                        <div class="pagination-controls" th:if="${!executeWorkersTable.empty}">
+                            <div class="pagination-info">
+                                Showing <span id="executeWorkerStart">1</span> to <span id="executeWorkerEnd">10</span> of <span id="executeWorkerTotal" th:text="${executeWorkersTable.size()}">0</span> workers
+                            </div>
+                            <div class="pagination-buttons">
+                                <button class="pagination-btn" id="executeWorkerPrevBtn" onclick="changeExecuteWorkerPage(-1)">
+                                    <i class="bi bi-chevron-left"></i> Previous
+                                </button>
+                                <span id="executeWorkerPageNumbers"></span>
+                                <button class="pagination-btn" id="executeWorkerNextBtn" onclick="changeExecuteWorkerPage(1)">
+                                    Next <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
                         <div class="alert alert-info m-3" th:if="${executeWorkersTable.empty}">
                             <i class="bi bi-info-circle"></i> No execute workers found
                         </div>
@@ -700,17 +857,38 @@
                     </h5>
                 </div>
                 <div class="card-body p-0">
+                    <!-- Storage Worker Table Controls -->
+                    <div class="table-controls" th:if="${!storageWorkersTable.empty}">
+                        <div class="table-search">
+                            <i class="bi bi-search"></i>
+                            <input type="text" id="storageWorkerSearch" placeholder="Search workers..." />
+                        </div>
+                        <div class="table-info">
+                            <span id="storageWorkerCount" th:text="${storageWorkersTable.size()}">0</span> workers
+                        </div>
+                        <div class="page-size-selector">
+                            <span>Show:</span>
+                            <select id="storageWorkerPageSize">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                            <span>per page</span>
+                        </div>
+                    </div>
+                    
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0" th:if="${!storageWorkersTable.empty}">
+                        <table class="table table-hover mb-0" id="storageWorkerTable" th:if="${!storageWorkersTable.empty}">
                             <thead>
                                 <tr>
-                                    <th><i class="bi bi-tag"></i> Worker ID</th>
-                                    <th><i class="bi bi-collection"></i> Group</th>
-                                    <th><i class="bi bi-globe"></i> Endpoint</th>
-                                    <th><i class="bi bi-gear"></i> Type</th>
-                                    <th><i class="bi bi-activity"></i> Status</th>
-                                    <th><i class="bi bi-clock"></i> Expires At</th>
-                                    <th><i class="bi bi-calendar-plus"></i> Registered</th>
+                                    <th class="sortable-header" data-column="workerId"><i class="bi bi-tag"></i> Worker ID</th>
+                                    <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
+                                    <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
+                                    <th class="sortable-header" data-column="workerType"><i class="bi bi-gear"></i> Type</th>
+                                    <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
+                                    <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Expires At</th>
+                                    <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -746,6 +924,23 @@
                                 </tr>
                             </tbody>
                         </table>
+                        
+                        <!-- Storage Worker Pagination Controls -->
+                        <div class="pagination-controls" th:if="${!storageWorkersTable.empty}">
+                            <div class="pagination-info">
+                                Showing <span id="storageWorkerStart">1</span> to <span id="storageWorkerEnd">10</span> of <span id="storageWorkerTotal" th:text="${storageWorkersTable.size()}">0</span> workers
+                            </div>
+                            <div class="pagination-buttons">
+                                <button class="pagination-btn" id="storageWorkerPrevBtn" onclick="changeStorageWorkerPage(-1)">
+                                    <i class="bi bi-chevron-left"></i> Previous
+                                </button>
+                                <span id="storageWorkerPageNumbers"></span>
+                                <button class="pagination-btn" id="storageWorkerNextBtn" onclick="changeStorageWorkerPage(1)">
+                                    Next <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
                         <div class="alert alert-info m-3" th:if="${storageWorkersTable.empty}">
                             <i class="bi bi-info-circle"></i> No storage workers found
                         </div>
@@ -792,6 +987,9 @@
             // Update timestamps
             updateRelativeTime();
             setInterval(updateRelativeTime, 60000); // Update every minute
+
+            // Initialize table functionality
+            initializeTableFunctionality();
         });
 
         // Format relative time
@@ -830,6 +1028,316 @@
                 }
             });
         });
+
+        // Table Management Variables
+        let executeWorkerData = [];
+        let storageWorkerData = [];
+        let executeWorkerCurrentPage = 1;
+        let storageWorkerCurrentPage = 1;
+        let executeWorkerPageSize = 10;
+        let storageWorkerPageSize = 10;
+        let executeWorkerSortColumn = '';
+        let executeWorkerSortDirection = 'asc';
+        let storageWorkerSortColumn = '';
+        let storageWorkerSortDirection = 'asc';
+
+        // Initialize table functionality
+        function initializeTableFunctionality() {
+            // Extract data from existing tables
+            extractTableData();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Initial render
+            renderExecuteWorkerTable();
+            renderStorageWorkerTable();
+        }
+
+        // Extract worker data from existing HTML tables
+        function extractTableData() {
+            const executeTable = document.getElementById('executeWorkerTable');
+            const storageTable = document.getElementById('storageWorkerTable');
+
+            if (executeTable) {
+                executeWorkerData = extractWorkerDataFromTable(executeTable);
+            }
+
+            if (storageTable) {
+                storageWorkerData = extractWorkerDataFromTable(storageTable);
+            }
+        }
+
+        function extractWorkerDataFromTable(table) {
+            const rows = table.querySelectorAll('tbody tr');
+            const data = [];
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 7) {
+                    data.push({
+                        workerId: cells[0].textContent.trim(),
+                        groupName: cells[1].textContent.trim(),
+                        endpoint: cells[2].textContent.trim(),
+                        workerType: cells[3].textContent.trim(),
+                        status: cells[4].textContent.trim(),
+                        expireAt: cells[5].textContent.trim(),
+                        firstRegisteredAt: cells[6].textContent.trim(),
+                        originalHtml: row.innerHTML
+                    });
+                }
+            });
+
+            return data;
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Search functionality
+            const executeSearch = document.getElementById('executeWorkerSearch');
+            const storageSearch = document.getElementById('storageWorkerSearch');
+
+            if (executeSearch) {
+                executeSearch.addEventListener('input', function() {
+                    executeWorkerCurrentPage = 1;
+                    renderExecuteWorkerTable();
+                });
+            }
+
+            if (storageSearch) {
+                storageSearch.addEventListener('input', function() {
+                    storageWorkerCurrentPage = 1;
+                    renderStorageWorkerTable();
+                });
+            }
+
+            // Page size selectors
+            const executePageSize = document.getElementById('executeWorkerPageSize');
+            const storagePageSize = document.getElementById('storageWorkerPageSize');
+
+            if (executePageSize) {
+                executePageSize.addEventListener('change', function() {
+                    executeWorkerPageSize = parseInt(this.value);
+                    executeWorkerCurrentPage = 1;
+                    renderExecuteWorkerTable();
+                });
+            }
+
+            if (storagePageSize) {
+                storagePageSize.addEventListener('change', function() {
+                    storageWorkerPageSize = parseInt(this.value);
+                    storageWorkerCurrentPage = 1;
+                    renderStorageWorkerTable();
+                });
+            }
+
+            // Sorting functionality
+            setupSortingListeners('executeWorkerTable', 'execute');
+            setupSortingListeners('storageWorkerTable', 'storage');
+        }
+
+        function setupSortingListeners(tableId, type) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+
+            const headers = table.querySelectorAll('.sortable-header');
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    const column = this.getAttribute('data-column');
+                    handleSort(column, type);
+                });
+            });
+        }
+
+        function handleSort(column, type) {
+            if (type === 'execute') {
+                if (executeWorkerSortColumn === column) {
+                    executeWorkerSortDirection = executeWorkerSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    executeWorkerSortColumn = column;
+                    executeWorkerSortDirection = 'asc';
+                }
+                updateSortHeaders('executeWorkerTable', column, executeWorkerSortDirection);
+                renderExecuteWorkerTable();
+            } else {
+                if (storageWorkerSortColumn === column) {
+                    storageWorkerSortDirection = storageWorkerSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    storageWorkerSortColumn = column;
+                    storageWorkerSortDirection = 'asc';
+                }
+                updateSortHeaders('storageWorkerTable', column, storageWorkerSortDirection);
+                renderStorageWorkerTable();
+            }
+        }
+
+        function updateSortHeaders(tableId, activeColumn, direction) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+
+            const headers = table.querySelectorAll('.sortable-header');
+            headers.forEach(header => {
+                header.classList.remove('sorted-asc', 'sorted-desc');
+                if (header.getAttribute('data-column') === activeColumn) {
+                    header.classList.add(direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+                }
+            });
+        }
+
+        // Render Execute Worker Table
+        function renderExecuteWorkerTable() {
+            const searchTerm = document.getElementById('executeWorkerSearch')?.value.toLowerCase() || '';
+            let filteredData = executeWorkerData.filter(worker => 
+                worker.workerId.toLowerCase().includes(searchTerm) ||
+                worker.groupName.toLowerCase().includes(searchTerm) ||
+                worker.endpoint.toLowerCase().includes(searchTerm) ||
+                worker.status.toLowerCase().includes(searchTerm)
+            );
+
+            // Apply sorting
+            if (executeWorkerSortColumn) {
+                filteredData.sort((a, b) => {
+                    let aVal = a[executeWorkerSortColumn].toLowerCase();
+                    let bVal = b[executeWorkerSortColumn].toLowerCase();
+                    if (executeWorkerSortDirection === 'asc') {
+                        return aVal.localeCompare(bVal);
+                    } else {
+                        return bVal.localeCompare(aVal);
+                    }
+                });
+            }
+
+            // Apply pagination
+            const totalItems = filteredData.length;
+            const totalPages = Math.ceil(totalItems / executeWorkerPageSize);
+            const startIndex = (executeWorkerCurrentPage - 1) * executeWorkerPageSize;
+            const endIndex = Math.min(startIndex + executeWorkerPageSize, totalItems);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            // Update table
+            const table = document.getElementById('executeWorkerTable');
+            if (table) {
+                const tbody = table.querySelector('tbody');
+                tbody.innerHTML = '';
+                pageData.forEach(worker => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = worker.originalHtml;
+                    tbody.appendChild(row);
+                });
+            }
+
+            // Update pagination info
+            updatePaginationInfo('execute', startIndex + 1, endIndex, totalItems, totalPages);
+        }
+
+        // Render Storage Worker Table
+        function renderStorageWorkerTable() {
+            const searchTerm = document.getElementById('storageWorkerSearch')?.value.toLowerCase() || '';
+            let filteredData = storageWorkerData.filter(worker => 
+                worker.workerId.toLowerCase().includes(searchTerm) ||
+                worker.groupName.toLowerCase().includes(searchTerm) ||
+                worker.endpoint.toLowerCase().includes(searchTerm) ||
+                worker.status.toLowerCase().includes(searchTerm)
+            );
+
+            // Apply sorting
+            if (storageWorkerSortColumn) {
+                filteredData.sort((a, b) => {
+                    let aVal = a[storageWorkerSortColumn].toLowerCase();
+                    let bVal = b[storageWorkerSortColumn].toLowerCase();
+                    if (storageWorkerSortDirection === 'asc') {
+                        return aVal.localeCompare(bVal);
+                    } else {
+                        return bVal.localeCompare(aVal);
+                    }
+                });
+            }
+
+            // Apply pagination
+            const totalItems = filteredData.length;
+            const totalPages = Math.ceil(totalItems / storageWorkerPageSize);
+            const startIndex = (storageWorkerCurrentPage - 1) * storageWorkerPageSize;
+            const endIndex = Math.min(startIndex + storageWorkerPageSize, totalItems);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            // Update table
+            const table = document.getElementById('storageWorkerTable');
+            if (table) {
+                const tbody = table.querySelector('tbody');
+                tbody.innerHTML = '';
+                pageData.forEach(worker => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = worker.originalHtml;
+                    tbody.appendChild(row);
+                });
+            }
+
+            // Update pagination info
+            updatePaginationInfo('storage', startIndex + 1, endIndex, totalItems, totalPages);
+        }
+
+        // Update pagination info and controls
+        function updatePaginationInfo(type, start, end, total, totalPages) {
+            const prefix = type === 'execute' ? 'executeWorker' : 'storageWorker';
+            const currentPage = type === 'execute' ? executeWorkerCurrentPage : storageWorkerCurrentPage;
+
+            // Update info text
+            document.getElementById(prefix + 'Start').textContent = total > 0 ? start : 0;
+            document.getElementById(prefix + 'End').textContent = end;
+            document.getElementById(prefix + 'Total').textContent = total;
+            document.getElementById(prefix + 'Count').textContent = total;
+
+            // Update pagination buttons
+            const prevBtn = document.getElementById(prefix + 'PrevBtn');
+            const nextBtn = document.getElementById(prefix + 'NextBtn');
+
+            if (prevBtn) prevBtn.disabled = currentPage <= 1;
+            if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+
+            // Generate page numbers
+            const pageNumbersSpan = document.getElementById(prefix + 'PageNumbers');
+            if (pageNumbersSpan) {
+                pageNumbersSpan.innerHTML = '';
+                for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = 'pagination-btn' + (i === currentPage ? ' active' : '');
+                    pageBtn.textContent = i;
+                    pageBtn.onclick = () => {
+                        if (type === 'execute') {
+                            executeWorkerCurrentPage = i;
+                            renderExecuteWorkerTable();
+                        } else {
+                            storageWorkerCurrentPage = i;
+                            renderStorageWorkerTable();
+                        }
+                    };
+                    pageNumbersSpan.appendChild(pageBtn);
+                }
+            }
+        }
+
+        // Page navigation functions
+        function changeExecuteWorkerPage(direction) {
+            const totalItems = executeWorkerData.length;
+            const totalPages = Math.ceil(totalItems / executeWorkerPageSize);
+
+            executeWorkerCurrentPage += direction;
+            if (executeWorkerCurrentPage < 1) executeWorkerCurrentPage = 1;
+            if (executeWorkerCurrentPage > totalPages) executeWorkerCurrentPage = totalPages;
+
+            renderExecuteWorkerTable();
+        }
+
+        function changeStorageWorkerPage(direction) {
+            const totalItems = storageWorkerData.length;
+            const totalPages = Math.ceil(totalItems / storageWorkerPageSize);
+
+            storageWorkerCurrentPage += direction;
+            if (storageWorkerCurrentPage < 1) storageWorkerCurrentPage = 1;
+            if (storageWorkerCurrentPage > totalPages) storageWorkerCurrentPage = totalPages;
+
+            renderStorageWorkerTable();
+        }
     </script>
 </body>
 </html>
