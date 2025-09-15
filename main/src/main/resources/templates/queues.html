@@ -66,38 +66,8 @@
                     </div>
                 </div>
                 
-                <!-- Debug Panel -->
-                <div class="alert alert-info" th:if="${operations != null}">
-                    <h6>Debug Information:</h6>
-                    <strong>Operations found:</strong> <span th:text="${operations.size()}">0</span><br>
-                    <strong>Operations empty:</strong> <span th:text="${operations.empty}">true</span><br>
-                    <strong>Queue names:</strong> <span th:text="${#strings.listJoin(queueNames, ', ')}">none</span><br>
-                    <strong>Table condition (operations != null):</strong> <span th:text="${operations != null}">false</span><br>
-                    <strong>Table condition (size > 0):</strong> <span th:text="${operations.size() > 0}">false</span><br>
-                    <strong>Combined condition:</strong> <span th:text="${operations != null and operations.size() > 0}">false</span>
-                </div>
-
-                <!-- SIMPLE TEST TABLE -->
-                <div class="alert alert-warning">
-                    <h6>Simple Test Table (Excluding Dispatching):</h6>
-                    <strong>Total operations:</strong> <span th:text="${operations.size()}">0</span><br>
-                    <table class="table table-striped" style="background-color: yellow;">
-                        <thead>
-                            <tr><th>Index</th><th>Queue</th><th>Operation Name</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="op, iterStat : ${operations}" th:if="${iterStat.count <= 5 and op.queueName != 'Dispatching'}">
-                                <td th:text="${iterStat.count}">1</td>
-                                <td th:text="${op.queueName}">queue</td>
-                                <td th:text="${op.operationName != null ? op.operationName : op.name}">operation</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
                 <div class="table-responsive">
-                    <!-- FORCE SHOW TABLE FOR TESTING -->
-                    <table class="table table-hover mb-0" id="operationTable">
+                    <table class="table table-hover mb-0" id="operationTable" th:if="${operations != null and operations.size() > 0}">
                         <thead>
                             <tr>
                                 <th class="sortable-header" data-column="index"><i class="bi bi-hash"></i> #</th>
@@ -111,7 +81,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="operation, iterStat : ${operations}" th:unless="${operation.queueName == 'Dispatching'}">
+                            <tr th:each="operation, iterStat : ${operations}">
                                 <td>
                                     <span class="text-muted" th:text="${iterStat.count}">1</span>
                                 </td>
@@ -180,21 +150,7 @@
                         </div>
                     </div>
                     
-                    <!-- Test Table (always visible) -->
-                    <table class="table table-hover mb-3" style="border: 2px solid red;">
-                        <thead>
-                            <tr>
-                                <th>Test Column</th>
-                                <th>Operations Count</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>TEST ROW (always visible)</td>
-                                <td th:text="${operations != null ? operations.size() : 'NULL'}">0</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
                     
                     <div class="alert alert-info m-3" th:if="${operations == null or operations.size() == 0}">
                         <i class="bi bi-info-circle"></i> No operations found in any queues

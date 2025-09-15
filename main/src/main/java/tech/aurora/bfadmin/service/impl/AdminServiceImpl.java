@@ -1,22 +1,20 @@
 package tech.aurora.bfadmin.service.impl;
 
 import tech.aurora.bfadmin.service.AdminService;
-import tech.aurora.bfadmin.service.ValkeyServiceInterface;
+import tech.aurora.bfadmin.service.ValkeyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
 
 @Service
-@ConditionalOnProperty(name = "admin.service.mock", havingValue = "false", matchIfMissing = false)
 public class AdminServiceImpl implements AdminService {
   private static final Logger logger = LoggerFactory.getLogger(AdminServiceImpl.class);
 
   @Autowired
-  private ValkeyServiceInterface valkeyService;
+  private ValkeyService valkeyService;
 
   @Override
   public String getHelloMessage() {
@@ -70,7 +68,7 @@ public class AdminServiceImpl implements AdminService {
         for (String key : executeWorkerKeys) {
           try {
             // Use the ValkeyService cast to access new methods
-            String formattedValue = ((tech.aurora.bfadmin.service.ValkeyService) valkeyService).getFormattedValue(key);
+            String formattedValue = ((tech.aurora.bfadmin.service.impl.ValkeyServiceImpl) valkeyService).getFormattedValue(key);
             result.append("\n🔧 ").append(key).append("\n");
             
             // Truncate very long values for display
@@ -108,7 +106,7 @@ public class AdminServiceImpl implements AdminService {
         for (String key : storageWorkerKeys) {
           try {
             // Use the ValkeyService cast to access new methods
-            String formattedValue = ((tech.aurora.bfadmin.service.ValkeyService) valkeyService).getFormattedValue(key);
+            String formattedValue = ((tech.aurora.bfadmin.service.impl.ValkeyServiceImpl) valkeyService).getFormattedValue(key);
             result.append("\n💾 ").append(key).append("\n");
             
             // Truncate very long values for display
@@ -135,8 +133,8 @@ public class AdminServiceImpl implements AdminService {
     logger.info("Execute workers table requested");
     try {
       // Cast to ValkeyService to access the new method
-      tech.aurora.bfadmin.service.ValkeyService valkeyServiceImpl = 
-        (tech.aurora.bfadmin.service.ValkeyService) valkeyService;
+      tech.aurora.bfadmin.service.impl.ValkeyServiceImpl valkeyServiceImpl = 
+        (tech.aurora.bfadmin.service.impl.ValkeyServiceImpl) valkeyService;
       return valkeyServiceImpl.getWorkersAsTable("Workers_execute*");
     } catch (Exception e) {
       logger.error("Failed to get execute workers table from Valkey", e);
@@ -149,8 +147,8 @@ public class AdminServiceImpl implements AdminService {
     logger.info("Storage workers table requested");
     try {
       // Cast to ValkeyService to access the new method
-      tech.aurora.bfadmin.service.ValkeyService valkeyServiceImpl = 
-        (tech.aurora.bfadmin.service.ValkeyService) valkeyService;
+      tech.aurora.bfadmin.service.impl.ValkeyServiceImpl valkeyServiceImpl = 
+        (tech.aurora.bfadmin.service.impl.ValkeyServiceImpl) valkeyService;
       return valkeyServiceImpl.getWorkersAsTable("Workers_storage*");
     } catch (Exception e) {
       logger.error("Failed to get storage workers table from Valkey", e);
@@ -163,8 +161,8 @@ public class AdminServiceImpl implements AdminService {
     logger.info("Servers table requested");
     try {
       // Cast to ValkeyService to access the new method
-      tech.aurora.bfadmin.service.ValkeyService valkeyServiceImpl = 
-        (tech.aurora.bfadmin.service.ValkeyService) valkeyService;
+      tech.aurora.bfadmin.service.impl.ValkeyServiceImpl valkeyServiceImpl = 
+        (tech.aurora.bfadmin.service.impl.ValkeyServiceImpl) valkeyService;
       
       // First, let's check what server-related keys exist
       Set<String> serverKeys = valkeyServiceImpl.getKeys("*server*");
@@ -238,8 +236,8 @@ public class AdminServiceImpl implements AdminService {
       if (valkeyConnected) {
         try {
           // Cast to ValkeyService to access additional methods
-          tech.aurora.bfadmin.service.ValkeyService valkeyServiceImpl = 
-            (tech.aurora.bfadmin.service.ValkeyService) valkeyService;
+          tech.aurora.bfadmin.service.impl.ValkeyServiceImpl valkeyServiceImpl = 
+            (tech.aurora.bfadmin.service.impl.ValkeyServiceImpl) valkeyService;
           java.util.Set<String> allKeys = valkeyServiceImpl.getKeys("*");
           status.put("totalKeyCount", allKeys != null ? allKeys.size() : 0);
           status.put("keyCountClass", allKeys != null && allKeys.size() > 0 ? "info" : "secondary");
@@ -278,8 +276,8 @@ public class AdminServiceImpl implements AdminService {
     logger.info("Queue names requested");
     try {
       // Cast to ValkeyService to access queue methods
-      tech.aurora.bfadmin.service.ValkeyService valkeyServiceImpl = 
-        (tech.aurora.bfadmin.service.ValkeyService) valkeyService;
+      tech.aurora.bfadmin.service.impl.ValkeyServiceImpl valkeyServiceImpl = 
+        (tech.aurora.bfadmin.service.impl.ValkeyServiceImpl) valkeyService;
       return valkeyServiceImpl.getQueueNames();
     } catch (Exception e) {
       logger.error("Failed to get queue names from Valkey", e);
@@ -292,8 +290,8 @@ public class AdminServiceImpl implements AdminService {
     logger.info("Queue operations requested for queue: {}", queueName);
     try {
       // Cast to ValkeyService to access queue methods
-      tech.aurora.bfadmin.service.ValkeyService valkeyServiceImpl = 
-        (tech.aurora.bfadmin.service.ValkeyService) valkeyService;
+      tech.aurora.bfadmin.service.impl.ValkeyServiceImpl valkeyServiceImpl = 
+        (tech.aurora.bfadmin.service.impl.ValkeyServiceImpl) valkeyService;
       return valkeyServiceImpl.getQueueOperations(queueName);
     } catch (Exception e) {
       logger.error("Failed to get queue operations for {} from Valkey", queueName, e);
@@ -306,8 +304,8 @@ public class AdminServiceImpl implements AdminService {
     logger.info("All queue operations requested");
     try {
       // Cast to ValkeyService to access queue methods
-      tech.aurora.bfadmin.service.ValkeyService valkeyServiceImpl = 
-        (tech.aurora.bfadmin.service.ValkeyService) valkeyService;
+      tech.aurora.bfadmin.service.impl.ValkeyServiceImpl valkeyServiceImpl = 
+        (tech.aurora.bfadmin.service.impl.ValkeyServiceImpl) valkeyService;
       return valkeyServiceImpl.getAllQueueOperations();
     } catch (Exception e) {
       logger.error("Failed to get all queue operations from Valkey", e);
