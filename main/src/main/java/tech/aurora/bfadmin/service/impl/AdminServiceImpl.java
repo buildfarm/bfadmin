@@ -5,11 +5,13 @@ import tech.aurora.bfadmin.service.ValkeyServiceInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
 
 @Service
+@ConditionalOnProperty(name = "admin.service.mock", havingValue = "false", matchIfMissing = false)
 public class AdminServiceImpl implements AdminService {
   private static final Logger logger = LoggerFactory.getLogger(AdminServiceImpl.class);
 
@@ -295,6 +297,20 @@ public class AdminServiceImpl implements AdminService {
       return valkeyServiceImpl.getQueueOperations(queueName);
     } catch (Exception e) {
       logger.error("Failed to get queue operations for {} from Valkey", queueName, e);
+      return new java.util.ArrayList<>();
+    }
+  }
+
+  @Override
+  public java.util.List<java.util.Map<String, Object>> getAllQueueOperations() {
+    logger.info("All queue operations requested");
+    try {
+      // Cast to ValkeyService to access queue methods
+      tech.aurora.bfadmin.service.ValkeyService valkeyServiceImpl = 
+        (tech.aurora.bfadmin.service.ValkeyService) valkeyService;
+      return valkeyServiceImpl.getAllQueueOperations();
+    } catch (Exception e) {
+      logger.error("Failed to get all queue operations from Valkey", e);
       return new java.util.ArrayList<>();
     }
   }

@@ -188,8 +188,8 @@ function renderOperationTable() {
     tbody.innerHTML = '';
     
     // Add filtered and paginated rows
-    pageOperations.forEach(operation => {
-        const row = createOperationRow(operation);
+    pageOperations.forEach((operation, index) => {
+        const row = createOperationRow(operation, index);
         tbody.appendChild(row);
     });
     
@@ -205,7 +205,7 @@ function renderOperationTable() {
 }
 
 // Create a table row for an operation
-function createOperationRow(operation) {
+function createOperationRow(operation, index) {
     const row = document.createElement('tr');
     
     const stageIcon = operation.stage === 'QUEUED' ? 'bi-clock' : 

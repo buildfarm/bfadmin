@@ -7,28 +7,26 @@
 </head>
 <body>
     <div id="content">
-        <!-- Queue Selection -->
+        <!-- Queue Operations Header -->
         <div class="card fade-in">
             <div class="card-header">
                 <h5 class="card-title">
-                    <span><i class="bi bi-list-task"></i> Queue Operations</span>
+                    <span><i class="bi bi-list-task"></i> All Queue Operations</span>
                     <span class="status-badge status-info" id="operationCount" th:text="${operations.size()} + ' Operations'">0 Operations</span>
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row align-items-center mb-3">
                     <div class="col-md-6">
-                        <label for="queueSelect" class="form-label">Select Queue:</label>
-                        <select class="form-select" id="queueSelect" onchange="loadQueueOperations()">
-                            <option th:each="queue : ${queueNames}" 
-                                    th:value="${queue}" 
-                                    th:text="${queue}"
-                                    th:selected="${queue == selectedQueue}">Queue Name</option>
-                        </select>
+                        <span class="text-muted">Showing operations from <strong th:text="${queueNames.size()}">0</strong> queues: 
+                        <span th:each="queue, iterStat : ${queueNames}">
+                            <span th:text="${queue}">queue</span><span th:unless="${iterStat.last}">, </span>
+                        </span>
+                        </span>
                     </div>
                     <div class="col-md-6 text-end">
-                        <button class="btn btn-refresh" onclick="refreshOperations()">
-                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        <button class="btn btn-refresh" onclick="refreshAllOperations()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh All
                         </button>
                     </div>
                 </div>
@@ -43,12 +41,12 @@
         <div class="card fade-in" th:unless="${queueNames.empty}">
             <div class="card-header">
                 <h5 class="card-title">
-                    <span><i class="bi bi-gear-fill"></i> Operations in Queue: <span id="currentQueueName" th:text="${selectedQueue}">prequeue</span></span>
+                    <span><i class="bi bi-gear-fill"></i> All Queue Operations</span>
                 </h5>
             </div>
             <div class="card-body p-0">
                 <!-- Table Controls -->
-                <div class="table-controls" th:if="${!operations.empty}">
+                <div class="table-controls" th:if="${operations != null and operations.size() > 0}">
                     <div class="table-search">
                         <i class="bi bi-search"></i>
                         <input type="text" id="operationSearch" placeholder="Search operations..." />
@@ -68,11 +66,42 @@
                     </div>
                 </div>
                 
+                <!-- Debug Panel -->
+                <div class="alert alert-info" th:if="${operations != null}">
+                    <h6>Debug Information:</h6>
+                    <strong>Operations found:</strong> <span th:text="${operations.size()}">0</span><br>
+                    <strong>Operations empty:</strong> <span th:text="${operations.empty}">true</span><br>
+                    <strong>Queue names:</strong> <span th:text="${#strings.listJoin(queueNames, ', ')}">none</span><br>
+                    <strong>Table condition (operations != null):</strong> <span th:text="${operations != null}">false</span><br>
+                    <strong>Table condition (size > 0):</strong> <span th:text="${operations.size() > 0}">false</span><br>
+                    <strong>Combined condition:</strong> <span th:text="${operations != null and operations.size() > 0}">false</span>
+                </div>
+
+                <!-- SIMPLE TEST TABLE -->
+                <div class="alert alert-warning">
+                    <h6>Simple Test Table (Excluding Dispatching):</h6>
+                    <strong>Total operations:</strong> <span th:text="${operations.size()}">0</span><br>
+                    <table class="table table-striped" style="background-color: yellow;">
+                        <thead>
+                            <tr><th>Index</th><th>Queue</th><th>Operation Name</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="op, iterStat : ${operations}" th:if="${iterStat.count <= 5 and op.queueName != 'Dispatching'}">
+                                <td th:text="${iterStat.count}">1</td>
+                                <td th:text="${op.queueName}">queue</td>
+                                <td th:text="${op.operationName != null ? op.operationName : op.name}">operation</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0" id="operationTable" th:if="${!operations.empty}">
+                    <!-- FORCE SHOW TABLE FOR TESTING -->
+                    <table class="table table-hover mb-0" id="operationTable">
                         <thead>
                             <tr>
                                 <th class="sortable-header" data-column="index"><i class="bi bi-hash"></i> #</th>
+                                <th class="sortable-header" data-column="queueName"><i class="bi bi-collection"></i> Queue</th>
                                 <th class="sortable-header" data-column="operationName"><i class="bi bi-file-text"></i> Operation</th>
                                 <th class="sortable-header" data-column="stage"><i class="bi bi-diagram-3"></i> Stage</th>
                                 <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
@@ -82,14 +111,22 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="operation, iterStat : ${operations}">
+                            <tr th:each="operation, iterStat : ${operations}" th:unless="${operation.queueName == 'Dispatching'}">
                                 <td>
                                     <span class="text-muted" th:text="${iterStat.count}">1</span>
                                 </td>
                                 <td>
-                                    <span class="fw-medium" th:text="${operation.name}">operation-name</span>
+                                    <span class="status-badge" 
+                                          th:classappend="${operation.queueName == 'prequeue' ? 'status-warning' : (operation.queueName == 'cpu' ? 'status-success' : 'status-info')}">
+                                        <i class="bi bi-collection"></i>
+                                        <span th:text="${operation.queueName}">prequeue</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="fw-medium" th:text="${operation.operationName != null ? operation.operationName : operation.name}">operation-name</span>
                                     <br>
-                                    <small class="text-muted" th:if="${operation.actionDigest}" th:text="'Digest: ' + ${#strings.substring(operation.actionDigest, 0, 8)} + '...'">Digest: abc12345...</small>
+                                    <small class="text-muted" th:if="${operation.actionDigest != null}" th:text="'Digest: ' + ${#strings.length(operation.actionDigest) >= 8 ? #strings.substring(operation.actionDigest, 0, 8) + '...' : operation.actionDigest}">Digest: abc12345...</small>
+                                    <small class="text-muted" th:unless="${operation.actionDigest != null}">Digest: N/A</small>
                                 </td>
                                 <td>
                                     <span class="status-badge" 
@@ -106,7 +143,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <small class="text-muted" th:text="${operation.queuedTimestamp}">2024-01-01T10:00:00</small>
+                                    <small class="text-muted" th:text="${operation.queuedTimestamp != null ? operation.queuedTimestamp : operation.queuedAt}">2024-01-01T10:00:00</small>
                                 </td>
                                 <td>
                                     <span th:if="${operation.platform}" class="status-badge status-success">
@@ -119,7 +156,7 @@
                                 <td>
                                     <button class="btn btn-sm btn-outline-info" 
                                             onclick="showOperationDetails(this)"
-                                            th:attr="data-name=${operation.name}, data-stage=${operation.stage}, data-worker=${operation.workerName}, data-platform=${operation.platform}, data-queued=${operation.queuedTimestamp}, data-execute-timeout=${operation.executeTimeout}, data-action-timeout=${operation.actionTimeout}">
+                                            th:attr="data-name=${operation.operationName != null ? operation.operationName : operation.name}, data-stage=${operation.stage}, data-queue=${operation.queueName}, data-status=${operation.status}, data-queued=${operation.queuedAt}, data-raw=${operation.rawData}">
                                         <i class="bi bi-eye"></i> View
                                     </button>
                                 </td>
@@ -128,7 +165,7 @@
                     </table>
                     
                     <!-- Operations Pagination Controls -->
-                    <div class="pagination-controls" th:if="${!operations.empty}">
+                    <div class="pagination-controls" th:if="${operations != null and operations.size() > 0}">
                         <div class="pagination-info">
                             Showing <span id="operationStart">1</span> to <span id="operationEnd">10</span> of <span id="operationTotal" th:text="${operations.size()}">0</span> operations
                         </div>
@@ -143,8 +180,24 @@
                         </div>
                     </div>
                     
-                    <div class="alert alert-info m-3" th:if="${operations.empty}">
-                        <i class="bi bi-info-circle"></i> No operations found in selected queue
+                    <!-- Test Table (always visible) -->
+                    <table class="table table-hover mb-3" style="border: 2px solid red;">
+                        <thead>
+                            <tr>
+                                <th>Test Column</th>
+                                <th>Operations Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>TEST ROW (always visible)</td>
+                                <td th:text="${operations != null ? operations.size() : 'NULL'}">0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="alert alert-info m-3" th:if="${operations == null or operations.size() == 0}">
+                        <i class="bi bi-info-circle"></i> No operations found in any queues
                     </div>
                 </div>
             </div>
@@ -168,5 +221,40 @@
             </div>
         </div>
     </div>
+
+    <script>
+    // Refresh all operations from all queues
+    function refreshAllOperations() {
+        window.location.reload();
+    }
+
+    // Show operation details in modal
+    function showOperationDetails(button) {
+        const operationName = button.getAttribute('data-name') || 'Unknown';
+        const stage = button.getAttribute('data-stage') || 'Unknown';
+        const queueName = button.getAttribute('data-queue') || 'Unknown';
+        const status = button.getAttribute('data-status') || 'Unknown';
+        const queuedAt = button.getAttribute('data-queued') || 'N/A';
+        const rawData = button.getAttribute('data-raw') || 'No raw data available';
+
+        const details = `Operation Details:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Name: ${operationName}
+Queue: ${queueName}
+Stage: ${stage}
+Status: ${status}
+Queued At: ${queuedAt}
+
+Raw Data:
+${rawData}`;
+
+        document.getElementById('operationDetails').textContent = details;
+        
+        // Show the modal (assuming Bootstrap is loaded)
+        const modal = new bootstrap.Modal(document.getElementById('operationModal'));
+        modal.show();
+    }
+    </script>
 </body>
 </html>

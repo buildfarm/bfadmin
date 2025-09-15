@@ -24,4 +24,6 @@ public interface AdminService {
   java.util.List<String> getQueueNames();
   
   java.util.List<java.util.Map<String, Object>> getQueueOperations(String queueName);
+  
+  java.util.List<java.util.Map<String, Object>> getAllQueueOperations();
 }

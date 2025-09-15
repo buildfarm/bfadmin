@@ -63,23 +63,24 @@ public class AdminController {
   @RequestMapping("/queues")
   public String getQueues(Model model) {
     if (ui) {
-      // Get available queue names
+      // Get all operations from all queues
+      java.util.List<java.util.Map<String, Object>> allOperations = adminService.getAllQueueOperations();
       java.util.List<String> queueNames = adminService.getQueueNames();
       
+      model.addAttribute("operations", allOperations);
       model.addAttribute("queueNames", queueNames);
-      model.addAttribute("selectedQueue", queueNames.isEmpty() ? "" : queueNames.get(0));
       model.addAttribute("activePage", "queues");
       model.addAttribute("currentPage", "queues");
       
-      // If there are queues available, get operations for the first queue
-      if (!queueNames.isEmpty()) {
-        java.util.List<java.util.Map<String, Object>> operations = adminService.getQueueOperations(queueNames.get(0));
-        model.addAttribute("operations", operations);
-      } else {
-        model.addAttribute("operations", new java.util.ArrayList<>());
-      }
+      logger.info("Queues page accessed, found {} total operations across {} queues", allOperations.size(), queueNames.size());
       
-      logger.info("Queues page accessed, found {} queues", queueNames.size());
+      // Debug: Log the first few operations to see their structure
+      if (!allOperations.isEmpty()) {
+        logger.info("First operation sample: {}", allOperations.get(0));
+        logger.info("Operations list class: {}, isEmpty: {}", allOperations.getClass().getName(), allOperations.isEmpty());
+      } else {
+        logger.warn("Operations list is empty or null");
+      }
       return "queues";
     } else {
       model.addAttribute("status", "999");
@@ -101,5 +102,12 @@ public class AdminController {
   public java.util.List<java.util.Map<String, Object>> getQueueOperations(@RequestParam String queueName) {
     logger.info("Queue operations requested for queue: {}", queueName);
     return adminService.getQueueOperations(queueName);
+  }
+  
+  @RequestMapping("/api/all-queue-operations")
+  @ResponseBody
+  public java.util.List<java.util.Map<String, Object>> getAllQueueOperations() {
+    logger.info("All queue operations requested via API");
+    return adminService.getAllQueueOperations();
   }
 }
