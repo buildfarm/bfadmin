@@ -1,1791 +1,397 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" 
+      xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Build Farm Admin Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- BuildFarm Dashboard Favicon -->
-    <link rel="icon" type="image/x-icon" href="/assets/img/favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/favicon-180.png">
-    <meta name="theme-color" content="#161b22">
-    
-    <style>
-        :root {
-            --dark-bg: #0d1117;
-            --card-bg: #161b22;
-            --border-color: #30363d;
-            --text-primary: #f0f6fc;
-            --text-secondary: #8b949e;
-            --accent-purple: #8b5cf6;
-            --accent-blue: #0ea5e9;
-            --accent-green: #10b981;
-            --accent-orange: #f59e0b;
-            --accent-red: #ef4444;
-            --sidebar-width: 250px;
-            --header-height: 70px;
-            
-            /* Override Bootstrap dark colors for better visibility */
-            --bs-dark: #6c757d;  /* Lighter than default #212529 */
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--dark-bg);
-            color: var(--text-primary);
-            overflow-x: hidden;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: var(--sidebar-width);
-            height: 100vh;
-            background: var(--card-bg);
-            border-right: 1px solid var(--border-color);
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar-brand {
-            padding: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .sidebar-brand h4 {
-            color: var(--accent-purple);
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .sidebar-nav {
-            padding: 20px 0;
-        }
-
-        .nav-item {
-            padding: 0 20px;
-            margin-bottom: 5px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            background: rgba(139, 92, 246, 0.1);
-            color: var(--accent-purple);
-        }
-
-        .nav-link i {
-            width: 20px;
-            margin-right: 12px;
-            font-size: 18px;
-        }
-
-        /* Main content */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-        }
-
-        /* Header */
-        .header {
-            height: var(--header-height);
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 30px;
-        }
-
-        .header-title h2 {
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .btn-refresh {
-            background: var(--accent-purple);
-            border: none;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-refresh:hover {
-            background: #7c3aed;
-            transform: translateY(-1px);
-        }
-
-        /* Content area */
-        .content {
-            padding: 30px;
-        }
-
-        /* Cards */
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            margin-bottom: 24px;
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.2);
-        }
-
-        .card-header {
-            background: transparent;
-            border-bottom: 1px solid var(--border-color);
-            padding: 20px 24px;
-        }
-
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .card-body {
-            padding: 24px;
-        }
-
-        /* Stats cards */
-        .stats-card {
-            background: linear-gradient(135deg, var(--accent-purple), #6d28d9);
-            border: none;
-            color: white;
-        }
-
-        .stats-card.blue {
-            background: linear-gradient(135deg, var(--accent-blue), #0284c7);
-        }
-
-        .stats-card.green {
-            background: linear-gradient(135deg, var(--accent-green), #059669);
-        }
-
-        .stats-card.orange {
-            background: linear-gradient(135deg, var(--accent-orange), #d97706);
-        }
-
-        .stats-card.red {
-            background: linear-gradient(135deg, var(--accent-red), #dc2626);
-        }
-        
-        /* Responsive content scaling for cards */
-        @media (max-width: 1200px) {
-            .stats-card .stats-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
-            }
-            .stats-content h3 {
-                font-size: 1.75rem !important;
-            }
-            .stats-card .stats-content p {
-                font-size: 0.8rem !important;
-            }
-        }
-        
-        @media (max-width: 992px) {
-            .stats-card .stats-icon {
-                width: 45px;
-                height: 45px;
-                font-size: 18px;
-            }
-            .stats-content h3 {
-                font-size: 1.5rem !important;
-            }
-            .stats-card .stats-content p {
-                font-size: 0.75rem !important;
-            }
-            .stats-card .card-body {
-                padding: 0.75rem !important;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .stats-card .stats-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 16px;
-            }
-            .stats-content h3 {
-                font-size: 1.25rem !important;
-            }
-            .stats-card .stats-content p {
-                font-size: 0.7rem !important;
-            }
-            .stats-card .ms-3 {
-                margin-left: 0.5rem !important;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .stats-card .stats-icon {
-                width: 35px;
-                height: 35px;
-                font-size: 14px;
-                border-radius: 8px;
-            }
-            .stats-content h3 {
-                font-size: 1.1rem !important;
-            }
-            .stats-card .stats-content p {
-                font-size: 0.65rem !important;
-            }
-            .stats-card .card-body {
-                padding: 0.5rem !important;
-            }
-            .stats-card .ms-3 {
-                margin-left: 0.25rem !important;
-            }
-        }
-
-        .stats-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-
-        .stats-content h3 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .stats-content p {
-            margin: 0;
-            opacity: 0.9;
-        }
-
-        /* Status badges */
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .status-success {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--accent-green);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
-        .status-danger {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--accent-red);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .status-warning {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--accent-orange);
-            border: 1px solid rgba(245, 158, 11, 0.2);
-        }
-
-        .status-info {
-            background: rgba(14, 165, 233, 0.1);
-            color: var(--accent-blue);
-            border: 1px solid rgba(14, 165, 233, 0.2);
-        }
-
-        .status-secondary {
-            background: rgba(139, 92, 246, 0.1);
-            color: var(--accent-purple);
-            border: 1px solid rgba(139, 92, 246, 0.2);
-        }
-
-        /* Server type badges */
-        .server-type {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .server-type-Scheduler {
-            background: rgba(139, 92, 246, 0.15);
-            color: var(--accent-purple);
-        }
-
-        .server-type-CAS {
-            background: rgba(14, 165, 233, 0.15);
-            color: var(--accent-blue);
-        }
-
-        .server-type-BuildFarm {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--accent-green);
-        }
-
-        .server-type-Unknown {
-            background: rgba(139, 149, 158, 0.15);
-            color: var(--text-secondary);
-        }
-
-        /* Tables */
-        .table {
-            background: transparent;
-            color: var(--text-primary);
-            margin: 0;
-        }
-
-        .table thead th {
-            background: var(--dark-bg);
-            color: var(--text-primary);
-            border: none;
-            font-weight: 600;
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 16px;
-        }
-
-        .table tbody td {
-            border-top: 1px solid var(--border-color);
-            padding: 16px;
-            vertical-align: middle;
-        }
-
-        .table tbody tr:hover {
-            background: rgba(139, 92, 246, 0.05);
-        }
-
-        .table-responsive {
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        /* Override Bootstrap dark colors for better visibility */
-        .text-dark,
-        .bg-dark {
-            color: var(--text-secondary) !important;
-        }
-        
-        .bg-dark {
-            background-color: var(--card-bg) !important;
-        }
-        
-        .border-dark {
-            border-color: var(--border-color) !important;
-        }
-        
-        /* Fix any elements that might inherit #212529 */
-        .btn-dark {
-            background-color: #6c757d;
-            border-color: #6c757d;
-            color: var(--text-primary);
-        }
-        
-        .btn-dark:hover {
-            background-color: #5a6268;
-            border-color: #545b62;
-        }
-
-        /* Make all headings and important text lighter */
-        h1, h2, h3, h4, h5, h6,
-        .h1, .h2, .h3, .h4, .h5, .h6 {
-            color: var(--text-primary) !important;
-        }
-
-        .card-title {
-            color: var(--text-primary) !important;
-            font-weight: 600;
-        }
-
-        .card-title span {
-            color: var(--text-primary) !important;
-        }
-
-        /* Ensure sidebar text is light */
-        .sidebar-brand h4 {
-            color: var(--text-primary) !important;
-        }
-
-        .sidebar-nav .nav-link {
-            color: var(--text-secondary) !important;
-        }
-
-        .sidebar-nav .nav-link:hover,
-        .sidebar-nav .nav-link.active {
-            color: var(--text-primary) !important;
-        }
-
-        /* Make muted text lighter and more visible */
-        .text-muted {
-            color: var(--text-secondary) !important;
-        }
-
-        /* Ensure all paragraph text is visible */
-        p {
-            color: var(--text-secondary);
-        }
-
-        /* Make sure dynamic content like helloMessage is visible */
-        .card-body p {
-            color: var(--text-secondary) !important;
-        }
-
-        /* Stats card labels - make them lighter and more visible */
-        .stats-card .stats-content p {
-            color: var(--text-secondary) !important;
-            font-size: 0.875rem;
-            margin-bottom: 0;
-            opacity: 0.9;
-        }
-
-        .stats-card .stats-content h3 {
-            color: var(--text-primary) !important;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-
-        /* Ensure all stats card text is properly colored */
-        .stats-card {
-            color: var(--text-primary);
-        }
-
-        .stats-card p,
-        .stats-card h1,
-        .stats-card h2,
-        .stats-card h3,
-        .stats-card h4,
-        .stats-card h5,
-        .stats-card h6 {
-            color: #ffffff !important;
-        }
-
-        /* Specific styling for card labels to ensure maximum visibility */
-        .stats-card .stats-content p,
-        .card-body p {
-            color: #ffffff !important;
-            font-weight: 500 !important;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important;
-        }
-
-        /* Additional white label styling for all card text elements */
-        .stats-card .stats-content,
-        .stats-card .card-body,
-        .status-item .status-label {
-            color: #ffffff !important;
-        }
-
-        /* Ensure all text in colored cards is white and visible */
-        .stats-card.blue *,
-        .stats-card.green *,
-        .stats-card.orange *,
-        .stats-card.red * {
-            color: #ffffff !important;
-        }
-
-        /* Worker ID styling */
-        .worker-id {
-            background: var(--dark-bg);
-            color: var(--accent-purple);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        /* System status grid */
-        .status-grid {
-            display: flex;
-            flex-wrap: nowrap;
-            gap: 15px;
-            margin-bottom: 30px;
-            overflow-x: auto;
-        }
-        
-        /* Responsive card sizing for 5 cards */
-        .status-grid .stats-card {
-            flex: 1 1 calc(20% - 12px);
-            min-width: 0;
-            max-width: none;
-        }
-        
-        /* Media queries for responsive scaling */
-        @media (max-width: 1400px) {
-            .status-grid {
-                gap: 12px;
-            }
-            .status-grid .stats-card {
-                flex: 1 1 calc(20% - 9.6px);
-            }
-        }
-        
-        @media (max-width: 1200px) {
-            .status-grid {
-                gap: 10px;
-            }
-            .status-grid .stats-card {
-                flex: 1 1 calc(20% - 8px);
-            }
-        }
-        
-        @media (max-width: 992px) {
-            .status-grid {
-                gap: 8px;
-            }
-            .status-grid .stats-card {
-                flex: 1 1 calc(20% - 6.4px);
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .status-grid {
-                gap: 6px;
-            }
-            .status-grid .stats-card {
-                flex: 1 1 calc(20% - 4.8px);
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .status-grid {
-                gap: 4px;
-            }
-            .status-grid .stats-card {
-                flex: 1 1 calc(20% - 3.2px);
-            }
-        }
-
-        .status-item {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .status-label {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .status-value {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Animation classes */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        /* Alert styling */
-        .alert {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-        }
-
-        .alert-info {
-            border-color: var(--accent-blue);
-            background: rgba(14, 165, 233, 0.1);
-        }
-
-        .alert-danger {
-            border-color: var(--accent-red);
-            background: rgba(239, 68, 68, 0.1);
-        }
-
-        /* Pagination and Sorting Styles */
-        .table-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .table-search {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .table-search input {
-            background: var(--dark-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 12px;
-            color: var(--text-primary);
-            font-size: 0.875rem;
-            width: 200px;
-        }
-
-        .table-search input:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-        }
-
-        .table-info {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .sortable-header {
-            cursor: pointer;
-            user-select: none;
-            position: relative;
-            transition: color 0.2s;
-        }
-
-        .sortable-header:hover {
-            color: var(--accent-blue);
-        }
-
-        .sortable-header.sorted-asc::after {
-            content: " ↑";
-            color: var(--accent-blue);
-        }
-
-        .sortable-header.sorted-desc::after {
-            content: " ↓";
-            color: var(--accent-blue);
-        }
-
-        .pagination-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: var(--card-bg);
-            border-top: 1px solid var(--border-color);
-        }
-
-        .pagination-info {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .pagination-buttons {
-            display: flex;
-            gap: 5px;
-        }
-
-        .pagination-btn {
-            background: var(--dark-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-        }
-
-        .pagination-btn:hover {
-            background: var(--accent-blue);
-            border-color: var(--accent-blue);
-        }
-
-        .pagination-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .pagination-btn.active {
-            background: var(--accent-blue);
-            border-color: var(--accent-blue);
-        }
-
-        .page-size-selector {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .page-size-selector select {
-            background: var(--dark-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 4px 8px;
-            color: var(--text-primary);
-            font-size: 0.875rem;
-        }
-    </style>
+    <title>BuildFarm Dashboard</title>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-brand">
-            <h4><i class="bi bi-server"></i> BuildFarm</h4>
-        </div>
-        <nav class="sidebar-nav">
-            <div class="nav-item">
-                <a href="#" class="nav-link active">
-                    <i class="bi bi-speedometer2"></i>
-                    Dashboard
-                </a>
-            </div>
-        </nav>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-title">
-                <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
-            </div>
-            <div class="header-actions">
-                <button class="btn btn-refresh" onclick="window.location.reload()">
-                    <i class="bi bi-arrow-clockwise"></i> Refresh
-                </button>
+    <div id="content">
+        <!-- Welcome Message -->
+        <div class="card fade-in">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="mb-1">Welcome to Build Farm Admin</h5>
+                        <p class="text-muted mb-0" th:text="${helloMessage}">System monitoring dashboard</p>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="status-badge" 
+                              th:classappend="${systemStatus.systemHealthClass == 'success' ? 'status-success' : (systemStatus.systemHealthClass == 'danger' ? 'status-danger' : 'status-warning')}"
+                              th:text="${systemStatus.systemHealthText}">
+                            <i class="bi bi-check-circle"></i> Healthy
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Content -->
-        <div class="content">
-            <!-- Welcome Message -->
-            <div class="card fade-in">
+        <!-- System Status Grid -->
+        <div class="status-grid">
+            <div class="card stats-card fade-in">
                 <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <h5 class="mb-1">Welcome to Build Farm Admin</h5>
-                            <p class="text-muted mb-0" th:text="${helloMessage}">System monitoring dashboard</p>
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon">
+                            <i class="bi bi-database"></i>
                         </div>
-                        <div class="d-flex align-items-center">
-                            <span class="status-badge" 
-                                  th:classappend="${systemStatus.systemHealthClass == 'success' ? 'status-success' : (systemStatus.systemHealthClass == 'danger' ? 'status-danger' : 'status-warning')}"
-                                  th:text="${systemStatus.systemHealthText}">
-                                <i class="bi bi-check-circle"></i> Healthy
-                            </span>
+                        <div class="ms-3 stats-content">
+                            <h3 th:text="${systemStatus.valkeyConnected ? 'Connected' : 'Disconnected'}">Connected</h3>
+                            <p>Valkey Cluster</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- System Status Grid -->
-            <div class="status-grid">
-                <div class="card stats-card fade-in">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon">
-                                <i class="bi bi-database"></i>
-                            </div>
-                            <div class="ms-3 stats-content">
-                                <h3 th:text="${systemStatus.valkeyConnected ? 'Connected' : 'Disconnected'}">Connected</h3>
-                                <p>Valkey Cluster</p>
-                            </div>
+            <div class="card stats-card blue fade-in">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon">
+                            <i class="bi bi-key"></i>
                         </div>
-                    </div>
-                </div>
-
-                <div class="card stats-card blue fade-in">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon">
-                                <i class="bi bi-key"></i>
-                            </div>
-                            <div class="ms-3 stats-content">
-                                <h3 th:text="${systemStatus.totalKeyCount}">1,234</h3>
-                                <p>Total Keys</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card stats-card green fade-in">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon">
-                                <i class="bi bi-cpu"></i>
-                            </div>
-                            <div class="ms-3 stats-content">
-                                <h3 th:text="${systemStatus.activeExecuteCount + '/' + systemStatus.executeWorkerCount}">1/1</h3>
-                                <p>Execute Workers</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card stats-card orange fade-in">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon">
-                                <i class="bi bi-hdd"></i>
-                            </div>
-                            <div class="ms-3 stats-content">
-                                <h3 th:text="${systemStatus.activeStorageCount + '/' + systemStatus.storageWorkerCount}">1/1</h3>
-                                <p>Storage Workers</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card stats-card purple fade-in">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon">
-                                <i class="bi bi-server"></i>
-                            </div>
-                            <div class="ms-3 stats-content">
-                                <h3 th:text="${serversTable != null ? serversTable.size() : 0}">0</h3>
-                                <p>Servers</p>
-                            </div>
+                        <div class="ms-3 stats-content">
+                            <h3 th:text="${systemStatus.totalKeyCount}">1,234</h3>
+                            <p>Total Keys</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Error Alert -->
-            <div class="alert alert-danger fade-in" th:if="${systemStatus.error != null}">
-                <i class="bi bi-exclamation-triangle"></i>
-                <span th:text="${systemStatus.error}">Error message</span>
-            </div>
-
-            <!-- Execute Workers Table -->
-            <div class="card fade-in">
-                <div class="card-header">
-                    <h5 class="card-title">
-                        <span><i class="bi bi-cpu"></i> Execute Workers</span>
-                        <span class="status-badge status-info" th:text="${executeWorkersTable.size()} + ' Workers'">0 Workers</span>
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <!-- Table Controls -->
-                    <div class="table-controls" th:if="${!executeWorkersTable.empty}">
-                        <div class="table-search">
-                            <i class="bi bi-search"></i>
-                            <input type="text" id="executeWorkerSearch" placeholder="Search workers..." />
+            <div class="card stats-card green fade-in">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon">
+                            <i class="bi bi-cpu"></i>
                         </div>
-                        <div class="table-info">
-                            <span id="executeWorkerCount" th:text="${executeWorkersTable.size()}">0</span> workers
-                        </div>
-                        <div class="page-size-selector">
-                            <span>Show:</span>
-                            <select id="executeWorkerPageSize">
-                                <option value="5">5</option>
-                                <option value="10" selected>10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                            </select>
-                            <span>per page</span>
-                        </div>
-                    </div>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="executeWorkerTable" th:if="${!executeWorkersTable.empty}">
-                            <thead>
-                                <tr>
-                                    <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
-                                    <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
-                                    <th class="sortable-header" data-column="workerType"><i class="bi bi-gear"></i> Type</th>
-                                    <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
-                                    <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Last Seen</th>
-                                    <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="worker : ${executeWorkersTable}">
-                                    <td>
-                                        <span class="status-badge status-secondary" th:text="${worker.groupName != null ? worker.groupName : 'default'}">default</span>
-                                    </td>
-                                    <td>
-                                        <span class="text-info" th:text="${worker.endpoint}">endpoint</span>
-                                    </td>
-                                    <td>
-                                        <span class="status-badge status-success">
-                                            <i class="bi bi-cpu"></i> 
-                                            <span th:text="${worker.workerType}">Execute</span>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="status-badge" 
-                                              th:classappend="${worker.status.startsWith('Active') ? 'status-success' : (worker.status == 'Expired' ? 'status-danger' : 'status-warning')}">
-                                            <i th:class="${worker.status.startsWith('Active') ? 'bi bi-check-circle' : (worker.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${worker.status}">Active</span>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <small class="text-muted" th:text="${worker.expireAt}">expiry</small>
-                                    </td>
-                                    <td>
-                                        <small class="text-muted" th:text="${worker.firstRegisteredAt}">registered</small>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        
-                        <!-- Execute Worker Pagination Controls -->
-                        <div class="pagination-controls" th:if="${!executeWorkersTable.empty}">
-                            <div class="pagination-info">
-                                Showing <span id="executeWorkerStart">1</span> to <span id="executeWorkerEnd">10</span> of <span id="executeWorkerTotal" th:text="${executeWorkersTable.size()}">0</span> workers
-                            </div>
-                            <div class="pagination-buttons">
-                                <button class="pagination-btn" id="executeWorkerPrevBtn" onclick="changeExecuteWorkerPage(-1)">
-                                    <i class="bi bi-chevron-left"></i> Previous
-                                </button>
-                                <span id="executeWorkerPageNumbers"></span>
-                                <button class="pagination-btn" id="executeWorkerNextBtn" onclick="changeExecuteWorkerPage(1)">
-                                    Next <i class="bi bi-chevron-right"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="alert alert-info m-3" th:if="${executeWorkersTable.empty}">
-                            <i class="bi bi-info-circle"></i> No execute workers found
+                        <div class="ms-3 stats-content">
+                            <h3 th:text="${systemStatus.activeExecuteCount + '/' + systemStatus.executeWorkerCount}">1/1</h3>
+                            <p>Execute Workers</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Storage Workers Table -->
-            <div class="card fade-in">
-                <div class="card-header">
-                    <h5 class="card-title">
-                        <span><i class="bi bi-hdd"></i> Storage Workers</span>
-                        <span class="status-badge status-info" th:text="${storageWorkersTable.size()} + ' Workers'">0 Workers</span>
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <!-- Storage Worker Table Controls -->
-                    <div class="table-controls" th:if="${!storageWorkersTable.empty}">
-                        <div class="table-search">
-                            <i class="bi bi-search"></i>
-                            <input type="text" id="storageWorkerSearch" placeholder="Search workers..." />
+            <div class="card stats-card orange fade-in">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon">
+                            <i class="bi bi-hdd"></i>
                         </div>
-                        <div class="table-info">
-                            <span id="storageWorkerCount" th:text="${storageWorkersTable.size()}">0</span> workers
-                        </div>
-                        <div class="page-size-selector">
-                            <span>Show:</span>
-                            <select id="storageWorkerPageSize">
-                                <option value="5">5</option>
-                                <option value="10" selected>10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                            </select>
-                            <span>per page</span>
-                        </div>
-                    </div>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="storageWorkerTable" th:if="${!storageWorkersTable.empty}">
-                            <thead>
-                                <tr>
-                                    <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
-                                    <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
-                                    <th class="sortable-header" data-column="workerType"><i class="bi bi-gear"></i> Type</th>
-                                    <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
-                                    <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Last Seen</th>
-                                    <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="worker : ${storageWorkersTable}">
-                                    <td>
-                                        <span class="status-badge status-secondary" th:text="${worker.groupName != null ? worker.groupName : 'default'}">default</span>
-                                    </td>
-                                    <td>
-                                        <span class="text-info" th:text="${worker.endpoint}">endpoint</span>
-                                    </td>
-                                    <td>
-                                        <span class="status-badge status-info">
-                                            <i class="bi bi-hdd"></i> 
-                                            <span th:text="${worker.workerType}">Storage</span>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="status-badge" 
-                                              th:classappend="${worker.status.startsWith('Active') ? 'status-success' : (worker.status == 'Expired' ? 'status-danger' : 'status-warning')}">
-                                            <i th:class="${worker.status.startsWith('Active') ? 'bi bi-check-circle' : (worker.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${worker.status}">Active</span>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <small class="text-muted" th:text="${worker.expireAt}">expiry</small>
-                                    </td>
-                                    <td>
-                                        <small class="text-muted" th:text="${worker.firstRegisteredAt}">registered</small>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        
-                        <!-- Storage Worker Pagination Controls -->
-                        <div class="pagination-controls" th:if="${!storageWorkersTable.empty}">
-                            <div class="pagination-info">
-                                Showing <span id="storageWorkerStart">1</span> to <span id="storageWorkerEnd">10</span> of <span id="storageWorkerTotal" th:text="${storageWorkersTable.size()}">0</span> workers
-                            </div>
-                            <div class="pagination-buttons">
-                                <button class="pagination-btn" id="storageWorkerPrevBtn" onclick="changeStorageWorkerPage(-1)">
-                                    <i class="bi bi-chevron-left"></i> Previous
-                                </button>
-                                <span id="storageWorkerPageNumbers"></span>
-                                <button class="pagination-btn" id="storageWorkerNextBtn" onclick="changeStorageWorkerPage(1)">
-                                    Next <i class="bi bi-chevron-right"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="alert alert-info m-3" th:if="${storageWorkersTable.empty}">
-                            <i class="bi bi-info-circle"></i> No storage workers found
+                        <div class="ms-3 stats-content">
+                            <h3 th:text="${systemStatus.activeStorageCount + '/' + systemStatus.storageWorkerCount}">1/1</h3>
+                            <p>Storage Workers</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Servers Table -->
-            <div class="card fade-in">
-                <div class="card-header">
-                    <h5 class="card-title">
-                        <span><i class="bi bi-server"></i> Servers</span>
-                        <span class="status-badge status-info" th:text="${serversTable.size()} + ' Servers'">0 Servers</span>
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <!-- Servers Table Controls -->
-                    <div class="table-controls" th:if="${serversTable != null and serversTable.size() > 0}">
-                        <div class="table-search">
-                            <i class="bi bi-search"></i>
-                            <input type="text" id="serversSearch" placeholder="Search servers..." />
+            <div class="card stats-card purple fade-in">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon">
+                            <i class="bi bi-server"></i>
                         </div>
-                        <div class="table-info">
-                            <span id="serversCount" th:text="${serversTable.size()}">0</span> servers
-                        </div>
-                        <div class="page-size-selector">
-                            <span>Show:</span>
-                            <select id="serversPageSize">
-                                <option value="5">5</option>
-                                <option value="10" selected>10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                            </select>
-                            <span>per page</span>
-                        </div>
-                    </div>
-                        
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="serversTable" th:if="${serversTable != null and serversTable.size() > 0}">
-                            <thead>
-                                <tr>
-                                    <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
-                                    <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
-                                    <th class="sortable-header" data-column="serverType"><i class="bi bi-gear"></i> Type</th>
-                                    <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
-                                    <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Last Seen</th>
-                                    <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="server : ${serversTable}">
-                                    <td>
-                                        <span class="status-badge status-secondary" th:text="${server.groupName != null ? server.groupName : 'default'}">default</span>
-                                    </td>
-                                    <td>
-                                        <span class="text-info" th:text="${server.endpoint}">endpoint</span>
-                                    </td>
-                                    <td>
-                                        <span class="status-badge" 
-                                              th:classappend="${server.serverType == 'Scheduler' ? 'status-info' : (server.serverType == 'CAS' ? 'status-primary' : 'status-success')}">
-                                            <i th:class="${server.serverType == 'Scheduler' ? 'bi bi-gear' : (server.serverType == 'CAS' ? 'bi bi-database' : 'bi bi-server')}"></i> 
-                                            <span th:text="${server.serverType}">Scheduler</span>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="status-badge" 
-                                              th:classappend="${server.status.startsWith('Active') ? 'status-success' : (server.status == 'Expired' ? 'status-danger' : 'status-warning')}">
-                                            <i th:class="${server.status.startsWith('Active') ? 'bi bi-check-circle' : (server.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${server.status}">Active</span>
-                                        </span>
-                                    </td>
-                                    <td><small class="text-muted" th:text="${server.expireAt}">2024-01-01 11:00:00</small></td>
-                                    <td><small class="text-muted" th:text="${server.firstRegisteredAt}">2024-01-01 10:00:00</small></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <!-- Servers Pagination Controls -->
-                        <div class="pagination-controls" th:if="${serversTable != null and serversTable.size() > 0}">
-                            <div class="pagination-info">
-                                <span id="serversInfo">Showing 1 to 25 of <span th:text="${serversTable.size()}">0</span> servers</span>
-                            </div>
-                            <div class="pagination-buttons">
-                                <button id="serversFirstBtn" class="pagination-btn" onclick="serversCurrentPage=1; renderServersTable();">
-                                    <i class="bi bi-chevron-double-left"></i> First
-                                </button>
-                                <button id="serversPrevBtn" class="pagination-btn" onclick="changeServersPage(-1)">
-                                    <i class="bi bi-chevron-left"></i> Previous
-                                </button>
-                                <span id="serversPageNumbers" class="page-numbers"></span>
-                                <button id="serversNextBtn" class="pagination-btn" onclick="changeServersPage(1)">
-                                    Next <i class="bi bi-chevron-right"></i>
-                                </button>
-                                <button id="serversLastBtn" class="pagination-btn" onclick="serversCurrentPage=Math.ceil(serversData.length/window.serversPageSize); renderServersTable();">
-                                    Last <i class="bi bi-chevron-double-right"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="alert alert-info m-3" th:if="${serversTable == null or serversTable.size() == 0}">
-                            <i class="bi bi-info-circle"></i> No servers found
+                        <div class="ms-3 stats-content">
+                            <h3 th:text="${serversTable != null ? serversTable.size() : 0}">0</h3>
+                            <p>Servers</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Error Alert -->
+        <div class="alert alert-danger fade-in" th:if="${systemStatus.error != null}">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${systemStatus.error}">Error message</span>
+        </div>
+
+        <!-- Execute Workers Table -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <span><i class="bi bi-cpu"></i> Execute Workers</span>
+                    <span class="status-badge status-info" th:text="${executeWorkersTable.size()} + ' Workers'">0 Workers</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <!-- Table Controls -->
+                <div class="table-controls" th:if="${!executeWorkersTable.empty}">
+                    <div class="table-search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="executeWorkerSearch" placeholder="Search workers..." />
+                    </div>
+                    <div class="table-info">
+                        <span id="executeWorkerCount" th:text="${executeWorkersTable.size()}">0</span> workers
+                    </div>
+                    <div class="page-size-selector">
+                        <span>Show:</span>
+                        <select id="executeWorkerPageSize">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>per page</span>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="executeWorkerTable" th:if="${!executeWorkersTable.empty}">
+                        <thead>
+                            <tr>
+                                <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
+                                <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
+                                <th class="sortable-header" data-column="workerType"><i class="bi bi-gear"></i> Type</th>
+                                <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
+                                <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Last Seen</th>
+                                <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="worker : ${executeWorkersTable}">
+                                <td>
+                                    <span class="status-badge status-secondary" th:text="${worker.groupName != null ? worker.groupName : 'default'}">default</span>
+                                </td>
+                                <td>
+                                    <span class="text-info" th:text="${worker.endpoint}">endpoint</span>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-success">
+                                        <i class="bi bi-cpu"></i> 
+                                        <span th:text="${worker.workerType}">Execute</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge" 
+                                          th:classappend="${worker.status.startsWith('Active') ? 'status-success' : (worker.status == 'Expired' ? 'status-danger' : 'status-warning')}">
+                                        <i th:class="${worker.status.startsWith('Active') ? 'bi bi-check-circle' : (worker.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${worker.status}">Active</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted" th:text="${worker.expireAt}">expiry</small>
+                                </td>
+                                <td>
+                                    <small class="text-muted" th:text="${worker.firstRegisteredAt}">registered</small>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Execute Worker Pagination Controls -->
+                    <div class="pagination-controls" th:if="${!executeWorkersTable.empty}">
+                        <div class="pagination-info">
+                            Showing <span id="executeWorkerStart">1</span> to <span id="executeWorkerEnd">10</span> of <span id="executeWorkerTotal" th:text="${executeWorkersTable.size()}">0</span> workers
+                        </div>
+                        <div class="pagination-buttons">
+                            <button class="pagination-btn" id="executeWorkerPrevBtn" onclick="changeExecuteWorkerPage(-1)">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </button>
+                            <span id="executeWorkerPageNumbers"></span>
+                            <button class="pagination-btn" id="executeWorkerNextBtn" onclick="changeExecuteWorkerPage(1)">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info m-3" th:if="${executeWorkersTable.empty}">
+                        <i class="bi bi-info-circle"></i> No execute workers found
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storage Workers Table -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <span><i class="bi bi-hdd"></i> Storage Workers</span>
+                    <span class="status-badge status-info" th:text="${storageWorkersTable.size()} + ' Workers'">0 Workers</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <!-- Storage Worker Table Controls -->
+                <div class="table-controls" th:if="${!storageWorkersTable.empty}">
+                    <div class="table-search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="storageWorkerSearch" placeholder="Search workers..." />
+                    </div>
+                    <div class="table-info">
+                        <span id="storageWorkerCount" th:text="${storageWorkersTable.size()}">0</span> workers
+                    </div>
+                    <div class="page-size-selector">
+                        <span>Show:</span>
+                        <select id="storageWorkerPageSize">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>per page</span>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="storageWorkerTable" th:if="${!storageWorkersTable.empty}">
+                        <thead>
+                            <tr>
+                                <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
+                                <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
+                                <th class="sortable-header" data-column="workerType"><i class="bi bi-gear"></i> Type</th>
+                                <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
+                                <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Last Seen</th>
+                                <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="worker : ${storageWorkersTable}">
+                                <td>
+                                    <span class="status-badge status-secondary" th:text="${worker.groupName != null ? worker.groupName : 'default'}">default</span>
+                                </td>
+                                <td>
+                                    <span class="text-info" th:text="${worker.endpoint}">endpoint</span>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-info">
+                                        <i class="bi bi-hdd"></i> 
+                                        <span th:text="${worker.workerType}">Storage</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge" 
+                                          th:classappend="${worker.status.startsWith('Active') ? 'status-success' : (worker.status == 'Expired' ? 'status-danger' : 'status-warning')}">
+                                        <i th:class="${worker.status.startsWith('Active') ? 'bi bi-check-circle' : (worker.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${worker.status}">Active</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted" th:text="${worker.expireAt}">expiry</small>
+                                </td>
+                                <td>
+                                    <small class="text-muted" th:text="${worker.firstRegisteredAt}">registered</small>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Storage Worker Pagination Controls -->
+                    <div class="pagination-controls" th:if="${!storageWorkersTable.empty}">
+                        <div class="pagination-info">
+                            Showing <span id="storageWorkerStart">1</span> to <span id="storageWorkerEnd">10</span> of <span id="storageWorkerTotal" th:text="${storageWorkersTable.size()}">0</span> workers
+                        </div>
+                        <div class="pagination-buttons">
+                            <button class="pagination-btn" id="storageWorkerPrevBtn" onclick="changeStorageWorkerPage(-1)">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </button>
+                            <span id="storageWorkerPageNumbers"></span>
+                            <button class="pagination-btn" id="storageWorkerNextBtn" onclick="changeStorageWorkerPage(1)">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info m-3" th:if="${storageWorkersTable.empty}">
+                        <i class="bi bi-info-circle"></i> No storage workers found
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Servers Table -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <span><i class="bi bi-server"></i> Servers</span>
+                    <span class="status-badge status-info" th:text="${serversTable.size()} + ' Servers'">0 Servers</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <!-- Servers Table Controls -->
+                <div class="table-controls" th:if="${serversTable != null and serversTable.size() > 0}">
+                    <div class="table-search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="serversSearch" placeholder="Search servers..." />
+                    </div>
+                    <div class="table-info">
+                        <span id="serversCount" th:text="${serversTable.size()}">0</span> servers
+                    </div>
+                    <div class="page-size-selector">
+                        <span>Show:</span>
+                        <select id="serversPageSize">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>per page</span>
+                    </div>
+                </div>
+                    
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="serversTable" th:if="${serversTable != null and serversTable.size() > 0}">
+                        <thead>
+                            <tr>
+                                <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
+                                <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
+                                <th class="sortable-header" data-column="serverType"><i class="bi bi-gear"></i> Type</th>
+                                <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
+                                <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Last Seen</th>
+                                <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="server : ${serversTable}">
+                                <td>
+                                    <span class="status-badge status-secondary" th:text="${server.groupName != null ? server.groupName : 'default'}">default</span>
+                                </td>
+                                <td>
+                                    <span class="text-info" th:text="${server.endpoint}">endpoint</span>
+                                </td>
+                                <td>
+                                    <span class="status-badge" 
+                                          th:classappend="${server.serverType == 'Scheduler' ? 'status-info' : (server.serverType == 'CAS' ? 'status-primary' : 'status-success')}">
+                                        <i th:class="${server.serverType == 'Scheduler' ? 'bi bi-gear' : (server.serverType == 'CAS' ? 'bi bi-database' : 'bi bi-server')}"></i> 
+                                        <span th:text="${server.serverType}">Scheduler</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge" 
+                                          th:classappend="${server.status.startsWith('Active') ? 'status-success' : (server.status == 'Expired' ? 'status-danger' : 'status-warning')}">
+                                        <i th:class="${server.status.startsWith('Active') ? 'bi bi-check-circle' : (server.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${server.status}">Active</span>
+                                    </span>
+                                </td>
+                                <td><small class="text-muted" th:text="${server.expireAt}">2024-01-01 11:00:00</small></td>
+                                <td><small class="text-muted" th:text="${server.firstRegisteredAt}">2024-01-01 10:00:00</small></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Servers Pagination Controls -->
+                    <div class="pagination-controls" th:if="${serversTable != null and serversTable.size() > 0}">
+                        <div class="pagination-info">
+                            <span id="serversInfo">Showing 1 to 25 of <span th:text="${serversTable.size()}">0</span> servers</span>
+                        </div>
+                        <div class="pagination-buttons">
+                            <button id="serversFirstBtn" class="pagination-btn" onclick="serversCurrentPage=1; renderServersTable();">
+                                <i class="bi bi-chevron-double-left"></i> First
+                            </button>
+                            <button id="serversPrevBtn" class="pagination-btn" onclick="changeServersPage(-1)">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </button>
+                            <span id="serversPageNumbers" class="page-numbers"></span>
+                            <button id="serversNextBtn" class="pagination-btn" onclick="changeServersPage(1)">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </button>
+                            <button id="serversLastBtn" class="pagination-btn" onclick="serversCurrentPage=Math.ceil(serversData.length/window.serversPageSize); renderServersTable();">
+                                <i class="bi bi-chevron-double-right"></i> Last
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info m-3" th:if="${serversTable == null or serversTable.size() == 0}">
+                        <i class="bi bi-info-circle"></i> No servers found
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add fade-in animation to elements
-            const animatedElements = document.querySelectorAll('.fade-in');
-            animatedElements.forEach((el, index) => {
-                el.style.animationDelay = `${index * 0.1}s`;
-            });
-
-            // Add pulse animation to status badges
-            const statusBadges = document.querySelectorAll('.status-success');
-            statusBadges.forEach(badge => {
-                if (badge.textContent.includes('Connected') || badge.textContent.includes('Active')) {
-                    badge.classList.add('pulse');
-                }
-            });
-
-            // Initialize tooltips
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-
-            // Add hover effects to nav links
-            const navLinks = document.querySelectorAll('.nav-link');
-            navLinks.forEach(link => {
-                link.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateX(5px)';
-                });
-                link.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateX(0)';
-                });
-            });
-
-            // Update timestamps
-            updateRelativeTime();
-            setInterval(updateRelativeTime, 60000); // Update every minute
-
-            // Initialize table functionality
-            initializeTableFunctionality();
-        });
-
-        // Format relative time
-        function updateRelativeTime() {
-            const timeElements = document.querySelectorAll('[data-time]');
-            timeElements.forEach(el => {
-                const timestamp = el.getAttribute('data-time');
-                if (timestamp) {
-                    el.textContent = formatRelativeTime(new Date(timestamp));
-                }
-            });
-        }
-
-        function formatRelativeTime(date) {
-            const now = new Date();
-            const diff = now - date;
-            const minutes = Math.floor(diff / 60000);
-            const hours = Math.floor(minutes / 60);
-            const days = Math.floor(hours / 24);
-
-            if (days > 0) return `${days}d ago`;
-            if (hours > 0) return `${hours}h ago`;
-            if (minutes > 0) return `${minutes}m ago`;
-            return 'Just now';
-        }
-
-        // Add smooth scrolling
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                }
-            });
-        });
-
-        // Table Management Variables
-        let executeWorkerData = [];
-        let storageWorkerData = [];
-        let serversData = [];
-        let executeWorkerCurrentPage = 1;
-        let storageWorkerCurrentPage = 1;
-        let serversCurrentPage = 1;
-        let executeWorkerPageSize = 10;
-        let storageWorkerPageSize = 10;
-        let serversPageSize = 25;
-        
-        // Initialize window variables for pagination
-        window.serversPageSize = 25;
-        
-        let executeWorkerSortColumn = '';
-        let executeWorkerSortDirection = 'asc';
-        let storageWorkerSortColumn = '';
-        let storageWorkerSortDirection = 'asc';
-        let serversSortColumn = '';
-        let serversSortDirection = 'asc';
-
-        // Initialize table functionality
-        function initializeTableFunctionality() {
-            // Extract data from existing tables
-            extractTableData();
-            
-            // Set up event listeners
-            setupEventListeners();
-            
-            // Initial render
-            renderExecuteWorkerTable();
-            renderStorageWorkerTable();
-            renderServersTable();
-        }
-
-        // Extract worker data from existing HTML tables
-        function extractTableData() {
-            const executeTable = document.getElementById('executeWorkerTable');
-            const storageTable = document.getElementById('storageWorkerTable');
-            const serversTable = document.getElementById('serversTable');
-
-            if (executeTable) {
-                executeWorkerData = extractWorkerDataFromTable(executeTable);
-            }
-
-            if (storageTable) {
-                storageWorkerData = extractWorkerDataFromTable(storageTable);
-            }
-
-            if (serversTable) {
-                serversData = extractServerDataFromTable(serversTable);
-            }
-        }
-
-        function extractWorkerDataFromTable(table) {
-            const rows = table.querySelectorAll('tbody tr');
-            const data = [];
-
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length >= 6) {
-                    // Remove content in parentheses from status
-                    const cleanStatus = cells[3].textContent.trim().replace(/\([^)]*\)/g, '').trim();
-                    data.push({
-                        groupName: cells[0].textContent.trim(),
-                        endpoint: cells[1].textContent.trim(),
-                        workerType: cells[2].textContent.trim(),
-                        status: cleanStatus,
-                        expireAt: cells[4].textContent.trim(),
-                        firstRegisteredAt: cells[5].textContent.trim(),
-                        originalHtml: row.innerHTML
-                    });
-                }
-            });
-
-            return data;
-        }
-
-        function extractServerDataFromTable(table) {
-            const rows = table.querySelectorAll('tbody tr');
-            const data = [];
-
-            rows.forEach((row, index) => {
-                const cells = row.querySelectorAll('td');
-                
-                if (cells.length >= 6) {
-                    // Remove content in parentheses from status
-                    const cleanStatus = cells[3].textContent.trim().replace(/\([^)]*\)/g, '').trim();
-                    const serverData = {
-                        groupName: cells[0].textContent.trim(),
-                        endpoint: cells[1].textContent.trim(),
-                        serverType: cells[2].textContent.trim(),
-                        status: cleanStatus,
-                        expireAt: cells[4].textContent.trim(),
-                        firstRegisteredAt: cells[5].textContent.trim(),
-                        originalHtml: row.innerHTML
-                    };
-                    data.push(serverData);
-                } else {
-                    // Row has insufficient cells
-                }
-            });
-
-            return data;
-        }
-
-        // Set up event listeners
-        function setupEventListeners() {
-            // Search functionality
-            const executeSearch = document.getElementById('executeWorkerSearch');
-            const storageSearch = document.getElementById('storageWorkerSearch');
-
-            if (executeSearch) {
-                executeSearch.addEventListener('input', function() {
-                    executeWorkerCurrentPage = 1;
-                    renderExecuteWorkerTable();
-                });
-            }
-
-            if (storageSearch) {
-                storageSearch.addEventListener('input', function() {
-                    storageWorkerCurrentPage = 1;
-                    renderStorageWorkerTable();
-                });
-            }
-
-            // Page size selectors
-            const executePageSize = document.getElementById('executeWorkerPageSize');
-            const storagePageSize = document.getElementById('storageWorkerPageSize');
-
-            if (executePageSize) {
-                executePageSize.addEventListener('change', function() {
-                    executeWorkerPageSize = parseInt(this.value);
-                    executeWorkerCurrentPage = 1;
-                    renderExecuteWorkerTable();
-                });
-            }
-
-            if (storagePageSize) {
-                storagePageSize.addEventListener('change', function() {
-                    storageWorkerPageSize = parseInt(this.value);
-                    storageWorkerCurrentPage = 1;
-                    renderStorageWorkerTable();
-                });
-            }
-
-            // Servers event listeners
-            const serversSearch = document.getElementById('serversSearch');
-            const serversPageSize = document.getElementById('serversPageSize');
-
-            if (serversSearch) {
-                serversSearch.addEventListener('input', function() {
-                    serversCurrentPage = 1;
-                    renderServersTable();
-                });
-            }
-
-            if (serversPageSize) {
-                serversPageSize.addEventListener('change', function() {
-                    window.serversPageSize = parseInt(this.value);
-                    serversCurrentPage = 1;
-                    renderServersTable();
-                });
-            }
-
-            // Sorting functionality
-            setupSortingListeners('executeWorkerTable', 'execute');
-            setupSortingListeners('storageWorkerTable', 'storage');
-            setupSortingListeners('serversTable', 'servers');
-        }
-
-        function setupSortingListeners(tableId, type) {
-            const table = document.getElementById(tableId);
-            if (!table) return;
-
-            const headers = table.querySelectorAll('.sortable');
-            headers.forEach(header => {
-                header.addEventListener('click', function() {
-                    const column = this.getAttribute('data-column');
-                    handleSort(column, type);
-                });
-            });
-        }
-
-        function handleSort(column, type) {
-            if (type === 'execute') {
-                if (executeWorkerSortColumn === column) {
-                    executeWorkerSortDirection = executeWorkerSortDirection === 'asc' ? 'desc' : 'asc';
-                } else {
-                    executeWorkerSortColumn = column;
-                    executeWorkerSortDirection = 'asc';
-                }
-                updateSortHeaders('executeWorkerTable', column, executeWorkerSortDirection);
-                renderExecuteWorkerTable();
-            } else if (type === 'storage') {
-                if (storageWorkerSortColumn === column) {
-                    storageWorkerSortDirection = storageWorkerSortDirection === 'asc' ? 'desc' : 'asc';
-                } else {
-                    storageWorkerSortColumn = column;
-                    storageWorkerSortDirection = 'asc';
-                }
-                updateSortHeaders('storageWorkerTable', column, storageWorkerSortDirection);
-                renderStorageWorkerTable();
-            } else if (type === 'servers') {
-                if (serversSortColumn === column) {
-                    serversSortDirection = serversSortDirection === 'asc' ? 'desc' : 'asc';
-                } else {
-                    serversSortColumn = column;
-                    serversSortDirection = 'asc';
-                }
-                updateSortHeaders('serversTable', column, serversSortDirection);
-                renderServersTable();
-            }
-        }
-
-        function updateSortHeaders(tableId, activeColumn, direction) {
-            const table = document.getElementById(tableId);
-            if (!table) return;
-
-            const headers = table.querySelectorAll('.sortable');
-            headers.forEach(header => {
-                header.classList.remove('sorted-asc', 'sorted-desc');
-                if (header.getAttribute('data-column') === activeColumn) {
-                    header.classList.add(direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-                }
-            });
-        }
-
-        // Render Execute Worker Table
-        function renderExecuteWorkerTable() {
-            const searchTerm = document.getElementById('executeWorkerSearch')?.value.toLowerCase() || '';
-            let filteredData = executeWorkerData.filter(worker => 
-                worker.groupName.toLowerCase().includes(searchTerm) ||
-                worker.endpoint.toLowerCase().includes(searchTerm) ||
-                worker.status.toLowerCase().includes(searchTerm)
-            );
-
-            // Apply sorting
-            if (executeWorkerSortColumn) {
-                filteredData.sort((a, b) => {
-                    let aVal = a[executeWorkerSortColumn].toLowerCase();
-                    let bVal = b[executeWorkerSortColumn].toLowerCase();
-                    if (executeWorkerSortDirection === 'asc') {
-                        return aVal.localeCompare(bVal);
-                    } else {
-                        return bVal.localeCompare(aVal);
-                    }
-                });
-            }
-
-            // Apply pagination
-            const totalItems = filteredData.length;
-            const totalPages = Math.ceil(totalItems / executeWorkerPageSize);
-            const startIndex = (executeWorkerCurrentPage - 1) * executeWorkerPageSize;
-            const endIndex = Math.min(startIndex + executeWorkerPageSize, totalItems);
-            const pageData = filteredData.slice(startIndex, endIndex);
-
-            // Update table
-            const table = document.getElementById('executeWorkerTable');
-            if (table) {
-                const tbody = table.querySelector('tbody');
-                tbody.innerHTML = '';
-                pageData.forEach(worker => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = worker.originalHtml;
-                    tbody.appendChild(row);
-                });
-            }
-
-            // Update pagination info
-            updatePaginationInfo('execute', startIndex + 1, endIndex, totalItems, totalPages);
-        }
-
-        // Render Storage Worker Table
-        function renderStorageWorkerTable() {
-            const searchTerm = document.getElementById('storageWorkerSearch')?.value.toLowerCase() || '';
-            let filteredData = storageWorkerData.filter(worker => 
-                worker.groupName.toLowerCase().includes(searchTerm) ||
-                worker.endpoint.toLowerCase().includes(searchTerm) ||
-                worker.status.toLowerCase().includes(searchTerm)
-            );
-
-            // Apply sorting
-            if (storageWorkerSortColumn) {
-                filteredData.sort((a, b) => {
-                    let aVal = a[storageWorkerSortColumn].toLowerCase();
-                    let bVal = b[storageWorkerSortColumn].toLowerCase();
-                    if (storageWorkerSortDirection === 'asc') {
-                        return aVal.localeCompare(bVal);
-                    } else {
-                        return bVal.localeCompare(aVal);
-                    }
-                });
-            }
-
-            // Apply pagination
-            const totalItems = filteredData.length;
-            const totalPages = Math.ceil(totalItems / storageWorkerPageSize);
-            const startIndex = (storageWorkerCurrentPage - 1) * storageWorkerPageSize;
-            const endIndex = Math.min(startIndex + storageWorkerPageSize, totalItems);
-            const pageData = filteredData.slice(startIndex, endIndex);
-
-            // Update table
-            const table = document.getElementById('storageWorkerTable');
-            if (table) {
-                const tbody = table.querySelector('tbody');
-                tbody.innerHTML = '';
-                pageData.forEach(worker => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = worker.originalHtml;
-                    tbody.appendChild(row);
-                });
-            }
-
-            // Update pagination info
-            updatePaginationInfo('storage', startIndex + 1, endIndex, totalItems, totalPages);
-        }
-
-        // Render Servers Table
-        function renderServersTable() {
-            const searchTerm = document.getElementById('serversSearch')?.value.toLowerCase() || '';
-            
-            let filteredData = serversData.filter(server => 
-                server.groupName.toLowerCase().includes(searchTerm) ||
-                server.endpoint.toLowerCase().includes(searchTerm) ||
-                server.serverType.toLowerCase().includes(searchTerm) ||
-                server.status.toLowerCase().includes(searchTerm)
-            );
-
-            // Apply sorting
-            if (serversSortColumn) {
-                filteredData.sort((a, b) => {
-                    let aVal = a[serversSortColumn].toLowerCase();
-                    let bVal = b[serversSortColumn].toLowerCase();
-                    if (serversSortDirection === 'asc') {
-                        return aVal.localeCompare(bVal);
-                    } else {
-                        return bVal.localeCompare(aVal);
-                    }
-                });
-            }
-
-            // Apply pagination
-            const totalItems = filteredData.length;
-            const totalPages = Math.ceil(totalItems / window.serversPageSize);
-            const startIndex = (serversCurrentPage - 1) * window.serversPageSize;
-            const endIndex = Math.min(startIndex + window.serversPageSize, totalItems);
-            const pageData = filteredData.slice(startIndex, endIndex);
-
-            // Update table
-            const table = document.getElementById('serversTable');
-            if (table) {
-                const tbody = table.querySelector('tbody');
-                if (tbody) {
-                    tbody.innerHTML = '';
-                    pageData.forEach((server, index) => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = server.originalHtml;
-                        tbody.appendChild(row);
-                    });
-                }
-            }
-
-            // Update pagination info - only if pagination elements exist
-            const infoElement = document.getElementById('serversInfo');
-            if (infoElement) {
-                updatePaginationInfo('servers', startIndex + 1, endIndex, totalItems, totalPages);
-            }
-        }
-
-        // Update pagination info and controls
-        function updatePaginationInfo(type, start, end, total, totalPages) {            
-            // Defensive check - ensure we have valid parameters
-            if (!type || total === undefined || total === null) {
-                return;
-            }
-            
-            let prefix, currentPage;
-            if (type === 'execute') {
-                prefix = 'executeWorker';
-                currentPage = executeWorkerCurrentPage;
-            } else if (type === 'storage') {
-                prefix = 'storageWorker';
-                currentPage = storageWorkerCurrentPage;
-            } else if (type === 'servers') {
-                prefix = 'servers';
-                currentPage = serversCurrentPage;
-            } else {
-                return;
-            }
-
-            // Update info text - handle different element structures
-            if (type === 'servers') {
-                const infoElement = document.getElementById('serversInfo');
-                if (infoElement) {
-                    infoElement.textContent = `Showing ${start} to ${end} of ${total} servers`;
-                }
-                const countElement = document.getElementById('serversCount');
-                if (countElement) {
-                    countElement.textContent = total;
-                }
-            } else {
-                // For worker tables
-                const startEl = document.getElementById(prefix + 'Start');
-                const endEl = document.getElementById(prefix + 'End');
-                const totalEl = document.getElementById(prefix + 'Total');
-                const countEl = document.getElementById(prefix + 'Count');
-                
-                if (startEl) startEl.textContent = total > 0 ? start : 0;
-                if (endEl) endEl.textContent = end;
-                if (totalEl) totalEl.textContent = total;
-                if (countEl) countEl.textContent = total;
-            }
-
-            // Update pagination buttons - handle different button naming for servers
-            let prevBtn, nextBtn, firstBtn, lastBtn, pageNumbersSpan;
-            
-            if (type === 'servers') {
-                prevBtn = document.getElementById('serversPrevBtn');
-                nextBtn = document.getElementById('serversNextBtn');
-                firstBtn = document.getElementById('serversFirstBtn');
-                lastBtn = document.getElementById('serversLastBtn');
-                pageNumbersSpan = document.getElementById('serversPageNumbers');
-            } else {
-                prevBtn = document.getElementById(prefix + 'PrevBtn');
-                nextBtn = document.getElementById(prefix + 'NextBtn');
-                firstBtn = document.getElementById(prefix + 'FirstBtn');
-                lastBtn = document.getElementById(prefix + 'LastBtn');
-                pageNumbersSpan = document.getElementById(prefix + 'PageNumbers');
-            }
-
-            if (prevBtn) prevBtn.disabled = currentPage <= 1;
-            if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
-            if (firstBtn) firstBtn.disabled = currentPage <= 1;
-            if (lastBtn) lastBtn.disabled = currentPage >= totalPages;
-
-            // Generate page numbers
-            if (pageNumbersSpan) {
-                pageNumbersSpan.innerHTML = '';
-                for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
-                    const pageBtn = document.createElement('button');
-                    pageBtn.className = 'pagination-btn' + (i === currentPage ? ' active' : '');
-                    pageBtn.textContent = i;
-                    pageBtn.onclick = () => {
-                        if (type === 'execute') {
-                            executeWorkerCurrentPage = i;
-                            renderExecuteWorkerTable();
-                        } else if (type === 'storage') {
-                            storageWorkerCurrentPage = i;
-                            renderStorageWorkerTable();
-                        } else if (type === 'servers') {
-                            serversCurrentPage = i;
-                            renderServersTable();
-                        }
-                    };
-                    pageNumbersSpan.appendChild(pageBtn);
-                }
-            }
-        }
-
-        // Page navigation functions
-        function changeExecuteWorkerPage(direction) {
-            const totalItems = executeWorkerData.length;
-            const totalPages = Math.ceil(totalItems / executeWorkerPageSize);
-
-            executeWorkerCurrentPage += direction;
-            if (executeWorkerCurrentPage < 1) executeWorkerCurrentPage = 1;
-            if (executeWorkerCurrentPage > totalPages) executeWorkerCurrentPage = totalPages;
-
-            renderExecuteWorkerTable();
-        }
-
-        function changeStorageWorkerPage(direction) {
-            const totalItems = storageWorkerData.length;
-            const totalPages = Math.ceil(totalItems / storageWorkerPageSize);
-
-            storageWorkerCurrentPage += direction;
-            if (storageWorkerCurrentPage < 1) storageWorkerCurrentPage = 1;
-            if (storageWorkerCurrentPage > totalPages) storageWorkerCurrentPage = totalPages;
-
-            renderStorageWorkerTable();
-        }
-
-        function changeServersPage(direction) {
-            const totalItems = serversData.length;
-            const totalPages = Math.ceil(totalItems / window.serversPageSize);
-
-            serversCurrentPage += direction;
-            if (serversCurrentPage < 1) serversCurrentPage = 1;
-            if (serversCurrentPage > totalPages) serversCurrentPage = totalPages;
-
-            renderServersTable();
-        }
-    </script>
 </body>
 </html>

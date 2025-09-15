@@ -1,0 +1,129 @@
+/* Responsive Styles for BuildFarm Dashboard */
+
+/* Media queries for responsive scaling of status grid */
+@media (max-width: 1400px) {
+    .status-grid {
+        gap: 12px;
+    }
+    .status-grid .stats-card {
+        flex: 1 1 calc(20% - 9.6px);
+    }
+}
+
+@media (max-width: 1200px) {
+    .status-grid {
+        gap: 10px;
+    }
+    .status-grid .stats-card {
+        flex: 1 1 calc(20% - 8px);
+    }
+}
+
+@media (max-width: 992px) {
+    .status-grid {
+        gap: 8px;
+    }
+    .status-grid .stats-card {
+        flex: 1 1 calc(20% - 6.4px);
+    }
+}
+
+@media (max-width: 768px) {
+    .status-grid {
+        gap: 6px;
+    }
+    .status-grid .stats-card {
+        flex: 1 1 calc(20% - 4.8px);
+    }
+    
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .content {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 576px) {
+    .status-grid {
+        gap: 4px;
+    }
+    .status-grid .stats-card {
+        flex: 1 1 calc(20% - 3.2px);
+    }
+}
+
+/* Responsive content scaling for cards */
+@media (max-width: 1200px) {
+    .stats-card .stats-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    .stats-content h3 {
+        font-size: 1.75rem !important;
+    }
+    .stats-card .stats-content p {
+        font-size: 0.8rem !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .stats-card .stats-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+    .stats-content h3 {
+        font-size: 1.5rem !important;
+    }
+    .stats-card .stats-content p {
+        font-size: 0.75rem !important;
+    }
+    .stats-card .card-body {
+        padding: 0.75rem !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-card .stats-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    .stats-content h3 {
+        font-size: 1.25rem !important;
+    }
+    .stats-card .stats-content p {
+        font-size: 0.7rem !important;
+    }
+    .stats-card .ms-3 {
+        margin-left: 0.5rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-card .stats-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+    .stats-content h3 {
+        font-size: 1.1rem !important;
+    }
+    .stats-card .stats-content p {
+        font-size: 0.65rem !important;
+    }
+    .stats-card .card-body {
+        padding: 0.5rem !important;
+    }
+    .stats-card .ms-3 {
+        margin-left: 0.25rem !important;
+    }
+}

@@ -1,0 +1,117 @@
+/* Layout Styles for BuildFarm Dashboard */
+
+/* Sidebar */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.sidebar-brand {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-brand h4 {
+    color: var(--accent-purple);
+    font-weight: 600;
+    margin: 0;
+}
+
+.sidebar-nav {
+    padding: 20px 0;
+}
+
+.nav-item {
+    padding: 0 20px;
+    margin-bottom: 5px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--accent-purple);
+}
+
+.nav-link i {
+    width: 20px;
+    margin-right: 12px;
+    font-size: 18px;
+}
+
+/* Main content */
+.main-content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    height: var(--header-height);
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+}
+
+.header-title h2 {
+    font-weight: 600;
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.btn-refresh {
+    background: var(--accent-purple);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-refresh:hover {
+    background: #7c3aed;
+    transform: translateY(-1px);
+}
+
+/* Content area */
+.content {
+    padding: 30px;
+}
+
+/* Ensure sidebar text is light */
+.sidebar-brand h4 {
+    color: var(--text-primary) !important;
+}
+
+.sidebar-nav .nav-link {
+    color: var(--text-secondary) !important;
+}
+
+.sidebar-nav .nav-link:hover,
+.sidebar-nav .nav-link.active {
+    color: var(--text-primary) !important;
+}

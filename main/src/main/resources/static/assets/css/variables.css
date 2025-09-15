@@ -1,0 +1,73 @@
+/* CSS Variables for BuildFarm Dashboard Theme */
+:root {
+    --dark-bg: #0d1117;
+    --card-bg: #161b22;
+    --border-color: #30363d;
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --accent-purple: #8b5cf6;
+    --accent-blue: #0ea5e9;
+    --accent-green: #10b981;
+    --accent-orange: #f59e0b;
+    --accent-red: #ef4444;
+    --sidebar-width: 250px;
+    --header-height: 70px;
+    
+    /* Override Bootstrap dark colors for better visibility */
+    --bs-dark: #6c757d;  /* Lighter than default #212529 */
+}
+
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--dark-bg);
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+    color: var(--text-primary) !important;
+}
+
+p {
+    color: var(--text-secondary);
+}
+
+/* Make muted text lighter and more visible */
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* Override Bootstrap dark colors for better visibility */
+.text-dark,
+.bg-dark {
+    color: var(--text-secondary) !important;
+}
+
+.bg-dark {
+    background-color: var(--card-bg) !important;
+}
+
+.border-dark {
+    border-color: var(--border-color) !important;
+}
+
+/* Fix Bootstrap buttons */
+.btn-dark {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: var(--text-primary);
+}
+
+.btn-dark:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}

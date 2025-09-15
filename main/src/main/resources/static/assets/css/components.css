@@ -1,0 +1,302 @@
+/* Component Styles for BuildFarm Dashboard */
+
+/* Cards */
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--border-color);
+    padding: 20px 24px;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--text-primary) !important;
+}
+
+.card-title span {
+    color: var(--text-primary) !important;
+}
+
+.card-body {
+    padding: 24px;
+}
+
+/* Make sure dynamic content like helloMessage is visible */
+.card-body p {
+    color: var(--text-secondary) !important;
+}
+
+/* Stats cards */
+.stats-card {
+    background: linear-gradient(135deg, var(--accent-purple), #6d28d9);
+    border: none;
+    color: white;
+}
+
+.stats-card.blue {
+    background: linear-gradient(135deg, var(--accent-blue), #0284c7);
+}
+
+.stats-card.green {
+    background: linear-gradient(135deg, var(--accent-green), #059669);
+}
+
+.stats-card.orange {
+    background: linear-gradient(135deg, var(--accent-orange), #d97706);
+}
+
+.stats-card.red {
+    background: linear-gradient(135deg, var(--accent-red), #dc2626);
+}
+
+.stats-card.purple {
+    background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+}
+
+.stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.stats-content h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.stats-content p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+/* Stats card labels - make them lighter and more visible */
+.stats-card .stats-content p {
+    color: var(--text-secondary) !important;
+    font-size: 0.875rem;
+    margin-bottom: 0;
+    opacity: 0.9;
+}
+
+.stats-card .stats-content h3 {
+    color: var(--text-primary) !important;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+/* Ensure all stats card text is properly colored */
+.stats-card {
+    color: var(--text-primary);
+}
+
+.stats-card p,
+.stats-card h1,
+.stats-card h2,
+.stats-card h3,
+.stats-card h4,
+.stats-card h5,
+.stats-card h6 {
+    color: #ffffff !important;
+}
+
+/* Specific styling for card labels to ensure maximum visibility */
+.stats-card .stats-content p,
+.card-body p {
+    color: #ffffff !important;
+    font-weight: 500 !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important;
+}
+
+/* Additional white label styling for all card text elements */
+.stats-card .stats-content,
+.stats-card .card-body,
+.status-item .status-label {
+    color: #ffffff !important;
+}
+
+/* Ensure all text in colored cards is white and visible */
+.stats-card.blue *,
+.stats-card.green *,
+.stats-card.orange *,
+.stats-card.red * {
+    color: #ffffff !important;
+}
+
+/* System status grid */
+.status-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 15px;
+    margin-bottom: 30px;
+    overflow-x: auto;
+}
+
+/* Responsive card sizing for 5 cards */
+.status-grid .stats-card {
+    flex: 1 1 calc(20% - 12px);
+    min-width: 0;
+    max-width: none;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--accent-red);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--accent-orange);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-info {
+    background: rgba(14, 165, 233, 0.1);
+    color: var(--accent-blue);
+    border: 1px solid rgba(14, 165, 233, 0.2);
+}
+
+.status-secondary {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--accent-purple);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+/* Server type badges */
+.server-type {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.server-type-Scheduler {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--accent-purple);
+}
+
+.server-type-CAS {
+    background: rgba(14, 165, 233, 0.15);
+    color: var(--accent-blue);
+}
+
+.server-type-BuildFarm {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-green);
+}
+
+.server-type-Unknown {
+    background: rgba(139, 149, 158, 0.15);
+    color: var(--text-secondary);
+}
+
+/* Worker ID styling */
+.worker-id {
+    background: var(--dark-bg);
+    color: var(--accent-purple);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-item {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.status-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Alert styling */
+.alert {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+}
+
+.alert-info {
+    border-color: var(--accent-blue);
+    background: rgba(14, 165, 233, 0.1);
+}
+
+.alert-danger {
+    border-color: var(--accent-red);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* Animation classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
