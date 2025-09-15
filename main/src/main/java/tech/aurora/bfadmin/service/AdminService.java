@@ -19,4 +19,9 @@ public interface AdminService {
   java.util.List<java.util.Map<String, Object>> getServersTable();
   
   java.util.Map<String, Object> getSystemStatus();
+  
+  // Queue-related methods
+  java.util.List<String> getQueueNames();
+  
+  java.util.List<java.util.Map<String, Object>> getQueueOperations(String queueName);
 }

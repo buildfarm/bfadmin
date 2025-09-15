@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 public class AdminController {
@@ -44,6 +46,8 @@ public class AdminController {
       model.addAttribute("executeWorkersTable", executeWorkersTable);
       model.addAttribute("storageWorkersTable", storageWorkersTable);
       model.addAttribute("serversTable", serversTable);
+      model.addAttribute("activePage", "dashboard");
+      model.addAttribute("currentPage", "dashboard");
       
       logger.info("Dashboard accessed, system status: {}, {} execute workers, {} storage workers, {} servers", 
                   systemStatus.get("systemHealthText"), executeWorkersTable.size(), storageWorkersTable.size(), serversTable.size());
@@ -54,5 +58,48 @@ public class AdminController {
       model.addAttribute("message", "UI is not enabled. Set ui.enable=true in application.properties");
       return "error";
     }
+  }
+
+  @RequestMapping("/queues")
+  public String getQueues(Model model) {
+    if (ui) {
+      // Get available queue names
+      java.util.List<String> queueNames = adminService.getQueueNames();
+      
+      model.addAttribute("queueNames", queueNames);
+      model.addAttribute("selectedQueue", queueNames.isEmpty() ? "" : queueNames.get(0));
+      model.addAttribute("activePage", "queues");
+      model.addAttribute("currentPage", "queues");
+      
+      // If there are queues available, get operations for the first queue
+      if (!queueNames.isEmpty()) {
+        java.util.List<java.util.Map<String, Object>> operations = adminService.getQueueOperations(queueNames.get(0));
+        model.addAttribute("operations", operations);
+      } else {
+        model.addAttribute("operations", new java.util.ArrayList<>());
+      }
+      
+      logger.info("Queues page accessed, found {} queues", queueNames.size());
+      return "queues";
+    } else {
+      model.addAttribute("status", "999");
+      model.addAttribute("error", "Not Enabled");  
+      model.addAttribute("message", "UI is not enabled. Set ui.enable=true in application.properties");
+      return "error";
+    }
+  }
+  
+  @RequestMapping("/api/queue-names")
+  @ResponseBody
+  public java.util.List<String> getQueueNames() {
+    logger.info("Queue names requested via API");
+    return adminService.getQueueNames();
+  }
+  
+  @RequestMapping("/api/queue-operations")
+  @ResponseBody
+  public java.util.List<java.util.Map<String, Object>> getQueueOperations(@RequestParam String queueName) {
+    logger.info("Queue operations requested for queue: {}", queueName);
+    return adminService.getQueueOperations(queueName);
   }
 }

@@ -44,6 +44,58 @@
     color: var(--text-secondary) !important;
 }
 
+/* Error Page Styles */
+.error-page {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.error-icon {
+    font-size: 4rem;
+    color: var(--danger-color);
+    margin-bottom: 1.5rem;
+    animation: pulse 2s infinite;
+}
+
+.error-title {
+    color: var(--danger-color);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.error-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.error-trace {
+    background-color: var(--code-bg, #f8f9fa);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
 /* Stats cards */
 .stats-card {
     background: linear-gradient(135deg, var(--accent-purple), #6d28d9);

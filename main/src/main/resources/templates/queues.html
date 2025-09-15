@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" 
+      xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content})}">
+<head>
+    <title>BuildFarm Queues</title>
+</head>
+<body>
+    <div id="content">
+        <!-- Queue Selection -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <span><i class="bi bi-list-task"></i> Queue Operations</span>
+                    <span class="status-badge status-info" id="operationCount" th:text="${operations.size()} + ' Operations'">0 Operations</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center mb-3">
+                    <div class="col-md-6">
+                        <label for="queueSelect" class="form-label">Select Queue:</label>
+                        <select class="form-select" id="queueSelect" onchange="loadQueueOperations()">
+                            <option th:each="queue : ${queueNames}" 
+                                    th:value="${queue}" 
+                                    th:text="${queue}"
+                                    th:selected="${queue == selectedQueue}">Queue Name</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button class="btn btn-refresh" onclick="refreshOperations()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <div th:if="${queueNames.empty}" class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No queues available
+                </div>
+            </div>
+        </div>
+
+        <!-- Operations Table -->
+        <div class="card fade-in" th:unless="${queueNames.empty}">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <span><i class="bi bi-gear-fill"></i> Operations in Queue: <span id="currentQueueName" th:text="${selectedQueue}">prequeue</span></span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <!-- Table Controls -->
+                <div class="table-controls" th:if="${!operations.empty}">
+                    <div class="table-search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="operationSearch" placeholder="Search operations..." />
+                    </div>
+                    <div class="table-info">
+                        <span id="operationTableCount" th:text="${operations.size()}">0</span> operations
+                    </div>
+                    <div class="page-size-selector">
+                        <span>Show:</span>
+                        <select id="operationPageSize">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>per page</span>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="operationTable" th:if="${!operations.empty}">
+                        <thead>
+                            <tr>
+                                <th class="sortable-header" data-column="index"><i class="bi bi-hash"></i> #</th>
+                                <th class="sortable-header" data-column="operationName"><i class="bi bi-file-text"></i> Operation</th>
+                                <th class="sortable-header" data-column="stage"><i class="bi bi-diagram-3"></i> Stage</th>
+                                <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
+                                <th class="sortable-header" data-column="queuedAt"><i class="bi bi-clock"></i> Queued At</th>
+                                <th class="sortable-header" data-column="hasMetadata"><i class="bi bi-info-square"></i> Metadata</th>
+                                <th><i class="bi bi-eye"></i> Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="operation, iterStat : ${operations}">
+                                <td>
+                                    <span class="text-muted" th:text="${iterStat.count}">1</span>
+                                </td>
+                                <td>
+                                    <span class="fw-medium" th:text="${operation.name}">operation-name</span>
+                                    <br>
+                                    <small class="text-muted" th:if="${operation.actionDigest}" th:text="'Digest: ' + ${#strings.substring(operation.actionDigest, 0, 8)} + '...'">Digest: abc12345...</small>
+                                </td>
+                                <td>
+                                    <span class="status-badge" 
+                                          th:classappend="${operation.stage == 'QUEUED' ? 'status-warning' : (operation.stage == 'EXECUTING' ? 'status-info' : (operation.stage == 'COMPLETED' ? 'status-success' : (operation.stage == 'FAILED' ? 'status-danger' : 'status-secondary')))}">
+                                        <i th:class="${operation.stage == 'QUEUED' ? 'bi bi-clock' : (operation.stage == 'EXECUTING' ? 'bi bi-gear' : (operation.stage == 'COMPLETED' ? 'bi bi-check-circle' : (operation.stage == 'FAILED' ? 'bi bi-x-circle' : 'bi bi-question-circle')))}"></i>
+                                        <span th:text="${operation.stage}">QUEUED</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge" 
+                                          th:classappend="${operation.stage == 'QUEUED' ? 'status-warning' : (operation.stage == 'EXECUTING' ? 'status-info' : (operation.stage == 'COMPLETED' ? 'status-success' : (operation.stage == 'FAILED' ? 'status-danger' : 'status-secondary')))}">
+                                        <i th:class="${operation.stage == 'QUEUED' ? 'bi bi-clock' : (operation.stage == 'EXECUTING' ? 'bi bi-gear' : (operation.stage == 'COMPLETED' ? 'bi bi-check-circle' : (operation.stage == 'FAILED' ? 'bi bi-x-circle' : 'bi bi-question-circle')))}"></i>
+                                        <span th:text="${operation.stage}">Queued</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted" th:text="${operation.queuedTimestamp}">2024-01-01T10:00:00</small>
+                                </td>
+                                <td>
+                                    <span th:if="${operation.platform}" class="status-badge status-success">
+                                        <i class="bi bi-check-circle"></i> Yes
+                                    </span>
+                                    <span th:unless="${operation.platform}" class="status-badge status-secondary">
+                                        <i class="bi bi-x-circle"></i> No
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info" 
+                                            onclick="showOperationDetails(this)"
+                                            th:attr="data-name=${operation.name}, data-stage=${operation.stage}, data-worker=${operation.workerName}, data-platform=${operation.platform}, data-queued=${operation.queuedTimestamp}, data-execute-timeout=${operation.executeTimeout}, data-action-timeout=${operation.actionTimeout}">
+                                        <i class="bi bi-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Operations Pagination Controls -->
+                    <div class="pagination-controls" th:if="${!operations.empty}">
+                        <div class="pagination-info">
+                            Showing <span id="operationStart">1</span> to <span id="operationEnd">10</span> of <span id="operationTotal" th:text="${operations.size()}">0</span> operations
+                        </div>
+                        <div class="pagination-buttons">
+                            <button class="pagination-btn" id="operationPrevBtn" onclick="changeOperationPage(-1)">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </button>
+                            <span id="operationPageNumbers"></span>
+                            <button class="pagination-btn" id="operationNextBtn" onclick="changeOperationPage(1)">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info m-3" th:if="${operations.empty}">
+                        <i class="bi bi-info-circle"></i> No operations found in selected queue
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Operation Details Modal -->
+        <div class="modal fade" id="operationModal" tabindex="-1" aria-labelledby="operationModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="operationModalLabel">Operation Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <pre id="operationDetails" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-size: 0.875rem;"></pre>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

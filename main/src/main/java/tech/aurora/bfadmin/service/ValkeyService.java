@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +11,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@ConditionalOnProperty(name = "valkey.cluster.enabled", havingValue = "true", matchIfMissing = false)
 public class ValkeyService implements ValkeyServiceInterface {
     
     private static final Logger logger = LoggerFactory.getLogger(ValkeyService.class);
@@ -610,6 +608,325 @@ public class ValkeyService implements ValkeyServiceInterface {
             }
         } catch (Exception e) {
             return "Unknown";
+        }
+    }
+
+    /**
+     * Get all available queue names including prequeue using backplane configuration
+     */
+    public java.util.List<String> getQueueNames() {
+        java.util.List<String> queueNames = new java.util.ArrayList<>();
+        
+        try {
+            // Add prequeue first (from backplane config: {Arrival}:PreQueuedOperations)
+            queueNames.add("prequeue");
+            
+            // Look for queued operations using backplane naming: {Execution}:QueuedOperations
+            Set<String> queueKeys = getKeys("{Execution}:QueuedOperations*");
+            logger.info("Found {} execution queue keys", queueKeys.size());
+            
+            for (String key : queueKeys) {
+                logger.info("Processing queue key: {}", key);
+                // Extract queue name from backplane format
+                if (key.equals("{Execution}:QueuedOperations")) {
+                    // Default queue
+                    queueNames.add("cpu");
+                } else if (key.startsWith("{Execution}:QueuedOperations:")) {
+                    // Named queue - extract name after the colon
+                    String queueName = key.substring("{Execution}:QueuedOperations:".length());
+                    if (!queueName.isEmpty() && !queueNames.contains(queueName)) {
+                        queueNames.add(queueName);
+                    }
+                }
+            }
+            
+            // Look for more backplane queue patterns beyond the basic ones
+            // Search for additional execution queue patterns that might exist
+            Set<String> allExecutionKeys = getKeys("{Execution}*");
+            logger.info("Found {} execution-related keys", allExecutionKeys.size());
+            
+            for (String key : allExecutionKeys) {
+                logger.debug("Examining execution key: {}", key);
+                if (key.startsWith("{Execution}:QueuedOperations:") && !key.equals("{Execution}:QueuedOperations")) {
+                    // Extract queue name from pattern like {Execution}:QueuedOperations:queuename
+                    String queueName = key.substring("{Execution}:QueuedOperations:".length());
+                    if (!queueName.isEmpty() && !queueNames.contains(queueName)) {
+                        queueNames.add(queueName);
+                        logger.info("Found execution queue: {}", queueName);
+                    }
+                }
+            }
+            
+            // Look for arrival/dispatch patterns that might indicate other queues
+            Set<String> arrivalKeys = getKeys("{Arrival}*");
+            logger.info("Found {} arrival-related keys", arrivalKeys.size());
+            
+            for (String key : arrivalKeys) {
+                logger.debug("Examining arrival key: {}", key);
+                // Look for patterns like {Arrival}:QueuedOperations:queuename
+                if (key.startsWith("{Arrival}:QueuedOperations:") && !key.equals("{Arrival}:QueuedOperations")) {
+                    String queueName = key.substring("{Arrival}:QueuedOperations:".length());
+                    if (!queueName.isEmpty() && !queueNames.contains(queueName)) {
+                        queueNames.add(queueName);
+                        logger.info("Found arrival queue: {}", queueName);
+                    }
+                }
+            }
+            
+            // Look for dispatch patterns
+            Set<String> dispatchKeys = getKeys("{Dispatch}*");
+            logger.info("Found {} dispatch-related keys", dispatchKeys.size());
+            
+            for (String key : dispatchKeys) {
+                logger.debug("Examining dispatch key: {}", key);
+                if (key.contains("QueuedOperations:") || key.contains("Queue:")) {
+                    // Extract potential queue names from dispatch keys
+                    String[] parts = key.split(":");
+                    for (int i = 0; i < parts.length - 1; i++) {
+                        if ("QueuedOperations".equals(parts[i]) || "Queue".equals(parts[i])) {
+                            String potentialQueue = parts[i + 1];
+                            if (!potentialQueue.isEmpty() && !queueNames.contains(potentialQueue)) {
+                                queueNames.add(potentialQueue);
+                                logger.info("Found dispatch queue: {}", potentialQueue);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Also look for other queue patterns that might exist in the backplane
+            Set<String> allQueueKeys = getKeys("*Queue*");
+            logger.info("Found {} keys containing 'Queue'", allQueueKeys.size());
+            
+            for (String key : allQueueKeys) {
+                logger.debug("Examining queue-related key: {}", key);
+                
+                // Look for backplane queue patterns
+                if (key.contains("QueuedOperations:")) {
+                    String[] parts = key.split(":");
+                    for (int i = 0; i < parts.length - 1; i++) {
+                        if ("QueuedOperations".equals(parts[i]) && i + 1 < parts.length) {
+                            String queueName = parts[i + 1];
+                            if (!queueName.isEmpty() && !queueNames.contains(queueName)) {
+                                queueNames.add(queueName);
+                                logger.info("Found backplane queue: {}", queueName);
+                            }
+                        }
+                    }
+                }
+                
+                // Look for traditional queue patterns like cpu_queue, gpu_queue etc.
+                if (key.contains("_queue") || key.endsWith("Queue")) {
+                    String[] parts = key.split(":");
+                    String lastPart = parts[parts.length - 1];
+                    if (lastPart.endsWith("_queue")) {
+                        String queueName = lastPart.replace("_queue", "");
+                        if (!queueName.isEmpty() && !queueNames.contains(queueName)) {
+                            queueNames.add(queueName);
+                            logger.info("Found traditional queue: {}", queueName);
+                        }
+                    } else if (lastPart.endsWith("Queue") && !lastPart.equals("Queue")) {
+                        String queueName = lastPart.replace("Queue", "").toLowerCase();
+                        if (!queueName.isEmpty() && !queueNames.contains(queueName)) {
+                            queueNames.add(queueName);
+                            logger.info("Found named queue: {}", queueName);
+                        }
+                    }
+                }
+            }
+            
+            // Add known queues from backplane configuration if not found dynamically
+            String[] knownQueues = {"cpu", "default"};
+            for (String knownQueue : knownQueues) {
+                if (!queueNames.contains(knownQueue)) {
+                    // Check if this queue actually exists in Redis
+                    String queueKey = "{Execution}:QueuedOperations:" + knownQueue;
+                    if (hasKey(queueKey)) {
+                        queueNames.add(knownQueue);
+                    }
+                }
+            }
+            
+            logger.info("Returning {} queue names: {}", queueNames.size(), queueNames);
+            
+        } catch (Exception e) {
+            logger.error("Failed to get queue names", e);
+        }
+        
+        return queueNames;
+    }
+
+    /**
+     * Get operations in a specific queue using backplane configuration
+     */
+    public java.util.List<java.util.Map<String, Object>> getQueueOperations(String queueName) {
+        java.util.List<java.util.Map<String, Object>> operations = new java.util.ArrayList<>();
+        
+        try {
+            logger.info("Getting operations for queue: {} using backplane config", queueName);
+            
+            String queueKey;
+            if ("prequeue".equals(queueName)) {
+                // Use backplane prequeue key: {Arrival}:PreQueuedOperations
+                queueKey = "{Arrival}:PreQueuedOperations";
+            } else {
+                // Use backplane queued operations pattern: {Execution}:QueuedOperations[:queuename]
+                if ("cpu".equals(queueName) || "default".equals(queueName)) {
+                    // Default queue
+                    queueKey = "{Execution}:QueuedOperations";
+                } else {
+                    // Named queue
+                    queueKey = "{Execution}:QueuedOperations:" + queueName;
+                }
+            }
+            
+            // Check if the specific key exists, otherwise look for related keys
+            Set<String> queueKeys = new java.util.HashSet<>();
+            if (hasKey(queueKey)) {
+                queueKeys.add(queueKey);
+            } else {
+                // Fallback: look for keys with similar patterns
+                String pattern = queueKey + "*";
+                queueKeys = getKeys(pattern);
+            }
+            
+            logger.info("Found {} keys for queue '{}' with key: {}", queueKeys.size(), queueName, queueKey);
+            
+            for (String key : queueKeys) {
+                try {
+                    String keyType = getKeyType(key);
+                    logger.info("Processing queue key: {} of type: {}", key, keyType);
+                    
+                    if ("list".equals(keyType)) {
+                        // Handle list-type queue
+                        Object listData = getValueByType(key);
+                        if (listData instanceof java.util.List) {
+                            @SuppressWarnings("unchecked")
+                            java.util.List<String> list = (java.util.List<String>) listData;
+                            
+                            for (int i = 0; i < list.size(); i++) {
+                                String operationData = list.get(i);
+                                java.util.Map<String, Object> operation = parseOperationData(operationData, i);
+                                if (operation != null) {
+                                    operations.add(operation);
+                                }
+                            }
+                        }
+                    } else if ("hash".equals(keyType)) {
+                        // Handle hash-type queue
+                        Object hashData = getValueByType(key);
+                        if (hashData instanceof java.util.Map) {
+                            @SuppressWarnings("unchecked")
+                            java.util.Map<String, String> hash = (java.util.Map<String, String>) hashData;
+                            
+                            for (java.util.Map.Entry<String, String> entry : hash.entrySet()) {
+                                String operationId = entry.getKey();
+                                String operationData = entry.getValue();
+                                java.util.Map<String, Object> operation = parseOperationData(operationData, operations.size());
+                                if (operation != null) {
+                                    operation.put("operationId", operationId);
+                                    operations.add(operation);
+                                }
+                            }
+                        }
+                    } else if ("string".equals(keyType)) {
+                        // Handle single string value
+                        Object stringData = getValueByType(key);
+                        if (stringData != null) {
+                            java.util.Map<String, Object> operation = parseOperationData(stringData.toString(), 0);
+                            if (operation != null) {
+                                operations.add(operation);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("Error processing queue key: {}", key, e);
+                }
+            }
+            
+            logger.info("Returning {} operations for queue: {}", operations.size(), queueName);
+            
+        } catch (Exception e) {
+            logger.error("Failed to get operations for queue: {}", queueName, e);
+        }
+        
+        return operations;
+    }
+
+    /**
+     * Parse operation data from JSON or string format
+     */
+    private java.util.Map<String, Object> parseOperationData(String operationData, int index) {
+        try {
+            java.util.Map<String, Object> operation = new java.util.HashMap<>();
+            
+            if (operationData != null && !operationData.trim().isEmpty()) {
+                // Try to extract common fields from JSON-like data
+                String operationName = extractJsonField(operationData, "name");
+                String stage = extractJsonField(operationData, "stage");
+                String requestMetadata = extractJsonField(operationData, "requestMetadata");
+                String executeResponse = extractJsonField(operationData, "executeResponse");
+                String queuedTimestamp = extractJsonField(operationData, "queuedTimestamp");
+                
+                operation.put("index", index + 1);
+                operation.put("operationName", operationName != null ? operationName : "operation-" + (index + 1));
+                operation.put("stage", stage != null ? stage : "UNKNOWN");
+                operation.put("status", determineOperationStatus(stage, operationData));
+                operation.put("queuedAt", queuedTimestamp != null ? formatTimestamp(queuedTimestamp) : "N/A");
+                operation.put("rawData", operationData.length() > 200 ? operationData.substring(0, 200) + "..." : operationData);
+                
+                // Extract additional metadata if available
+                if (requestMetadata != null) {
+                    operation.put("hasMetadata", true);
+                } else {
+                    operation.put("hasMetadata", false);
+                }
+                
+                if (executeResponse != null) {
+                    operation.put("hasExecuteResponse", true);
+                } else {
+                    operation.put("hasExecuteResponse", false);
+                }
+                
+            } else {
+                // Empty or null data
+                operation.put("index", index + 1);
+                operation.put("operationName", "empty-operation-" + (index + 1));
+                operation.put("stage", "EMPTY");
+                operation.put("status", "Empty");
+                operation.put("queuedAt", "N/A");
+                operation.put("rawData", "");
+                operation.put("hasMetadata", false);
+                operation.put("hasExecuteResponse", false);
+            }
+            
+            return operation;
+            
+        } catch (Exception e) {
+            logger.error("Error parsing operation data: {}", operationData, e);
+            return null;
+        }
+    }
+
+    /**
+     * Determine operation status based on stage and data
+     */
+    private String determineOperationStatus(String stage, String operationData) {
+        if (stage == null) {
+            return "Unknown";
+        }
+        
+        switch (stage.toUpperCase()) {
+            case "QUEUED":
+                return "Queued";
+            case "EXECUTING":
+                return "Executing";
+            case "COMPLETED":
+                return "Completed";
+            case "FAILED":
+                return "Failed";
+            default:
+                return stage;
         }
     }
 }

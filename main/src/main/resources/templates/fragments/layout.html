@@ -45,6 +45,7 @@
     
     <!-- Custom JS -->
     <script th:src="@{/assets/js/dashboard.js}"></script>
+    <script th:if="${currentPage == 'queues'}" th:src="@{/assets/js/queues.js}"></script>
 </body>
 </html>
 
@@ -55,10 +56,14 @@
     </div>
     <nav class="sidebar-nav">
         <div class="nav-item">
-            <a href="#" class="nav-link active">
-                <i class="bi bi-speedometer2"></i>
-                Dashboard
-            </a>
+                                        <a class="nav-link" th:class="${activePage == 'dashboard' ? 'nav-link active' : 'nav-link'}" href="/dashboard">
+                                <i class="bi bi-speedometer2" style="margin-right: 8px;"></i>
+                                Dashboard
+                            </a>
+                            <a class="nav-link" th:class="${activePage == 'queues' ? 'nav-link active' : 'nav-link'}" href="/queues">
+                                <i class="bi bi-list-ul" style="margin-right: 8px;"></i>
+                                Queues
+                            </a>
         </div>
     </nav>
 </div>

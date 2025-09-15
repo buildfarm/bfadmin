@@ -17,8 +17,8 @@
                     </div>
                     <div class="d-flex align-items-center">
                         <span class="status-badge" 
-                              th:classappend="${systemStatus.systemHealthClass == 'success' ? 'status-success' : (systemStatus.systemHealthClass == 'danger' ? 'status-danger' : 'status-warning')}"
-                              th:text="${systemStatus.systemHealthText}">
+                              th:classappend="${systemStatus['systemHealthClass'] == 'success' ? 'status-success' : (systemStatus['systemHealthClass'] == 'danger' ? 'status-danger' : 'status-warning')}"
+                              th:text="${systemStatus['systemHealthText']}">
                             <i class="bi bi-check-circle"></i> Healthy
                         </span>
                     </div>
@@ -35,7 +35,7 @@
                             <i class="bi bi-database"></i>
                         </div>
                         <div class="ms-3 stats-content">
-                            <h3 th:text="${systemStatus.valkeyConnected ? 'Connected' : 'Disconnected'}">Connected</h3>
+                            <h3 th:text="${systemStatus['valkeyStatus'] != null ? systemStatus['valkeyStatus'] : 'Unknown'}">Connected</h3>
                             <p>Valkey Cluster</p>
                         </div>
                     </div>
@@ -49,7 +49,7 @@
                             <i class="bi bi-key"></i>
                         </div>
                         <div class="ms-3 stats-content">
-                            <h3 th:text="${systemStatus.totalKeyCount}">1,234</h3>
+                            <h3 th:text="${systemStatus['totalKeyCount']}">1,234</h3>
                             <p>Total Keys</p>
                         </div>
                     </div>
@@ -63,7 +63,7 @@
                             <i class="bi bi-cpu"></i>
                         </div>
                         <div class="ms-3 stats-content">
-                            <h3 th:text="${systemStatus.activeExecuteCount + '/' + systemStatus.executeWorkerCount}">1/1</h3>
+                            <h3 th:text="${systemStatus['activeExecuteCount'] + '/' + systemStatus['executeWorkerCount']}">1/1</h3>
                             <p>Execute Workers</p>
                         </div>
                     </div>
@@ -77,7 +77,7 @@
                             <i class="bi bi-hdd"></i>
                         </div>
                         <div class="ms-3 stats-content">
-                            <h3 th:text="${systemStatus.activeStorageCount + '/' + systemStatus.storageWorkerCount}">1/1</h3>
+                            <h3 th:text="${systemStatus['activeStorageCount'] + '/' + systemStatus['storageWorkerCount']}">1/1</h3>
                             <p>Storage Workers</p>
                         </div>
                     </div>
@@ -100,9 +100,9 @@
         </div>
 
         <!-- Error Alert -->
-        <div class="alert alert-danger fade-in" th:if="${systemStatus.error != null}">
+        <div class="alert alert-danger fade-in" th:if="${systemStatus['error'] != null}">
             <i class="bi bi-exclamation-triangle"></i>
-            <span th:text="${systemStatus.error}">Error message</span>
+            <span th:text="${systemStatus['error']}">Error message</span>
         </div>
 
         <!-- Execute Workers Table -->
@@ -150,28 +150,28 @@
                         <tbody>
                             <tr th:each="worker : ${executeWorkersTable}">
                                 <td>
-                                    <span class="status-badge status-secondary" th:text="${worker.groupName != null ? worker.groupName : 'default'}">default</span>
+                                    <span class="status-badge status-secondary" th:text="${worker['groupName'] != null ? worker['groupName'] : 'default'}">default</span>
                                 </td>
                                 <td>
-                                    <span class="text-info" th:text="${worker.endpoint}">endpoint</span>
+                                    <span class="text-info" th:text="${worker['endpoint']}">endpoint</span>
                                 </td>
                                 <td>
                                     <span class="status-badge status-success">
                                         <i class="bi bi-cpu"></i> 
-                                        <span th:text="${worker.workerType}">Execute</span>
+                                        <span th:text="${worker['workerType']}">Execute</span>
                                     </span>
                                 </td>
                                 <td>
                                     <span class="status-badge" 
-                                          th:classappend="${worker.status.startsWith('Active') ? 'status-success' : (worker.status == 'Expired' ? 'status-danger' : 'status-warning')}">
-                                        <i th:class="${worker.status.startsWith('Active') ? 'bi bi-check-circle' : (worker.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${worker.status}">Active</span>
+                                          th:classappend="${worker['status'] != null && worker['status'].toString().startsWith('Active') ? 'status-success' : (worker['status'] == 'Expired' ? 'status-danger' : 'status-warning')}">
+                                        <i th:class="${worker['status'] != null && worker['status'].toString().startsWith('Active') ? 'bi bi-check-circle' : (worker['status'] == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${worker['status']}">Active</span>
                                     </span>
                                 </td>
                                 <td>
-                                    <small class="text-muted" th:text="${worker.expireAt}">expiry</small>
+                                    <small class="text-muted" th:text="${worker['expireAt']}">expiry</small>
                                 </td>
                                 <td>
-                                    <small class="text-muted" th:text="${worker.firstRegisteredAt}">registered</small>
+                                    <small class="text-muted" th:text="${worker['firstRegisteredAt']}">registered</small>
                                 </td>
                             </tr>
                         </tbody>
@@ -245,28 +245,28 @@
                         <tbody>
                             <tr th:each="worker : ${storageWorkersTable}">
                                 <td>
-                                    <span class="status-badge status-secondary" th:text="${worker.groupName != null ? worker.groupName : 'default'}">default</span>
+                                    <span class="status-badge status-secondary" th:text="${worker['groupName'] != null ? worker['groupName'] : 'default'}">default</span>
                                 </td>
                                 <td>
-                                    <span class="text-info" th:text="${worker.endpoint}">endpoint</span>
+                                    <span class="text-info" th:text="${worker['endpoint']}">endpoint</span>
                                 </td>
                                 <td>
                                     <span class="status-badge status-info">
                                         <i class="bi bi-hdd"></i> 
-                                        <span th:text="${worker.workerType}">Storage</span>
+                                        <span th:text="${worker['workerType']}">Storage</span>
                                     </span>
                                 </td>
                                 <td>
                                     <span class="status-badge" 
-                                          th:classappend="${worker.status.startsWith('Active') ? 'status-success' : (worker.status == 'Expired' ? 'status-danger' : 'status-warning')}">
-                                        <i th:class="${worker.status.startsWith('Active') ? 'bi bi-check-circle' : (worker.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${worker.status}">Active</span>
+                                          th:classappend="${worker['status'] != null && worker['status'].toString().startsWith('Active') ? 'status-success' : (worker['status'] == 'Expired' ? 'status-danger' : 'status-warning')}">
+                                        <i th:class="${worker['status'] != null && worker['status'].toString().startsWith('Active') ? 'bi bi-check-circle' : (worker['status'] == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${worker['status']}">Active</span>
                                     </span>
                                 </td>
                                 <td>
-                                    <small class="text-muted" th:text="${worker.expireAt}">expiry</small>
+                                    <small class="text-muted" th:text="${worker['expireAt']}">expiry</small>
                                 </td>
                                 <td>
-                                    <small class="text-muted" th:text="${worker.firstRegisteredAt}">registered</small>
+                                    <small class="text-muted" th:text="${worker['firstRegisteredAt']}">registered</small>
                                 </td>
                             </tr>
                         </tbody>
@@ -340,26 +340,26 @@
                         <tbody>
                             <tr th:each="server : ${serversTable}">
                                 <td>
-                                    <span class="status-badge status-secondary" th:text="${server.groupName != null ? server.groupName : 'default'}">default</span>
+                                    <span class="status-badge status-secondary" th:text="${server['groupName'] != null ? server['groupName'] : 'default'}">default</span>
                                 </td>
                                 <td>
-                                    <span class="text-info" th:text="${server.endpoint}">endpoint</span>
+                                    <span class="text-info" th:text="${server['endpoint']}">endpoint</span>
                                 </td>
                                 <td>
                                     <span class="status-badge" 
-                                          th:classappend="${server.serverType == 'Scheduler' ? 'status-info' : (server.serverType == 'CAS' ? 'status-primary' : 'status-success')}">
-                                        <i th:class="${server.serverType == 'Scheduler' ? 'bi bi-gear' : (server.serverType == 'CAS' ? 'bi bi-database' : 'bi bi-server')}"></i> 
-                                        <span th:text="${server.serverType}">Scheduler</span>
+                                          th:classappend="${server['serverType'] == 'Scheduler' ? 'status-info' : (server['serverType'] == 'CAS' ? 'status-primary' : 'status-success')}">
+                                        <i th:class="${server['serverType'] == 'Scheduler' ? 'bi bi-gear' : (server['serverType'] == 'CAS' ? 'bi bi-database' : 'bi bi-server')}"></i> 
+                                        <span th:text="${server['serverType']}">Scheduler</span>
                                     </span>
                                 </td>
                                 <td>
                                     <span class="status-badge" 
-                                          th:classappend="${server.status.startsWith('Active') ? 'status-success' : (server.status == 'Expired' ? 'status-danger' : 'status-warning')}">
-                                        <i th:class="${server.status.startsWith('Active') ? 'bi bi-check-circle' : (server.status == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${server.status}">Active</span>
+                                          th:classappend="${server['status'] != null && server['status'].toString().startsWith('Active') ? 'status-success' : (server['status'] == 'Expired' ? 'status-danger' : 'status-warning')}">
+                                        <i th:class="${server['status'] != null && server['status'].toString().startsWith('Active') ? 'bi bi-check-circle' : (server['status'] == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${server['status']}">Active</span>
                                     </span>
                                 </td>
-                                <td><small class="text-muted" th:text="${server.expireAt}">2024-01-01 11:00:00</small></td>
-                                <td><small class="text-muted" th:text="${server.firstRegisteredAt}">2024-01-01 10:00:00</small></td>
+                                <td><small class="text-muted" th:text="${server['expireAt']}">2024-01-01 11:00:00</small></td>
+                                <td><small class="text-muted" th:text="${server['firstRegisteredAt']}">2024-01-01 10:00:00</small></td>
                             </tr>
                         </tbody>
                     </table>

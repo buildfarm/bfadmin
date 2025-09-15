@@ -190,8 +190,15 @@ public class AdminServiceImpl implements AdminService {
     java.util.Map<String, Object> status = new java.util.HashMap<>();
     
     try {
-      // Test Valkey connection
-      boolean valkeyConnected = valkeyService.testConnection();
+      // Test Valkey connection with error handling
+      boolean valkeyConnected = false;
+      try {
+        valkeyConnected = valkeyService != null ? valkeyService.testConnection() : false;
+      } catch (Exception e) {
+        logger.error("Failed to test Valkey connection", e);
+        valkeyConnected = false;
+      }
+      
       status.put("valkeyConnected", valkeyConnected);
       status.put("valkeyStatus", valkeyConnected ? "Connected" : "Disconnected");
       status.put("valkeyStatusClass", valkeyConnected ? "success" : "danger");
@@ -262,5 +269,33 @@ public class AdminServiceImpl implements AdminService {
     }
     
     return status;
+  }
+
+  @Override
+  public java.util.List<String> getQueueNames() {
+    logger.info("Queue names requested");
+    try {
+      // Cast to ValkeyService to access queue methods
+      tech.aurora.bfadmin.service.ValkeyService valkeyServiceImpl = 
+        (tech.aurora.bfadmin.service.ValkeyService) valkeyService;
+      return valkeyServiceImpl.getQueueNames();
+    } catch (Exception e) {
+      logger.error("Failed to get queue names from Valkey", e);
+      return new java.util.ArrayList<>();
+    }
+  }
+
+  @Override  
+  public java.util.List<java.util.Map<String, Object>> getQueueOperations(String queueName) {
+    logger.info("Queue operations requested for queue: {}", queueName);
+    try {
+      // Cast to ValkeyService to access queue methods
+      tech.aurora.bfadmin.service.ValkeyService valkeyServiceImpl = 
+        (tech.aurora.bfadmin.service.ValkeyService) valkeyService;
+      return valkeyServiceImpl.getQueueOperations(queueName);
+    } catch (Exception e) {
+      logger.error("Failed to get queue operations for {} from Valkey", queueName, e);
+      return new java.util.ArrayList<>();
+    }
   }
 }
