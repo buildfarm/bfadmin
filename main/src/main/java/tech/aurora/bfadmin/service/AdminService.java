@@ -28,4 +28,6 @@ public interface AdminService {
   java.util.List<java.util.Map<String, Object>> getAllQueueOperations();
   
   java.util.List<java.util.Map<String, Object>> getDispatchedOperations();
+  
+  java.util.List<java.util.Map<String, Object>> getPrequeuedOperations();
 }

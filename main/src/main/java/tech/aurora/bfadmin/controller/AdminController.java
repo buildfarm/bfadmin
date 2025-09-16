@@ -194,4 +194,58 @@ public class AdminController {
     
     return operations;
   }
+  
+  @RequestMapping("/prequeue")
+  public String getPrequeuedOperations(Model model) {
+    if (ui) {
+      // Get all prequeued operations
+      java.util.List<java.util.Map<String, Object>> prequeuedOperations = adminService.getPrequeuedOperations();
+      
+      model.addAttribute("operations", prequeuedOperations);
+      model.addAttribute("activePage", "prequeue");
+      model.addAttribute("currentPage", "prequeue");
+      
+      logger.info("Prequeued operations page accessed, found {} operations", prequeuedOperations.size());
+      
+      // Log raw JSON of prequeued operations for debugging
+      try {
+        String operationsJson = objectMapper.writeValueAsString(prequeuedOperations);
+        logger.info("RAW PREQUEUED OPERATIONS JSON: {}", operationsJson);
+        
+        // Also log individual operation samples
+        if (!prequeuedOperations.isEmpty()) {
+          logger.info("First prequeued operation sample: {}", prequeuedOperations.get(0));
+          logger.info("Total prequeued operations count: {}", prequeuedOperations.size());
+        } else {
+          logger.warn("Prequeued operations list is empty");
+        }
+      } catch (JsonProcessingException e) {
+        logger.error("Failed to convert prequeued operations to JSON", e);
+      }
+      
+      return "prequeue";
+    } else {
+      model.addAttribute("status", "999");
+      model.addAttribute("error", "Not Enabled");  
+      model.addAttribute("message", "UI is not enabled. Set ui.enable=true in application.properties");
+      return "error";
+    }
+  }
+  
+  @RequestMapping("/api/prequeued-operations")
+  @ResponseBody
+  public java.util.List<java.util.Map<String, Object>> getPrequeuedOperationsApi() {
+    logger.info("Prequeued operations requested via API");
+    java.util.List<java.util.Map<String, Object>> operations = adminService.getPrequeuedOperations();
+    
+    // Log raw JSON of API response
+    try {
+      String operationsJson = objectMapper.writeValueAsString(operations);
+      logger.info("API RAW PREQUEUED OPERATIONS JSON: {}", operationsJson);
+    } catch (JsonProcessingException e) {
+      logger.error("Failed to convert API prequeued operations to JSON", e);
+    }
+    
+    return operations;
+  }
 }

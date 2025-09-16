@@ -1336,4 +1336,53 @@ public class ValkeyServiceImpl implements ValkeyService {
         
         return null;
     }
+    
+    /**
+     * Get all prequeued operations from the {Arrival}:PreQueuedOperations list
+     */
+    @Override
+    public java.util.List<java.util.Map<String, Object>> getPrequeuedOperations() {
+        java.util.List<java.util.Map<String, Object>> prequeuedOperations = new java.util.ArrayList<>();
+        
+        try {
+            logger.info("Getting prequeued operations from {Arrival}:PreQueuedOperations list");
+            String prequeuedKey = "{Arrival}:PreQueuedOperations";
+            
+            if (hasKey(prequeuedKey)) {
+                String keyType = getKeyType(prequeuedKey);
+                logger.info("Processing prequeued operations key: {} of type: {}", prequeuedKey, keyType);
+                
+                if ("list".equals(keyType)) {
+                    // Handle list-type prequeued operations
+                    java.util.List<Object> listData = valkeyTemplate.opsForList().range(prequeuedKey, 0, -1);
+                    
+                    if (listData != null) {
+                        logger.info("Found {} prequeued operations in list", listData.size());
+                        
+                        for (int i = 0; i < listData.size(); i++) {
+                            Object item = listData.get(i);
+                            String operationData = item.toString();
+                            java.util.Map<String, Object> operation = parseOperationData(operationData, i + 1);
+                            if (operation != null) {
+                                operation.put("status", "prequeued");
+                                operation.put("stage", "PREQUEUED");
+                                prequeuedOperations.add(operation);
+                            }
+                        }
+                    }
+                } else {
+                    logger.warn("PreQueuedOperations key is not a list, found type: {}", keyType);
+                }
+            } else {
+                logger.warn("{Arrival}:PreQueuedOperations key does not exist");
+            }
+            
+            logger.info("Returning {} prequeued operations", prequeuedOperations.size());
+            
+        } catch (Exception e) {
+            logger.error("Failed to get prequeued operations", e);
+        }
+        
+        return prequeuedOperations;
+    }
 }

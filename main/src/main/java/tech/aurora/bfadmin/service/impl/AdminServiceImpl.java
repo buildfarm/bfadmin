@@ -322,4 +322,15 @@ public class AdminServiceImpl implements AdminService {
       return new java.util.ArrayList<>();
     }
   }
+  
+  @Override
+  public java.util.List<java.util.Map<String, Object>> getPrequeuedOperations() {
+    logger.info("Prequeued operations requested");
+    try {
+      return valkeyService.getPrequeuedOperations();
+    } catch (Exception e) {
+      logger.error("Failed to get prequeued operations from Valkey", e);
+      return new java.util.ArrayList<>();
+    }
+  }
 }

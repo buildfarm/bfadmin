@@ -46,6 +46,7 @@
     <!-- Custom JS -->
     <script th:src="@{/assets/js/dashboard.js}"></script>
     <script th:if="${currentPage == 'queues'}" th:src="@{/assets/js/queues.js}"></script>
+    <script th:if="${currentPage == 'prequeue'}" th:src="@{/assets/js/prequeue.js}"></script>
     <script th:if="${currentPage == 'dispatched'}" th:src="@{/assets/js/dispatched.js}"></script>
 </body>
 </html>
@@ -57,18 +58,22 @@
     </div>
     <nav class="sidebar-nav">
         <div class="nav-item">
-                                        <a class="nav-link" th:class="${activePage == 'dashboard' ? 'nav-link active' : 'nav-link'}" href="/dashboard">
-                                <i class="bi bi-speedometer2" style="margin-right: 8px;"></i>
-                                Dashboard
-                            </a>
-                            <a class="nav-link" th:class="${activePage == 'queues' ? 'nav-link active' : 'nav-link'}" href="/queues">
-                                <i class="bi bi-list-ul" style="margin-right: 8px;"></i>
-                                Queues
-                            </a>
-                            <a class="nav-link" th:class="${activePage == 'dispatched' ? 'nav-link active' : 'nav-link'}" href="/dispatched">
-                                <i class="bi bi-send" style="margin-right: 8px;"></i>
-                                Dispatched
-                            </a>
+            <a class="nav-link" th:class="${activePage == 'dashboard' ? 'nav-link active' : 'nav-link'}" href="/dashboard">
+                <i class="bi bi-speedometer2" style="margin-right: 8px;"></i>
+                Dashboard
+            </a>
+            <a class="nav-link" th:class="${activePage == 'queues' ? 'nav-link active' : 'nav-link'}" href="/queues">
+                <i class="bi bi-list-ul" style="margin-right: 8px;"></i>
+                Queue
+            </a>
+            <a class="nav-link" th:class="${activePage == 'prequeue' ? 'nav-link active' : 'nav-link'}" href="/prequeue">
+                <i class="bi bi-clock-history" style="margin-right: 8px;"></i>
+                Prequeue
+            </a>
+            <a class="nav-link" th:class="${activePage == 'dispatched' ? 'nav-link active' : 'nav-link'}" href="/dispatched">
+                <i class="bi bi-send" style="margin-right: 8px;"></i>
+                Dispatch
+            </a>
         </div>
     </nav>
 </div>

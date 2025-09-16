@@ -88,4 +88,10 @@ public interface ValkeyService {
      * @return list of dispatched operations
      */
     java.util.List<java.util.Map<String, Object>> getDispatchedOperations();
+    
+    /**
+     * Get all prequeued operations from the {Arrival}:PreQueuedOperations list
+     * @return list of prequeued operations
+     */
+    java.util.List<java.util.Map<String, Object>> getPrequeuedOperations();
 }
