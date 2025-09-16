@@ -360,10 +360,18 @@ public class ValkeyServiceImpl implements ValkeyService {
         java.util.List<java.util.Map<String, Object>> servers = new java.util.ArrayList<>();
         
         try {
-            Set<String> serverKeys = getKeys(pattern);
+            // Use exact key instead of pattern matching
+            String serverKey = pattern; // pattern is now the exact key name
+            java.util.Set<String> serverKeys = java.util.Set.of(serverKey);
             logger.info("🔍 Fetching Servers keys from Redis with pattern: {}", pattern);
             logger.info("🔑 Found {} server keys matching pattern '{}': {}", serverKeys.size(), pattern, serverKeys);
             
+            
+            // Check if the key exists before processing
+            if (!hasKey(serverKey)) {
+                logger.warn("Servers key does not exist: {}", serverKey);
+                return servers;
+            }
             for (String key : serverKeys) {
                 try {
                     String keyType = getKeyType(key);
@@ -380,22 +388,22 @@ public class ValkeyServiceImpl implements ValkeyService {
                             
                             // Each hash field represents a server
                             for (java.util.Map.Entry<String, String> entry : hash.entrySet()) {
-                                String serverKey = entry.getKey();
+                                String serverId = entry.getKey();
                                 String serverJson = entry.getValue();
                                 
                                 try {
-                                    logger.info("📄 Server JSON for key '{}': {}", serverKey, serverJson);
+                                    logger.info("📄 Server JSON for key '{}': {}", serverId, serverJson);
                                     // Parse the JSON for each individual server
-                                    java.util.Map<String, Object> serverData = parseServerJson(serverKey, serverJson);
+                                    java.util.Map<String, Object> serverData = parseServerJson(serverId, serverJson);
                                     if (serverData != null) {
                                         servers.add(serverData);
                                         logger.info("✅ Successfully parsed server: {}", serverData);
                                     }
                                 } catch (Exception e) {
-                                    logger.error("Error parsing server JSON for key {}: {}", serverKey, serverJson, e);
+                                    logger.error("Error parsing server JSON for key {}: {}", serverId, serverJson, e);
                                     // Add error entry for this specific server
                                     java.util.Map<String, Object> errorData = new java.util.HashMap<>();
-                                    errorData.put("serverId", serverKey);
+                                    errorData.put("serverId", serverId);
                                     errorData.put("endpoint", "Parse Error");
                                     errorData.put("expireAt", "N/A");
                                     errorData.put("serverType", "Error");

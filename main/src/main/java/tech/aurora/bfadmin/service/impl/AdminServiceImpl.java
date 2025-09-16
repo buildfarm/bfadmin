@@ -165,19 +165,17 @@ public class AdminServiceImpl implements AdminService {
         (tech.aurora.bfadmin.service.impl.ValkeyServiceImpl) valkeyService;
       
       // First, let's check what server-related keys exist
-      Set<String> serverKeys = valkeyServiceImpl.getKeys("*server*");
-      logger.info("🔍 Keys containing 'server': {}", serverKeys);
+      // Set<String> serverKeys = valkeyServiceImpl.getKeys("*server*"); // Disabled for performance
+      logger.info("🔍 Keys containing 'server': Disabled for performance");
       
-      Set<String> capitalServerKeys = valkeyServiceImpl.getKeys("*Server*");  
-      logger.info("🔍 Keys containing 'Server': {}", capitalServerKeys);
+      // Set<String> capitalServerKeys = valkeyServiceImpl.getKeys("*Server*"); // Disabled for performance
+      logger.info("🔍 Keys containing 'Server': Disabled for performance");
       
-      Set<String> allKeys = valkeyServiceImpl.getKeys("*");
-      java.util.List<String> serverRelatedKeys = allKeys.stream()
-        .filter(key -> key.toLowerCase().contains("server") || key.contains("Server"))
-        .collect(java.util.stream.Collectors.toList());
-      logger.info("🔍 All server-related keys found: {}", serverRelatedKeys);
+      // Set<String> allKeys = valkeyServiceImpl.getKeys("*"); // Disabled for performance
+      // java.util.List<String> serverRelatedKeys = allKeys.stream() // Disabled
+      logger.info("🔍 All server-related keys found: Using direct Servers key only");
       
-      return valkeyServiceImpl.getServersAsTable("Servers*");
+      return valkeyServiceImpl.getServersAsTable("Servers");
     } catch (Exception e) {
       logger.error("Failed to get servers table from Valkey", e);
       return new java.util.ArrayList<>();
@@ -232,24 +230,7 @@ public class AdminServiceImpl implements AdminService {
       status.put("activeStorageCount", activeStorage);
       status.put("activeTotalCount", activeExecute + activeStorage);
       
-      // Get total key count if Valkey is connected
-      if (valkeyConnected) {
-        try {
-          // Cast to ValkeyService to access additional methods
-          tech.aurora.bfadmin.service.impl.ValkeyServiceImpl valkeyServiceImpl = 
-            (tech.aurora.bfadmin.service.impl.ValkeyServiceImpl) valkeyService;
-          java.util.Set<String> allKeys = valkeyServiceImpl.getKeys("*");
-          status.put("totalKeyCount", allKeys != null ? allKeys.size() : 0);
-          status.put("keyCountClass", allKeys != null && allKeys.size() > 0 ? "info" : "secondary");
-        } catch (Exception e) {
-          logger.warn("Failed to get key count", e);
-          status.put("totalKeyCount", "Unknown");
-          status.put("keyCountClass", "secondary");
-        }
-      } else {
-        status.put("totalKeyCount", "N/A");
-        status.put("keyCountClass", "secondary");
-      }
+
       
       // Overall system health
       boolean systemHealthy = valkeyConnected && totalWorkers > 0 && (activeExecute + activeStorage) > 0;
