@@ -47,22 +47,25 @@ function extractOperationData() {
     
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        if (cells.length >= 6) {
+        if (cells.length >= 8) {
             const operation = {
                 index: cells[0].textContent.trim(),
-                operationName: cells[1].querySelector('.fw-medium')?.textContent.trim() || '',
-                operationId: cells[1].querySelector('small')?.textContent.replace('ID: ', '').trim() || '',
-                stage: cells[2].querySelector('span')?.textContent.trim() || '',
-                status: cells[3].querySelector('span')?.textContent.trim() || '',
-                queuedAt: cells[4].textContent.trim(),
-                hasMetadata: cells[5].querySelector('.status-success') !== null,
-                rawData: cells[6].querySelector('button')?.dataset.raw || ''
+                queueName: cells[1].querySelector('span')?.textContent.trim() || '',
+                operationName: cells[2].querySelector('.fw-medium')?.textContent.trim() || '',
+                operationId: cells[2].dataset.operationId || '',
+                actionDigest: cells[2].querySelector('small')?.textContent.replace('Digest: ', '').trim() || '',
+                stage: cells[3].querySelector('span')?.textContent.trim() || '',
+                status: cells[4].querySelector('span')?.textContent.trim() || '',
+                queuedAt: cells[5].textContent.trim(),
+                hasMetadata: cells[6].querySelector('.status-success') !== null,
+                rawData: cells[7].querySelector('button')?.dataset.raw || ''
             };
             operationData.push(operation);
         }
     });
     
     console.log('Extracted', operationData.length, 'operations');
+    console.log('RAW OPERATIONS DATA FROM HTML:', JSON.stringify(operationData, null, 2));
 }
 
 // Set up event listeners for queue interactions
@@ -146,10 +149,11 @@ function renderOperationTable() {
     // Filter operations based on search
     let filteredOperations = operationData.filter(operation => {
         if (!searchTerm) return true;
-        return operation.name.toLowerCase().includes(searchTerm) ||
+        return operation.operationName.toLowerCase().includes(searchTerm) ||
+               operation.queueName.toLowerCase().includes(searchTerm) ||
                operation.stage.toLowerCase().includes(searchTerm) ||
-               operation.workerName.toLowerCase().includes(searchTerm) ||
-               operation.platform.toLowerCase().includes(searchTerm);
+               operation.status.toLowerCase().includes(searchTerm) ||
+               operation.operationId.toLowerCase().includes(searchTerm);
     });
     
     // Sort operations
@@ -159,10 +163,10 @@ function renderOperationTable() {
             let valueB = b[operationSortColumn];
             
         // Handle different data types
-        if (operationSortColumn === 'name' || operationSortColumn === 'stage') {
+        if (operationSortColumn === 'operationName' || operationSortColumn === 'stage' || operationSortColumn === 'queueName') {
             valueA = String(valueA).toLowerCase();
             valueB = String(valueB).toLowerCase();
-        } else if (operationSortColumn === 'queuedTimestamp') {
+        } else if (operationSortColumn === 'queuedAt') {
             valueA = new Date(valueA);
             valueB = new Date(valueB);
         } else {
@@ -218,20 +222,23 @@ function createOperationRow(operation, index) {
                            operation.stage === 'COMPLETED' ? 'status-success' : 
                            operation.stage === 'FAILED' ? 'status-danger' : 'status-secondary';
     
-    const statusIcon = operation.stage === 'QUEUED' ? 'bi-clock' :
-                      operation.stage === 'EXECUTING' ? 'bi-gear' :
-                      operation.stage === 'COMPLETED' ? 'bi-check-circle' :
-                      operation.stage === 'FAILED' ? 'bi-x-circle' : 'bi-question-circle';
+    const statusIcon = operation.status === 'Queued' ? 'bi-clock' :
+                      operation.status === 'Executing' ? 'bi-gear' :
+                      operation.status === 'Completed' ? 'bi-check-circle' :
+                      operation.status === 'Failed' ? 'bi-x-circle' : 'bi-question-circle';
     
-    const statusBadgeClass = operation.stage === 'QUEUED' ? 'status-warning' :
-                            operation.stage === 'EXECUTING' ? 'status-info' :
-                            operation.stage === 'COMPLETED' ? 'status-success' :
-                            operation.stage === 'FAILED' ? 'status-danger' : 'status-secondary';
+    const statusBadgeClass = operation.status === 'Queued' ? 'status-warning' :
+                            operation.status === 'Executing' ? 'status-info' :
+                            operation.status === 'Completed' ? 'status-success' :
+                            operation.status === 'Failed' ? 'status-danger' : 'status-secondary';
     
     row.innerHTML = `
-        <td><span class="text-muted">${index + 1}</span></td>
+        <td><span class="text-muted">${operation.index}</span></td>
         <td>
-            <span class="fw-medium">${operation.name}</span>
+            <span class="queue-badge">${operation.queueName || 'Unknown'}</span>
+        </td>
+        <td data-operation-id="${operation.operationId}">
+            <span class="fw-medium">${operation.operationName}</span>
             ${operation.actionDigest ? `<br><small class="text-muted">Digest: ${operation.actionDigest.substring(0, 8)}...</small>` : ''}
         </td>
         <td>
@@ -241,27 +248,25 @@ function createOperationRow(operation, index) {
             </span>
         </td>
         <td>
-            <span class="status-badge ${stageBadgeClass}">
-                <i class="bi ${stageIcon}"></i>
-                <span>${operation.stage}</span>
+            <span class="status-badge ${statusBadgeClass}">
+                <i class="bi ${statusIcon}"></i>
+                <span>${operation.status}</span>
             </span>
         </td>
-        <td><small class="text-muted">${operation.queuedTimestamp}</small></td>
+        <td><small class="text-muted">${operation.queuedAt}</small></td>
         <td>
-            <span class="status-badge ${operation.platform ? 'status-success' : 'status-secondary'}">
-                <i class="bi ${operation.platform ? 'bi-check-circle' : 'bi-x-circle'}"></i>
-                ${operation.platform ? 'Yes' : 'No'}
+            <span class="status-badge ${operation.hasMetadata ? 'status-success' : 'status-secondary'}">
+                <i class="bi ${operation.hasMetadata ? 'bi-check-circle' : 'bi-x-circle'}"></i>
+                ${operation.hasMetadata ? 'Yes' : 'No'}
             </span>
         </td>
         <td>
             <button class="btn btn-sm btn-outline-info" onclick="showOperationDetails(this)" 
-                    data-name="${operation.name}" 
+                    data-name="${operation.operationName}" 
                     data-stage="${operation.stage}" 
-                    data-worker="${operation.workerName}" 
-                    data-platform="${operation.platform}" 
-                    data-queued="${operation.queuedTimestamp}" 
-                    data-execute-timeout="${operation.executeTimeout}" 
-                    data-action-timeout="${operation.actionTimeout}">
+                    data-status="${operation.status}"
+                    data-queued="${operation.queuedAt}" 
+                    data-raw="${operation.rawData}">
                 <i class="bi bi-eye"></i> View
             </button>
         </td>
@@ -344,7 +349,8 @@ function loadQueueOperations() {
     fetch(`/api/queue-operations?queueName=${encodeURIComponent(selectedQueue)}`)
         .then(response => response.json())
         .then(operations => {
-            console.log('Received', operations.length, 'operations');
+            console.log('Received', operations.length, 'operations for queue:', selectedQueue);
+            console.log('RAW API RESPONSE JSON:', JSON.stringify(operations, null, 2));
             
             // Update operation data
             operationData = operations.map(op => ({
@@ -357,6 +363,8 @@ function loadQueueOperations() {
                 hasMetadata: op.hasMetadata || false,
                 rawData: op.rawData || ''
             }));
+            
+            console.log('MAPPED OPERATIONS DATA:', JSON.stringify(operationData, null, 2));
             
             // Reset pagination
             operationCurrentPage = 1;

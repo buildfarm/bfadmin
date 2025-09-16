@@ -3,45 +3,41 @@
       xmlns:th="http://www.thymeleaf.org" 
       th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content})}">
 <head>
-    <title>BuildFarm Queues</title>
+    <title>BuildFarm Dispatched Operations</title>
 </head>
 <body>
     <div id="content">
-        <!-- Queue Operations Header -->
+        <!-- Dispatched Operations Header -->
         <div class="card fade-in">
             <div class="card-header">
                 <h5 class="card-title">
-                    <span><i class="bi bi-list-task"></i> All Queue Operations</span>
-                    <span class="status-badge status-info" id="operationCount" th:text="${operations.size()} + ' Operations'">0 Operations</span>
+                    <span><i class="bi bi-send"></i> Dispatched Operations</span>
+                    <span class="status-badge status-info" id="dispatchedCount" th:text="${operations.size()} + ' Operations'">0 Operations</span>
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row align-items-center mb-3">
                     <div class="col-md-6">
-                        <span class="text-muted">Showing operations from <strong th:text="${queueNames.size()}">0</strong> queues: 
-                        <span th:each="queue, iterStat : ${queueNames}">
-                            <span th:text="${queue}">queue</span><span th:unless="${iterStat.last}">, </span>
-                        </span>
-                        </span>
+                        <span class="text-muted">Operations currently dispatched for execution</span>
                     </div>
                     <div class="col-md-6 text-end">
-                        <button class="btn btn-refresh" onclick="refreshAllOperations()">
-                            <i class="bi bi-arrow-clockwise"></i> Refresh All
+                        <button class="btn btn-refresh" onclick="refreshDispatchedOperations()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
                         </button>
                     </div>
                 </div>
                 
-                <div th:if="${queueNames.empty}" class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> No queues available
+                <div th:if="${operations.empty}" class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No dispatched operations currently
                 </div>
             </div>
         </div>
 
-        <!-- Operations Table -->
-        <div class="card fade-in" th:unless="${queueNames.empty}">
+        <!-- Dispatched Operations Table -->
+        <div class="card fade-in" th:unless="${operations.empty}">
             <div class="card-header">
                 <h5 class="card-title">
-                    <span><i class="bi bi-gear-fill"></i> All Queue Operations</span>
+                    <span><i class="bi bi-gear-fill"></i> Dispatched Operations</span>
                 </h5>
             </div>
             <div class="card-body p-0">
@@ -49,14 +45,14 @@
                 <div class="table-controls" th:if="${operations != null and operations.size() > 0}">
                     <div class="table-search">
                         <i class="bi bi-search"></i>
-                        <input type="text" id="operationSearch" placeholder="Search operations..." />
+                        <input type="text" id="dispatchedSearch" placeholder="Search dispatched operations..." />
                     </div>
                     <div class="table-info">
-                        <span id="operationTableCount" th:text="${operations.size()}">0</span> operations
+                        <span id="dispatchedTableCount" th:text="${operations.size()}">0</span> operations
                     </div>
                     <div class="page-size-selector">
                         <span>Show:</span>
-                        <select id="operationPageSize">
+                        <select id="dispatchedPageSize">
                             <option value="5">5</option>
                             <option value="10" selected>10</option>
                             <option value="25">25</option>
@@ -67,15 +63,15 @@
                 </div>
                 
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0" id="operationTable" th:if="${operations != null and operations.size() > 0}">
+                    <table class="table table-hover mb-0" id="dispatchedTable" th:if="${operations != null and operations.size() > 0}">
                         <thead>
                             <tr>
                                 <th class="sortable-header" data-column="index"><i class="bi bi-hash"></i> #</th>
-                                <th class="sortable-header" data-column="queueName"><i class="bi bi-collection"></i> Queue</th>
+                                <th class="sortable-header" data-column="operationId"><i class="bi bi-key"></i> Operation ID</th>
                                 <th class="sortable-header" data-column="operationName"><i class="bi bi-file-text"></i> Operation</th>
                                 <th class="sortable-header" data-column="stage"><i class="bi bi-diagram-3"></i> Stage</th>
                                 <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
-                                <th class="sortable-header" data-column="queuedAt"><i class="bi bi-clock"></i> Queued At</th>
+                                <th class="sortable-header" data-column="dispatchedAt"><i class="bi bi-clock"></i> Dispatched At</th>
                                 <th class="sortable-header" data-column="hasMetadata"><i class="bi bi-info-square"></i> Metadata</th>
                                 <th><i class="bi bi-eye"></i> Actions</th>
                             </tr>
@@ -86,13 +82,9 @@
                                     <span class="text-muted" th:text="${iterStat.count}">1</span>
                                 </td>
                                 <td>
-                                    <span class="status-badge" 
-                                          th:classappend="${operation.queueName == 'prequeue' ? 'status-warning' : (operation.queueName == 'cpu' ? 'status-success' : 'status-info')}">
-                                        <i class="bi bi-collection"></i>
-                                        <span th:text="${operation.queueName}">prequeue</span>
-                                    </span>
+                                    <small class="font-monospace" th:text="${operation.operationId != null ? (#strings.length(operation.operationId) > 16 ? #strings.substring(operation.operationId, 0, 16) + '...' : operation.operationId) : 'N/A'}">operation-id...</small>
                                 </td>
-                                <td th:data-operation-id="${operation.operationId}">
+                                <td>
                                     <span class="fw-medium" th:text="${operation.operationName != null ? operation.operationName : operation.name}">operation-name</span>
                                     <br>
                                     <small class="text-muted" th:if="${operation.actionDigest != null}" th:text="'Digest: ' + ${#strings.length(operation.actionDigest) >= 8 ? #strings.substring(operation.actionDigest, 0, 8) + '...' : operation.actionDigest}">Digest: abc12345...</small>
@@ -100,16 +92,15 @@
                                 </td>
                                 <td>
                                     <span class="status-badge" 
-                                          th:classappend="${operation.stage == 'QUEUED' ? 'status-warning' : (operation.stage == 'EXECUTING' ? 'status-info' : (operation.stage == 'COMPLETED' ? 'status-success' : (operation.stage == 'FAILED' ? 'status-danger' : 'status-secondary')))}">
-                                        <i th:class="${operation.stage == 'QUEUED' ? 'bi bi-clock' : (operation.stage == 'EXECUTING' ? 'bi bi-gear' : (operation.stage == 'COMPLETED' ? 'bi bi-check-circle' : (operation.stage == 'FAILED' ? 'bi bi-x-circle' : 'bi bi-question-circle')))}"></i>
-                                        <span th:text="${operation.stage}">QUEUED</span>
+                                          th:classappend="${operation.stage == 'DISPATCHED' ? 'status-info' : (operation.stage == 'EXECUTING' ? 'status-warning' : (operation.stage == 'COMPLETED' ? 'status-success' : (operation.stage == 'FAILED' ? 'status-danger' : 'status-secondary')))}">
+                                        <i th:class="${operation.stage == 'DISPATCHED' ? 'bi bi-send' : (operation.stage == 'EXECUTING' ? 'bi bi-gear' : (operation.stage == 'COMPLETED' ? 'bi bi-check-circle' : (operation.stage == 'FAILED' ? 'bi bi-x-circle' : 'bi bi-question-circle')))}"></i>
+                                        <span th:text="${operation.stage}">DISPATCHED</span>
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="status-badge" 
-                                          th:classappend="${operation.status == 'Queued' ? 'status-warning' : (operation.status == 'Executing' ? 'status-info' : (operation.status == 'Completed' ? 'status-success' : (operation.status == 'Failed' ? 'status-danger' : 'status-secondary')))}">
-                                        <i th:class="${operation.status == 'Queued' ? 'bi bi-clock' : (operation.status == 'Executing' ? 'bi bi-gear' : (operation.status == 'Completed' ? 'bi bi-check-circle' : (operation.status == 'Failed' ? 'bi bi-x-circle' : 'bi bi-question-circle')))}"></i>
-                                        <span th:text="${operation.status}">Queued</span>
+                                    <span class="status-badge status-info">
+                                        <i class="bi bi-send"></i>
+                                        <span th:text="${operation.status != null ? operation.status : 'Dispatched'}">Dispatched</span>
                                     </span>
                                 </td>
                                 <td>
@@ -125,8 +116,8 @@
                                 </td>
                                 <td>
                                     <button class="btn btn-sm btn-outline-info" 
-                                            onclick="showOperationDetails(this)"
-                                            th:attr="data-name=${operation.operationName != null ? operation.operationName : operation.name}, data-stage=${operation.stage}, data-queue=${operation.queueName}, data-status=${operation.status}, data-queued=${operation.queuedAt}, data-raw=${operation.rawData}">
+                                            onclick="showDispatchedOperationDetails(this)"
+                                            th:attr="data-name=${operation.operationName != null ? operation.operationName : operation.name}, data-stage=${operation.stage}, data-operation-id=${operation.operationId}, data-status=${operation.status}, data-dispatched=${operation.queuedTimestamp != null ? operation.queuedTimestamp : operation.queuedAt}, data-raw=${operation.rawData}">
                                         <i class="bi bi-eye"></i> View
                                     </button>
                                 </td>
@@ -134,41 +125,39 @@
                         </tbody>
                     </table>
                     
-                    <!-- Operations Pagination Controls -->
+                    <!-- Dispatched Operations Pagination Controls -->
                     <div class="pagination-controls" th:if="${operations != null and operations.size() > 0}">
                         <div class="pagination-info">
-                            Showing <span id="operationStart">1</span> to <span id="operationEnd">10</span> of <span id="operationTotal" th:text="${operations.size()}">0</span> operations
+                            Showing <span id="dispatchedStart">1</span> to <span id="dispatchedEnd">10</span> of <span id="dispatchedTotal" th:text="${operations.size()}">0</span> operations
                         </div>
                         <div class="pagination-buttons">
-                            <button class="pagination-btn" id="operationPrevBtn" onclick="changeOperationPage(-1)">
+                            <button class="pagination-btn" id="dispatchedPrevBtn" onclick="changeDispatchedPage(-1)">
                                 <i class="bi bi-chevron-left"></i> Previous
                             </button>
-                            <span id="operationPageNumbers"></span>
-                            <button class="pagination-btn" id="operationNextBtn" onclick="changeOperationPage(1)">
+                            <span id="dispatchedPageNumbers"></span>
+                            <button class="pagination-btn" id="dispatchedNextBtn" onclick="changeDispatchedPage(1)">
                                 Next <i class="bi bi-chevron-right"></i>
                             </button>
                         </div>
                     </div>
-                    
 
-                    
                     <div class="alert alert-info m-3" th:if="${operations == null or operations.size() == 0}">
-                        <i class="bi bi-info-circle"></i> No operations found in any queues
+                        <i class="bi bi-info-circle"></i> No dispatched operations found
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Operation Details Modal -->
-        <div class="modal fade" id="operationModal" tabindex="-1" aria-labelledby="operationModalLabel" aria-hidden="true">
+        <!-- Dispatched Operation Details Modal -->
+        <div class="modal fade" id="dispatchedOperationModal" tabindex="-1" aria-labelledby="dispatchedOperationModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="operationModalLabel">Operation Details</h5>
+                        <h5 class="modal-title" id="dispatchedOperationModalLabel">Dispatched Operation Details</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <pre id="operationDetails" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-size: 0.875rem;"></pre>
+                        <pre id="dispatchedOperationDetails" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-size: 0.875rem;"></pre>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -179,58 +168,73 @@
     </div>
 
     <script th:inline="javascript">
-    // Log raw operations data from server for debugging
-    console.log('=== FRONTEND RAW OPERATIONS DATA FROM SERVER ===');
-    /*[[${operations}]]*/ 
-    var serverOperationsData = /*[[${operations}]]*/ [];
-    console.log('SERVER OPERATIONS RAW JSON:', JSON.stringify(serverOperationsData, null, 2));
-    console.log('SERVER OPERATIONS COUNT:', serverOperationsData.length);
+    // Log raw dispatched operations data from server for debugging
+    console.log('=== FRONTEND RAW DISPATCHED OPERATIONS DATA FROM SERVER ===');
+    var serverDispatchedOperationsData = /*[[${operations}]]*/ [];
+    console.log('SERVER DISPATCHED OPERATIONS RAW JSON:', JSON.stringify(serverDispatchedOperationsData, null, 2));
+    console.log('SERVER DISPATCHED OPERATIONS COUNT:', serverDispatchedOperationsData.length);
     
-    var serverQueueNames = /*[[${queueNames}]]*/ [];
-    console.log('SERVER QUEUE NAMES:', JSON.stringify(serverQueueNames, null, 2));
-    
-    // Log each individual operation for detailed inspection
-    if (serverOperationsData && serverOperationsData.length > 0) {
-        console.log('=== DETAILED OPERATION INSPECTION ===');
-        for (let i = 0; i < Math.min(5, serverOperationsData.length); i++) {
-            console.log(`Operation ${i}:`, JSON.stringify(serverOperationsData[i], null, 2));
+    // Log each individual dispatched operation for detailed inspection
+    if (serverDispatchedOperationsData && serverDispatchedOperationsData.length > 0) {
+        console.log('=== DETAILED DISPATCHED OPERATION INSPECTION ===');
+        for (let i = 0; i < Math.min(5, serverDispatchedOperationsData.length); i++) {
+            console.log(`Dispatched Operation ${i}:`, JSON.stringify(serverDispatchedOperationsData[i], null, 2));
         }
     } else {
-        console.warn('No operations data received from server!');
+        console.warn('No dispatched operations data received from server!');
     }
-    console.log('=== END FRONTEND DEBUG DATA ===');
+    console.log('=== END FRONTEND DISPATCHED DEBUG DATA ===');
     
-    // Refresh all operations from all queues
-    function refreshAllOperations() {
+    // Refresh dispatched operations
+    function refreshDispatchedOperations() {
         window.location.reload();
     }
 
-    // Show operation details in modal
-    function showOperationDetails(button) {
+    // Show dispatched operation details in modal
+    function showDispatchedOperationDetails(button) {
         const operationName = button.getAttribute('data-name') || 'Unknown';
         const stage = button.getAttribute('data-stage') || 'Unknown';
-        const queueName = button.getAttribute('data-queue') || 'Unknown';
+        const operationId = button.getAttribute('data-operation-id') || 'Unknown';
         const status = button.getAttribute('data-status') || 'Unknown';
-        const queuedAt = button.getAttribute('data-queued') || 'N/A';
+        const dispatchedAt = button.getAttribute('data-dispatched') || 'N/A';
         const rawData = button.getAttribute('data-raw') || 'No raw data available';
 
-        const details = `Operation Details:
+        const details = `Dispatched Operation Details:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Name: ${operationName}
-Queue: ${queueName}
+Operation ID: ${operationId}
 Stage: ${stage}
 Status: ${status}
-Queued At: ${queuedAt}
+Dispatched At: ${dispatchedAt}
 
 Raw Data:
 ${rawData}`;
 
-        document.getElementById('operationDetails').textContent = details;
+        document.getElementById('dispatchedOperationDetails').textContent = details;
         
         // Show the modal (assuming Bootstrap is loaded)
-        const modal = new bootstrap.Modal(document.getElementById('operationModal'));
+        const modal = new bootstrap.Modal(document.getElementById('dispatchedOperationModal'));
         modal.show();
+    }
+
+    // Initialize dispatched operations table with DataTables-like functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const table = document.getElementById('dispatchedTable');
+        if (table) {
+            initializeDispatchedTable();
+        }
+    });
+
+    function initializeDispatchedTable() {
+        // Add table functionality similar to queues table
+        // Pagination, search, etc. can be implemented here
+        console.log('Dispatched operations table initialized');
+    }
+
+    function changeDispatchedPage(direction) {
+        // Implement pagination logic
+        console.log('Change dispatched page:', direction);
     }
     </script>
 </body>

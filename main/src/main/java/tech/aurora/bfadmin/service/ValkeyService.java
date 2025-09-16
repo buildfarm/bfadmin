@@ -63,4 +63,29 @@ public interface ValkeyService {
      * @return true if key exists, false otherwise
      */
     boolean hasKey(String key);
+    
+    /**
+     * Get all configured queue names
+     * @return list of queue names
+     */
+    java.util.List<String> getQueueNames();
+    
+    /**
+     * Get operations for a specific queue
+     * @param queueName the name of the queue
+     * @return list of operations
+     */
+    java.util.List<java.util.Map<String, Object>> getQueueOperations(String queueName);
+    
+    /**
+     * Get operations from all configured queues
+     * @return list of all operations
+     */
+    java.util.List<java.util.Map<String, Object>> getAllQueueOperations();
+    
+    /**
+     * Get all dispatched operations from the DispatchedOperations hash
+     * @return list of dispatched operations
+     */
+    java.util.List<java.util.Map<String, Object>> getDispatchedOperations();
 }

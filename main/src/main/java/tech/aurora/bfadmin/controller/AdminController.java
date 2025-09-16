@@ -10,6 +10,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 @Controller
 public class AdminController {
@@ -17,6 +19,9 @@ public class AdminController {
 
   @Autowired
   AdminService adminService;
+  
+  @Autowired
+  ObjectMapper objectMapper;
 
   @Value("${ui.enable}")
   private boolean ui;
@@ -74,13 +79,28 @@ public class AdminController {
       
       logger.info("Queues page accessed, found {} total operations across {} queues", allOperations.size(), queueNames.size());
       
-      // Debug: Log the first few operations to see their structure
-      if (!allOperations.isEmpty()) {
-        logger.info("First operation sample: {}", allOperations.get(0));
-        logger.info("Operations list class: {}, isEmpty: {}", allOperations.getClass().getName(), allOperations.isEmpty());
-      } else {
-        logger.warn("Operations list is empty or null");
+      // Log raw JSON of operations for debugging
+      try {
+        String operationsJson = objectMapper.writeValueAsString(allOperations);
+        logger.info("RAW OPERATIONS JSON: {}", operationsJson);
+        
+        // Also log individual operation samples
+        if (!allOperations.isEmpty()) {
+          logger.info("First operation sample: {}", allOperations.get(0));
+          logger.info("Total operations count: {}", allOperations.size());
+          
+          // Log first few operations in detail
+          for (int i = 0; i < Math.min(3, allOperations.size()); i++) {
+            String singleOpJson = objectMapper.writeValueAsString(allOperations.get(i));
+            logger.info("Operation {} JSON: {}", i, singleOpJson);
+          }
+        } else {
+          logger.warn("Operations list is empty or null");
+        }
+      } catch (JsonProcessingException e) {
+        logger.error("Failed to convert operations to JSON", e);
       }
+      
       return "queues";
     } else {
       model.addAttribute("status", "999");
@@ -108,6 +128,70 @@ public class AdminController {
   @ResponseBody
   public java.util.List<java.util.Map<String, Object>> getAllQueueOperations() {
     logger.info("All queue operations requested via API");
-    return adminService.getAllQueueOperations();
+    java.util.List<java.util.Map<String, Object>> operations = adminService.getAllQueueOperations();
+    
+    // Log raw JSON of API response
+    try {
+      String operationsJson = objectMapper.writeValueAsString(operations);
+      logger.info("API RAW OPERATIONS JSON: {}", operationsJson);
+    } catch (JsonProcessingException e) {
+      logger.error("Failed to convert API operations to JSON", e);
+    }
+    
+    return operations;
+  }
+  
+  @RequestMapping("/dispatched")
+  public String getDispatchedOperations(Model model) {
+    if (ui) {
+      // Get all dispatched operations
+      java.util.List<java.util.Map<String, Object>> dispatchedOperations = adminService.getDispatchedOperations();
+      
+      model.addAttribute("operations", dispatchedOperations);
+      model.addAttribute("activePage", "dispatched");
+      model.addAttribute("currentPage", "dispatched");
+      
+      logger.info("Dispatched operations page accessed, found {} operations", dispatchedOperations.size());
+      
+      // Log raw JSON of dispatched operations for debugging
+      try {
+        String operationsJson = objectMapper.writeValueAsString(dispatchedOperations);
+        logger.info("RAW DISPATCHED OPERATIONS JSON: {}", operationsJson);
+        
+        // Also log individual operation samples
+        if (!dispatchedOperations.isEmpty()) {
+          logger.info("First dispatched operation sample: {}", dispatchedOperations.get(0));
+          logger.info("Total dispatched operations count: {}", dispatchedOperations.size());
+        } else {
+          logger.warn("Dispatched operations list is empty");
+        }
+      } catch (JsonProcessingException e) {
+        logger.error("Failed to convert dispatched operations to JSON", e);
+      }
+      
+      return "dispatched";
+    } else {
+      model.addAttribute("status", "999");
+      model.addAttribute("error", "Not Enabled");  
+      model.addAttribute("message", "UI is not enabled. Set ui.enable=true in application.properties");
+      return "error";
+    }
+  }
+  
+  @RequestMapping("/api/dispatched-operations")
+  @ResponseBody
+  public java.util.List<java.util.Map<String, Object>> getDispatchedOperationsApi() {
+    logger.info("Dispatched operations requested via API");
+    java.util.List<java.util.Map<String, Object>> operations = adminService.getDispatchedOperations();
+    
+    // Log raw JSON of API response
+    try {
+      String operationsJson = objectMapper.writeValueAsString(operations);
+      logger.info("API RAW DISPATCHED OPERATIONS JSON: {}", operationsJson);
+    } catch (JsonProcessingException e) {
+      logger.error("Failed to convert API dispatched operations to JSON", e);
+    }
+    
+    return operations;
   }
 }

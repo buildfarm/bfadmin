@@ -46,6 +46,7 @@
     <!-- Custom JS -->
     <script th:src="@{/assets/js/dashboard.js}"></script>
     <script th:if="${currentPage == 'queues'}" th:src="@{/assets/js/queues.js}"></script>
+    <script th:if="${currentPage == 'dispatched'}" th:src="@{/assets/js/dispatched.js}"></script>
 </body>
 </html>
 
@@ -63,6 +64,10 @@
                             <a class="nav-link" th:class="${activePage == 'queues' ? 'nav-link active' : 'nav-link'}" href="/queues">
                                 <i class="bi bi-list-ul" style="margin-right: 8px;"></i>
                                 Queues
+                            </a>
+                            <a class="nav-link" th:class="${activePage == 'dispatched' ? 'nav-link active' : 'nav-link'}" href="/dispatched">
+                                <i class="bi bi-send" style="margin-right: 8px;"></i>
+                                Dispatched
                             </a>
         </div>
     </nav>

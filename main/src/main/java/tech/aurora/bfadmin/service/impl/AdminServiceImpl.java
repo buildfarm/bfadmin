@@ -312,4 +312,14 @@ public class AdminServiceImpl implements AdminService {
       return new java.util.ArrayList<>();
     }
   }
+
+  public java.util.List<java.util.Map<String, Object>> getDispatchedOperations() {
+    logger.info("Dispatched operations requested");
+    try {
+      return valkeyService.getDispatchedOperations();
+    } catch (Exception e) {
+      logger.error("Failed to get dispatched operations from Valkey", e);
+      return new java.util.ArrayList<>();
+    }
+  }
 }

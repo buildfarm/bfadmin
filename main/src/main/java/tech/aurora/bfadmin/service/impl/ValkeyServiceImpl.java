@@ -23,6 +23,12 @@ public class ValkeyServiceImpl implements ValkeyService {
     @Value("${valkey.cluster.nodes:localhost:7000}")
     private String clusterNodes;
     
+    @Value("${buildfarm.queues.names:cpu_queue_priority,gpu_queue_priority}")
+    private java.util.List<String> queueNames;
+    
+    @Value("${buildfarm.queues.key.pattern:{Execution}:QueuedOperations}")
+    private String queueKeyPattern;
+    
     /**
      * Test the connection to Valkey cluster
      */
@@ -569,6 +575,16 @@ public class ValkeyServiceImpl implements ValkeyService {
     }
     
     /**
+     * Format current timestamp in the same format as other timestamps
+     */
+    private String formatCurrentTimestamp() {
+        java.time.Instant instant = java.time.Instant.now();
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            .withZone(java.time.ZoneId.systemDefault());
+        return formatter.format(instant);
+    }
+    
+    /**
      * Parse worker type number to readable string
      */
     private String parseWorkerType(String workerType) {
@@ -614,283 +630,90 @@ public class ValkeyServiceImpl implements ValkeyService {
     }
 
     /**
-     * Get all available queue names including prequeue using backplane configuration
+     * Get all configured queue names from properties
      */
     public java.util.List<String> getQueueNames() {
-        java.util.List<String> queueNames = new java.util.ArrayList<>();
-        
-        try {
-            // Add prequeue first (from backplane config: {Arrival}:PreQueuedOperations)
-            queueNames.add("prequeue");
-            
-            // Look for queued operations using backplane naming: {Execution}:QueuedOperations
-            Set<String> queueKeys = getKeys("{Execution}:QueuedOperations*");
-            logger.info("Found {} execution queue keys", queueKeys.size());
-            
-            for (String key : queueKeys) {
-                logger.info("Processing queue key: {}", key);
-                // Extract queue name from backplane format
-                if (key.equals("{Execution}:QueuedOperations")) {
-                    // Default queue
-                    queueNames.add("cpu");
-                } else if (key.startsWith("{Execution}:QueuedOperations:")) {
-                    // Named queue - extract name after the colon
-                    String queueName = key.substring("{Execution}:QueuedOperations:".length());
-                    if (!queueName.isEmpty() && !queueNames.contains(queueName)) {
-                        queueNames.add(queueName);
-                    }
-                }
-            }
-            
-            // Look for more backplane queue patterns beyond the basic ones
-            // Search for additional execution queue patterns that might exist
-            Set<String> allExecutionKeys = getKeys("{Execution}*");
-            logger.info("Found {} execution-related keys", allExecutionKeys.size());
-            
-            for (String key : allExecutionKeys) {
-                logger.debug("Examining execution key: {}", key);
-                if (key.startsWith("{Execution}:QueuedOperations:") && !key.equals("{Execution}:QueuedOperations")) {
-                    // Extract queue name from pattern like {Execution}:QueuedOperations:queuename
-                    String queueName = key.substring("{Execution}:QueuedOperations:".length());
-                    if (!queueName.isEmpty() && !queueNames.contains(queueName)) {
-                        queueNames.add(queueName);
-                        logger.info("Found execution queue: {}", queueName);
-                    }
-                }
-            }
-            
-            // Look for arrival/dispatch patterns that might indicate other queues
-            Set<String> arrivalKeys = getKeys("{Arrival}*");
-            logger.info("Found {} arrival-related keys", arrivalKeys.size());
-            
-            for (String key : arrivalKeys) {
-                logger.debug("Examining arrival key: {}", key);
-                // Look for patterns like {Arrival}:QueuedOperations:queuename
-                if (key.startsWith("{Arrival}:QueuedOperations:") && !key.equals("{Arrival}:QueuedOperations")) {
-                    String queueName = key.substring("{Arrival}:QueuedOperations:".length());
-                    if (!queueName.isEmpty() && !queueNames.contains(queueName)) {
-                        queueNames.add(queueName);
-                        logger.info("Found arrival queue: {}", queueName);
-                    }
-                }
-            }
-            
-            // Look for dispatch patterns
-            Set<String> dispatchKeys = getKeys("{Dispatch}*");
-            logger.info("Found {} dispatch-related keys", dispatchKeys.size());
-            
-            for (String key : dispatchKeys) {
-                logger.debug("Examining dispatch key: {}", key);
-                if (key.contains("QueuedOperations:") || key.contains("Queue:")) {
-                    // Extract potential queue names from dispatch keys
-                    String[] parts = key.split(":");
-                    for (int i = 0; i < parts.length - 1; i++) {
-                        if ("QueuedOperations".equals(parts[i]) || "Queue".equals(parts[i])) {
-                            String potentialQueue = parts[i + 1];
-                            if (!potentialQueue.isEmpty() && !queueNames.contains(potentialQueue)) {
-                                queueNames.add(potentialQueue);
-                                logger.info("Found dispatch queue: {}", potentialQueue);
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Also look for other queue patterns that might exist in the backplane
-            Set<String> allQueueKeys = getKeys("*Queue*");
-            logger.info("Found {} keys containing 'Queue'", allQueueKeys.size());
-            
-            // Add common BuildFarm queue names (memory-efficient approach)
-            // Instead of loading all 1M+ keys, use known patterns from BuildFarm
-            String[] commonQueueNames = {
-                "prequeue", 
-                "cpu_queue_priority", 
-                "DispatchedOperations", 
-                "PreQueuedOperations_priority"
-            };
-            
-            for (String commonQueue : commonQueueNames) {
-                if (!queueNames.contains(commonQueue)) {
-                    queueNames.add(commonQueue);
-                }
-            }
-            
-            logger.info("Added common BuildFarm queue names to avoid memory overflow from scanning all keys");
-            
-            for (String key : allQueueKeys) {
-                logger.debug("Examining queue-related key: {}", key);
-                
-                // Look for backplane queue patterns
-                if (key.contains("QueuedOperations:")) {
-                    String[] parts = key.split(":");
-                    for (int i = 0; i < parts.length - 1; i++) {
-                        if ("QueuedOperations".equals(parts[i]) && i + 1 < parts.length) {
-                            String queueName = parts[i + 1];
-                            if (!queueName.isEmpty() && !queueNames.contains(queueName)) {
-                                queueNames.add(queueName);
-                                logger.info("Found backplane queue: {}", queueName);
-                            }
-                        }
-                    }
-                }
-                
-                // Look for traditional queue patterns like cpu_queue, gpu_queue etc.
-                if (key.contains("_queue") || key.endsWith("Queue")) {
-                    String[] parts = key.split(":");
-                    String lastPart = parts[parts.length - 1];
-                    if (lastPart.endsWith("_queue")) {
-                        String queueName = lastPart.replace("_queue", "");
-                        if (!queueName.isEmpty() && !queueNames.contains(queueName)) {
-                            queueNames.add(queueName);
-                            logger.info("Found traditional queue: {}", queueName);
-                        }
-                    } else if (lastPart.endsWith("Queue") && !lastPart.equals("Queue")) {
-                        String queueName = lastPart.replace("Queue", "").toLowerCase();
-                        if (!queueName.isEmpty() && !queueNames.contains(queueName)) {
-                            queueNames.add(queueName);
-                            logger.info("Found named queue: {}", queueName);
-                        }
-                    }
-                }
-            }
-            
-            // Add known queues from backplane configuration if not found dynamically
-            String[] knownQueues = {"cpu", "default"};
-            for (String knownQueue : knownQueues) {
-                if (!queueNames.contains(knownQueue)) {
-                    // Check if this queue actually exists in Redis
-                    String queueKey = "{Execution}:QueuedOperations:" + knownQueue;
-                    if (hasKey(queueKey)) {
-                        queueNames.add(knownQueue);
-                    }
-                }
-            }
-            
-            logger.info("Returning {} queue names: {}", queueNames.size(), queueNames);
-            
-        } catch (Exception e) {
-            logger.error("Failed to get queue names", e);
-        }
-        
-        return queueNames;
+        logger.info("Returning {} configured queue names: {}", queueNames.size(), queueNames);
+        return new java.util.ArrayList<>(queueNames);
     }
 
     /**
-     * Get operations in a specific queue using backplane configuration
+     * Get operations in a specific queue using configured key pattern
      */
     public java.util.List<java.util.Map<String, Object>> getQueueOperations(String queueName) {
         java.util.List<java.util.Map<String, Object>> operations = new java.util.ArrayList<>();
         
         try {
-            logger.info("Getting operations for queue: {} using backplane config", queueName);
+            logger.info("Getting operations for queue: {} using configured pattern", queueName);
             
-            // Determine queue key patterns based on discovered patterns
-            Set<String> possibleKeys = new java.util.HashSet<>();
-            
+            // Use the configured key pattern - for most queues, we'll use the standard pattern
+            String queueKey;
             if ("prequeue".equals(queueName)) {
-                // Use backplane prequeue key: {Arrival}:PreQueuedOperations
-                possibleKeys.add("{Arrival}:PreQueuedOperations");
+                // Special case for prequeue
+                queueKey = "{Arrival}:PreQueuedOperations";
             } else {
-                // Try multiple patterns based on discovered queue types
-                
-                // Pattern 1: Standard buildfarm pattern
-                if ("cpu".equals(queueName) || "default".equals(queueName)) {
-                    possibleKeys.add("{Execution}:QueuedOperations");
-                } else {
-                    possibleKeys.add("{Execution}:QueuedOperations:" + queueName);
-                }
-                
-                // Pattern 2: Hash-tagged patterns like {:0}cpu_queue_priority
-                possibleKeys.add("{:0}" + queueName);
-                possibleKeys.add("{:1}" + queueName);
-                possibleKeys.add("{:2}" + queueName);
-                
-                // Pattern 3: Direct queue name patterns
-                possibleKeys.add(queueName);
-                
-                // Pattern 4: If it's a _queue_priority or _queue pattern, try variations
-                if (queueName.endsWith("_queue_priority")) {
-                    String baseQueue = queueName.replace("_queue_priority", "");
-                    possibleKeys.add("{:0}" + baseQueue + "_queue_priority");
-                    possibleKeys.add(baseQueue);
-                } else if (queueName.endsWith("_queue")) {
-                    String baseQueue = queueName.replace("_queue", "");
-                    possibleKeys.add("{:0}" + baseQueue + "_queue");
-                    possibleKeys.add(baseQueue);
-                }
+                // Use configured pattern without appending queue name
+                queueKey = queueKeyPattern;
             }
             
-            logger.info("Trying {} possible key patterns for queue: {}", possibleKeys.size(), queueName);
+            logger.info("Looking for queue key: {}", queueKey);
             
-            // Find existing keys that match the possible patterns
-            Set<String> queueKeys = new java.util.HashSet<>();
-            for (String possibleKey : possibleKeys) {
-                if (hasKey(possibleKey)) {
-                    queueKeys.add(possibleKey);
-                    logger.info("Found exact match for queue '{}': {}", queueName, possibleKey);
-                } else {
-                    // Try pattern matching for this key
-                    Set<String> matchingKeys = getKeys(possibleKey + "*");
-                    if (!matchingKeys.isEmpty()) {
-                        queueKeys.addAll(matchingKeys);
-                        logger.info("Found {} pattern matches for queue '{}' with pattern '{}*'", 
-                                  matchingKeys.size(), queueName, possibleKey);
-                    }
-                }
-            }
+            // Debug: Let's see what keys exist that might be related to queues
+            java.util.Set<String> allKeys = getKeys("*Queue*");
+            logger.info("All keys containing 'Queue': {}", allKeys);
             
-            logger.info("Found {} total keys for queue '{}': {}", queueKeys.size(), queueName, queueKeys);
+            // Let's also check for keys with the queue name
+            java.util.Set<String> queueRelatedKeys = getKeys("*" + queueName + "*");
+            logger.info("Keys containing queue name '{}': {}", queueName, queueRelatedKeys);
             
-            for (String key : queueKeys) {
-                try {
-                    String keyType = getKeyType(key);
-                    logger.info("Processing queue key: {} of type: {}", key, keyType);
-                    
-                    if ("list".equals(keyType)) {
-                        // Handle list-type queue
-                        Object listData = getValueByType(key);
-                        if (listData instanceof java.util.List) {
-                            @SuppressWarnings("unchecked")
-                            java.util.List<String> list = (java.util.List<String>) listData;
-                            
-                            for (int i = 0; i < list.size(); i++) {
-                                String operationData = list.get(i);
-                                java.util.Map<String, Object> operation = parseOperationData(operationData, i);
-                                if (operation != null) {
-                                    operations.add(operation);
-                                }
-                            }
-                        }
-                    } else if ("hash".equals(keyType)) {
-                        // Handle hash-type queue
-                        Object hashData = getValueByType(key);
-                        if (hashData instanceof java.util.Map) {
-                            @SuppressWarnings("unchecked")
-                            java.util.Map<String, String> hash = (java.util.Map<String, String>) hashData;
-                            
-                            for (java.util.Map.Entry<String, String> entry : hash.entrySet()) {
-                                String operationId = entry.getKey();
-                                String operationData = entry.getValue();
-                                java.util.Map<String, Object> operation = parseOperationData(operationData, operations.size());
-                                if (operation != null) {
-                                    operation.put("operationId", operationId);
-                                    operations.add(operation);
-                                }
-                            }
-                        }
-                    } else if ("string".equals(keyType)) {
-                        // Handle single string value
-                        Object stringData = getValueByType(key);
-                        if (stringData != null) {
-                            java.util.Map<String, Object> operation = parseOperationData(stringData.toString(), 0);
+            if (hasKey(queueKey)) {
+                String keyType = getKeyType(queueKey);
+                logger.info("Processing queue key: {} of type: {}", queueKey, keyType);
+                
+                if ("list".equals(keyType)) {
+                    // Handle list-type queue
+                    Object listData = getValueByType(queueKey);
+                    if (listData instanceof java.util.List) {
+                        @SuppressWarnings("unchecked")
+                        java.util.List<String> list = (java.util.List<String>) listData;
+                        
+                        for (int i = 0; i < list.size(); i++) {
+                            String operationData = list.get(i);
+                            java.util.Map<String, Object> operation = parseOperationData(operationData, i);
                             if (operation != null) {
                                 operations.add(operation);
                             }
                         }
                     }
-                } catch (Exception e) {
-                    logger.error("Error processing queue key: {}", key, e);
+                } else if ("hash".equals(keyType)) {
+                    // Handle hash-type queue
+                    Object hashData = getValueByType(queueKey);
+                    if (hashData instanceof java.util.Map) {
+                        @SuppressWarnings("unchecked")
+                        java.util.Map<String, String> hash = (java.util.Map<String, String>) hashData;
+                        
+                        for (java.util.Map.Entry<String, String> entry : hash.entrySet()) {
+                            String operationId = entry.getKey();
+                            String operationData = entry.getValue();
+                            java.util.Map<String, Object> operation = parseOperationData(operationData, operations.size());
+                            if (operation != null) {
+                                operation.put("operationId", operationId);
+                                operations.add(operation);
+                            }
+                        }
+                    }
+                } else if ("string".equals(keyType)) {
+                    // Handle single string value
+                    Object stringData = getValueByType(queueKey);
+                    if (stringData != null) {
+                        java.util.Map<String, Object> operation = parseOperationData(stringData.toString(), 0);
+                        if (operation != null) {
+                            operations.add(operation);
+                        }
+                    }
                 }
+            } else {
+                logger.warn("Queue key does not exist: {}", queueKey);
             }
             
             logger.info("Returning {} operations for queue: {}", operations.size(), queueName);
@@ -903,43 +726,230 @@ public class ValkeyServiceImpl implements ValkeyService {
     }
 
     /**
-     * Parse operation data from JSON or string format
+     * Parse operation data from JSON string and extract fields for UI display
      */
     private java.util.Map<String, Object> parseOperationData(String operationData, int index) {
         try {
             java.util.Map<String, Object> operation = new java.util.HashMap<>();
             
             if (operationData != null && !operationData.trim().isEmpty()) {
-                // Try to extract common fields from JSON-like data
-                String operationName = extractJsonField(operationData, "name");
-                String stage = extractJsonField(operationData, "stage");
-                String requestMetadata = extractJsonField(operationData, "requestMetadata");
-                String executeResponse = extractJsonField(operationData, "executeResponse");
-                String queuedTimestamp = extractJsonField(operationData, "queuedTimestamp");
-                String actionDigest = extractJsonField(operationData, "actionDigest");
-                String stdoutDigest = extractJsonField(operationData, "stdoutDigest");
-                String stderrDigest = extractJsonField(operationData, "stderrDigest");
-                String platform = extractJsonField(operationData, "platform");
-                String workerName = extractJsonField(operationData, "workerName");
+                // Handle buildfarm's timestamp:json format first
+                String jsonData = operationData;
+                logger.debug("Original operation data: {}", operationData.length() > 100 ? operationData.substring(0, 100) + "..." : operationData);
+                
+                // Check for timestamp:json format (timestamp can be followed by newlines/whitespace before JSON)
+                if (operationData.matches("^\\d+:.*")) {
+                    int colonIndex = operationData.indexOf(':');
+                    jsonData = operationData.substring(colonIndex + 1).trim();
+                    logger.debug("Stripped timestamp prefix from operation data, new length: {}", jsonData.length());
+                    logger.debug("First 100 chars of stripped JSON: {}", jsonData.length() > 100 ? jsonData.substring(0, 100) : jsonData);
+                } else {
+                    logger.debug("No timestamp prefix detected in operation data");
+                }
+                
+                try {
+                    // Clean and trim the JSON data
+                    jsonData = jsonData.trim();
+                    
+                    // Additional validation and cleanup
+                    if (!jsonData.startsWith("{")) {
+                        throw new IllegalArgumentException("JSON data does not start with {");
+                    }
+                    if (!jsonData.endsWith("}")) {
+                        logger.warn("JSON data appears to be truncated - does not end with }. Length: {}, ends with: '{}'", 
+                                   jsonData.length(), 
+                                   jsonData.length() > 50 ? jsonData.substring(jsonData.length() - 50) : jsonData);
+                        throw new IllegalArgumentException("JSON data appears to be truncated");
+                    }
+                    
+                    // Parse the JSON data properly for buildfarm structure
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    // Use more strict settings first
+                    mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                    @SuppressWarnings("unchecked")
+                    java.util.Map<String, Object> parsedJsonData = mapper.readValue(jsonData, java.util.Map.class);
+                    
+                    logger.debug("Successfully parsed JSON, keys: {}", parsedJsonData.keySet());
+                    
+                    // Extract from buildfarm executeEntry structure
+                    Object executeEntry = parsedJsonData.get("executeEntry");
+                    logger.debug("executeEntry object: {}", executeEntry);
+                    
+                    if (executeEntry instanceof java.util.Map) {
+                        @SuppressWarnings("unchecked")
+                        java.util.Map<String, Object> executeEntryMap = (java.util.Map<String, Object>) executeEntry;
+                        
+                        // Extract operationName from executeEntry
+                        String operationName = (String) executeEntryMap.get("operationName");
+                        logger.debug("Extracted operationName from executeEntry: '{}'", operationName);
+                        
+                        // Extract actionDigest from executeEntry
+                        Object actionDigestObj = executeEntryMap.get("actionDigest");
+                        String actionDigestHash = null;
+                        if (actionDigestObj instanceof java.util.Map) {
+                            @SuppressWarnings("unchecked")
+                            java.util.Map<String, Object> actionDigestMap = (java.util.Map<String, Object>) actionDigestObj;
+                            actionDigestHash = (String) actionDigestMap.get("hash");
+                        }
+                        
+                        // Extract platform information if available
+                        String platform = "linux"; // default
+                        Object platformObj = executeEntryMap.get("platform");
+                        if (platformObj != null) {
+                            if (platformObj instanceof java.util.Map) {
+                                @SuppressWarnings("unchecked")
+                                java.util.Map<String, Object> platformMap = (java.util.Map<String, Object>) platformObj;
+                                // Try to extract platform properties
+                                Object osProperty = platformMap.get("properties");
+                                if (osProperty instanceof java.util.Map) {
+                                    @SuppressWarnings("unchecked")
+                                    java.util.Map<String, Object> properties = (java.util.Map<String, Object>) osProperty;
+                                    Object osName = properties.get("OSFamily");
+                                    if (osName != null) {
+                                        platform = osName.toString().toLowerCase();
+                                    }
+                                } else {
+                                    // If platform is just a map without properties, try to get a string representation
+                                    platform = platformMap.toString();
+                                }
+                            } else {
+                                // If platform is a string or other type
+                                platform = platformObj.toString();
+                            }
+                        }
+                        
+                        // Extract request metadata for additional info
+                        Object requestMetadataObj = executeEntryMap.get("requestMetadata");
+                        String toolName = null;
+                        String toolVersion = null;
+                        if (requestMetadataObj instanceof java.util.Map) {
+                            @SuppressWarnings("unchecked")
+                            java.util.Map<String, Object> requestMetadata = (java.util.Map<String, Object>) requestMetadataObj;
+                            Object toolDetailsObj = requestMetadata.get("toolDetails");
+                            if (toolDetailsObj instanceof java.util.Map) {
+                                @SuppressWarnings("unchecked")
+                                java.util.Map<String, Object> toolDetails = (java.util.Map<String, Object>) toolDetailsObj;
+                                toolName = (String) toolDetails.get("toolName");
+                                toolVersion = (String) toolDetails.get("toolVersion");
+                            }
+                        }
+                        
+                        // Extract timestamp from the original timestamp:json format
+                        String queuedTimestamp = null;
+                        if (operationData.matches("^\\d+:.*")) {
+                            int colonIndex = operationData.indexOf(':');
+                            String timestampStr = operationData.substring(0, colonIndex);
+                            try {
+                                long timestamp = Long.parseLong(timestampStr);
+                                queuedTimestamp = java.time.Instant.ofEpochMilli(timestamp).toString();
+                            } catch (NumberFormatException e) {
+                                logger.debug("Failed to parse timestamp from operation data: {}", timestampStr);
+                            }
+                        }
+                        
+                        // Determine worker name and status - for queue operations, they are queued
+                        String workerName = "unknown-worker";
+                        if (toolName != null) {
+                            workerName = toolName + (toolVersion != null ? "-" + toolVersion : "");
+                        }
+                        
+                        // Set the extracted values
+                        operation.put("index", index + 1);
+                        operation.put("operationName", operationName != null ? operationName : "operation-" + (index + 1));
+                        operation.put("name", operationName != null ? operationName : "operation-" + (index + 1));
+                        operation.put("stage", "QUEUED"); // For queue operations, they are typically in QUEUED state
+                        operation.put("status", "Queued");
+                        operation.put("queuedAt", queuedTimestamp != null ? queuedTimestamp : formatCurrentTimestamp());
+                        operation.put("queuedTimestamp", queuedTimestamp != null ? queuedTimestamp : formatCurrentTimestamp());
+                        operation.put("rawData", operationData.length() > 200 ? operationData.substring(0, 200) + "..." : operationData);
+                        
+                        // Add digest fields expected by the template
+                        String finalActionDigest = (actionDigestHash != null && actionDigestHash.length() >= 8) ? actionDigestHash : generatePlaceholderDigest();
+                        operation.put("actionDigest", finalActionDigest);
+                        operation.put("stdoutDigest", null);
+                        operation.put("stderrDigest", null);
+                        operation.put("platform", platform);
+                        operation.put("workerName", workerName);
+                        
+                        // Generate operationId from the operationName or use a fallback
+                        String operationId = operationName != null ? operationName : "op-" + (index + 1);
+                        operation.put("operationId", operationId);
+                        
+                        operation.put("hasMetadata", executeEntryMap.containsKey("requestMetadata"));
+                        operation.put("hasExecuteResponse", false); // Queue operations typically don't have responses yet
+                        
+                        logger.debug("Successfully parsed buildfarm executeEntry: operationName='{}', actionDigest='{}'", 
+                                   operationName, actionDigestHash);
+                        return operation;
+                    } else {
+                        logger.warn("executeEntry is not a Map, type: {}", executeEntry != null ? executeEntry.getClass() : "null");
+                    }
+                } catch (Exception jsonException) {
+                    logger.warn("Failed to parse JSON operation data, falling back to string extraction: {}", jsonException.getMessage());
+                    logger.debug("Failed JSON data length: {}, starts with: '{}', ends with: '{}'", 
+                               jsonData.length(), 
+                               jsonData.length() > 10 ? jsonData.substring(0, 10) : jsonData,
+                               jsonData.length() > 10 ? jsonData.substring(Math.max(0, jsonData.length() - 10)) : jsonData);
+                    
+                    // Check if JSON was truncated
+                    if (jsonException.getMessage() != null && jsonException.getMessage().contains("truncated")) {
+                        logger.warn("JSON appears to be truncated - this suggests the raw data from Redis was incomplete");
+                    }
+                    
+                    // Log first 500 characters to see more structure
+                    logger.debug("First 500 chars of failed JSON: {}", jsonData.length() > 500 ? jsonData.substring(0, 500) + "..." : jsonData);
+                }
+                
+                // Fallback to improved string extraction for buildfarm format
+                String operationName = extractBuildfarmOperationName(jsonData);
+                String stage = extractJsonField(jsonData, "stage");
+                String requestMetadata = extractJsonField(jsonData, "requestMetadata");
+                String executeResponse = extractJsonField(jsonData, "executeResponse");
+                String actionDigest = extractBuildfarmActionDigest(jsonData);
+                String stdoutDigest = extractJsonField(jsonData, "stdoutDigest");
+                String stderrDigest = extractJsonField(jsonData, "stderrDigest");
+                String platform = extractJsonField(jsonData, "platform");
+                String workerName = extractJsonField(jsonData, "workerName");
+                
+                // Extract timestamp from the original timestamp:json format for fallback too
+                String queuedTimestamp = null;
+                if (operationData.matches("^\\d+:.*")) {
+                    int colonIndex = operationData.indexOf(':');
+                    String timestampStr = operationData.substring(0, colonIndex);
+                    try {
+                        long timestamp = Long.parseLong(timestampStr);
+                        queuedTimestamp = java.time.Instant.ofEpochMilli(timestamp).toString();
+                    } catch (NumberFormatException e) {
+                        logger.debug("Failed to parse timestamp from operation data in fallback: {}", timestampStr);
+                    }
+                }
+                
+                // Extract tool information from requestMetadata for better worker name
+                String toolName = extractJsonField(jsonData, "toolName");
+                if (workerName == null && toolName != null) {
+                    workerName = toolName;
+                }
                 
                 operation.put("index", index + 1);
                 operation.put("operationName", operationName != null ? operationName : "operation-" + (index + 1));
                 operation.put("name", operationName != null ? operationName : "operation-" + (index + 1));
-                operation.put("stage", stage != null ? stage : "UNKNOWN");
-                operation.put("status", determineOperationStatus(stage, operationData));
-                operation.put("queuedAt", queuedTimestamp != null ? formatTimestamp(queuedTimestamp) : "N/A");
-                operation.put("queuedTimestamp", queuedTimestamp != null ? formatTimestamp(queuedTimestamp) : "N/A");
+                operation.put("stage", stage != null ? stage : "QUEUED");
+                operation.put("status", stage != null ? determineOperationStatus(stage, operationData) : "Queued");
+                operation.put("queuedAt", queuedTimestamp != null ? queuedTimestamp : formatCurrentTimestamp());
+                operation.put("queuedTimestamp", queuedTimestamp != null ? queuedTimestamp : formatCurrentTimestamp());
                 operation.put("rawData", operationData.length() > 200 ? operationData.substring(0, 200) + "..." : operationData);
                 
                 // Add digest fields expected by the template
                 String finalActionDigest = (actionDigest != null && actionDigest.length() >= 8) ? actionDigest : generatePlaceholderDigest();
-                logger.debug("Operation {}: actionDigest extracted='{}' (length={}), final='{}' (length={})", 
-                           index + 1, actionDigest, actionDigest != null ? actionDigest.length() : 0, finalActionDigest, finalActionDigest.length());
-                
                 operation.put("actionDigest", finalActionDigest);
                 operation.put("stdoutDigest", (stdoutDigest != null && stdoutDigest.length() >= 8) ? stdoutDigest : null);
                 operation.put("stderrDigest", (stderrDigest != null && stderrDigest.length() >= 8) ? stderrDigest : null);
-                operation.put("platform", platform != null ? platform : "linux");
+                // Clean up platform field - avoid showing just opening brace
+                String cleanPlatform = "linux"; // default
+                if (platform != null && !platform.trim().isEmpty() && !platform.equals("{") && !platform.equals("{}")) {
+                    cleanPlatform = platform.trim();
+                }
+                operation.put("platform", cleanPlatform);
                 operation.put("workerName", workerName != null ? workerName : "unknown-worker");
                 
                 // Ensure operationId field is present for template
@@ -948,17 +958,10 @@ public class ValkeyServiceImpl implements ValkeyService {
                 }
                 
                 // Extract additional metadata if available
-                if (requestMetadata != null) {
-                    operation.put("hasMetadata", true);
-                } else {
-                    operation.put("hasMetadata", false);
-                }
+                operation.put("hasMetadata", requestMetadata != null);
+                operation.put("hasExecuteResponse", executeResponse != null);
                 
-                if (executeResponse != null) {
-                    operation.put("hasExecuteResponse", true);
-                } else {
-                    operation.put("hasExecuteResponse", false);
-                }
+                logger.debug("Used fallback parsing for operation data");
                 
             } else {
                 // Empty or null data
@@ -1029,29 +1032,182 @@ public class ValkeyServiceImpl implements ValkeyService {
         java.util.List<java.util.Map<String, Object>> allOperations = new java.util.ArrayList<>();
         
         try {
-            logger.info("Getting operations from all queues");
-            java.util.List<String> queueNames = getQueueNames();
+            logger.info("Getting all operations from buildfarm queue pattern");
             
-            for (String queueName : queueNames) {
-                logger.info("Processing operations for queue: {}", queueName);
-                java.util.List<java.util.Map<String, Object>> queueOperations = getQueueOperations(queueName);
-                
-                // Add queue information to each operation and validate digest
-                for (java.util.Map<String, Object> operation : queueOperations) {
-                    operation.put("queueName", queueName);
-                    
-                    // Extra safety check for actionDigest
-                    Object digest = operation.get("actionDigest");
-                    if (digest != null && digest instanceof String && ((String) digest).length() < 8) {
-                        logger.warn("Found operation with short actionDigest '{}' (length={}), replacing with placeholder", 
-                                   digest, ((String) digest).length());
-                        operation.put("actionDigest", generatePlaceholderDigest());
-                    }
-                    
-                    allOperations.add(operation);
+            // Step 1: Discover queue names from Redis using the *_queue_* pattern
+            java.util.Set<String> queueKeys = getKeys("*_queue_*");
+            logger.info("Found {} queue keys with *_queue_* pattern: {}", queueKeys.size(), queueKeys);
+            
+            // Step 2: Extract queue names from the discovered keys
+            java.util.Set<String> queueNames = new java.util.HashSet<>();
+            for (String key : queueKeys) {
+                String queueName = extractQueueNameFromRedisKey(key);
+                if (queueName != null && !queueName.isEmpty()) {
+                    queueNames.add(queueName);
                 }
+            }
+            logger.info("Extracted {} unique queue names: {}", queueNames.size(), queueNames);
+            
+            // Step 3: For each queue name, load all related keys and operations
+            for (String queueName : queueNames) {
+                logger.info("Processing queue: {}", queueName);
                 
-                logger.info("Added {} operations from queue '{}'", queueOperations.size(), queueName);
+                // Look for all keys related to this queue
+                java.util.Set<String> queueRelatedKeys = getKeys("*" + queueName + "*");
+                logger.info("Found {} keys related to queue '{}': {}", queueRelatedKeys.size(), queueName, queueRelatedKeys);
+                
+                // Process each key related to this queue
+                for (String queueKey : queueRelatedKeys) {
+                    try {
+                        String keyType = getKeyType(queueKey);
+                        logger.info("Processing queue key: {} of type: {} for queue: {}", queueKey, keyType, queueName);
+                        
+                        if ("list".equals(keyType)) {
+                            // Handle list-type queue
+                            Object listData = getValueByType(queueKey);
+                            if (listData instanceof java.util.List) {
+                                @SuppressWarnings("unchecked")
+                                java.util.List<String> list = (java.util.List<String>) listData;
+                                
+                                logger.info("Processing {} operations from list key: {}", list.size(), queueKey);
+                                for (int i = 0; i < list.size(); i++) {
+                                    String operationData = list.get(i);
+                                    java.util.Map<String, Object> operation = parseOperationData(operationData, allOperations.size());
+                                    if (operation != null) {
+                                        operation.put("queueName", queueName);
+                                        operation.put("sourceKey", queueKey);
+                                        
+                                        // Extra safety check for actionDigest
+                                        Object digest = operation.get("actionDigest");
+                                        if (digest != null && digest instanceof String && ((String) digest).length() < 8) {
+                                            logger.warn("Found operation with short actionDigest '{}' (length={}), replacing with placeholder", 
+                                                       digest, ((String) digest).length());
+                                            operation.put("actionDigest", generatePlaceholderDigest());
+                                        }
+                                        
+                                        allOperations.add(operation);
+                                    }
+                                }
+                            }
+                        } else if ("hash".equals(keyType)) {
+                            // Handle hash-type queue
+                            Object hashData = getValueByType(queueKey);
+                            if (hashData instanceof java.util.Map) {
+                                @SuppressWarnings("unchecked")
+                                java.util.Map<String, String> hash = (java.util.Map<String, String>) hashData;
+                                
+                                logger.info("Processing {} operations from hash key: {}", hash.size(), queueKey);
+                                for (java.util.Map.Entry<String, String> entry : hash.entrySet()) {
+                                    String operationId = entry.getKey();
+                                    String operationData = entry.getValue();
+                                    java.util.Map<String, Object> operation = parseOperationData(operationData, allOperations.size());
+                                    if (operation != null) {
+                                        operation.put("operationId", operationId);
+                                        operation.put("queueName", queueName);
+                                        operation.put("sourceKey", queueKey);
+                                        
+                                        // Extra safety check for actionDigest
+                                        Object digest = operation.get("actionDigest");
+                                        if (digest != null && digest instanceof String && ((String) digest).length() < 8) {
+                                            logger.warn("Found operation with short actionDigest '{}' (length={}), replacing with placeholder", 
+                                                       digest, ((String) digest).length());
+                                            operation.put("actionDigest", generatePlaceholderDigest());
+                                        }
+                                        
+                                        allOperations.add(operation);
+                                    }
+                                }
+                            }
+                        } else if ("set".equals(keyType)) {
+                            // Handle set-type data
+                            Object setData = getValueByType(queueKey);
+                            if (setData instanceof java.util.Set) {
+                                @SuppressWarnings("unchecked")
+                                java.util.Set<String> set = (java.util.Set<String>) setData;
+                                
+                                logger.info("Processing {} operations from set key: {}", set.size(), queueKey);
+                                int index = 0;
+                                for (String operationData : set) {
+                                    java.util.Map<String, Object> operation = parseOperationData(operationData, allOperations.size());
+                                    if (operation != null) {
+                                        operation.put("queueName", queueName);
+                                        operation.put("sourceKey", queueKey);
+                                        operation.put("setIndex", index++);
+                                        
+                                        // Extra safety check for actionDigest
+                                        Object digest = operation.get("actionDigest");
+                                        if (digest != null && digest instanceof String && ((String) digest).length() < 8) {
+                                            logger.warn("Found operation with short actionDigest '{}' (length={}), replacing with placeholder", 
+                                                       digest, ((String) digest).length());
+                                            operation.put("actionDigest", generatePlaceholderDigest());
+                                        }
+                                        
+                                        allOperations.add(operation);
+                                    }
+                                }
+                            }
+                        } else if ("zset".equals(keyType)) {
+                            // Handle sorted set (zset) - this is what buildfarm uses for queues
+                            try {
+                                // Use raw string operations to avoid JSON deserialization issues with timestamp prefixes
+                                org.springframework.data.redis.core.StringRedisTemplate stringTemplate = 
+                                    new org.springframework.data.redis.core.StringRedisTemplate(valkeyTemplate.getConnectionFactory());
+                                
+                                java.util.Set<org.springframework.data.redis.core.ZSetOperations.TypedTuple<String>> zsetsWithScores = 
+                                    stringTemplate.opsForZSet().rangeWithScores(queueKey, 0, -1);
+                                
+                                if (zsetsWithScores != null) {
+                                    logger.info("Processing {} operations from zset key: {}", zsetsWithScores.size(), queueKey);
+                                    
+                                    int itemCount = 0;
+                                    for (org.springframework.data.redis.core.ZSetOperations.TypedTuple<String> tuple : zsetsWithScores) {
+                                        String operationDataStr = tuple.getValue();
+                                        Double score = tuple.getScore();
+                                        
+                                        // Debug first few items to check for truncation
+                                        if (itemCount < 3) {
+                                            logger.debug("Zset item {}: length={}, starts={}, ends={}", 
+                                                        itemCount, 
+                                                        operationDataStr != null ? operationDataStr.length() : 0,
+                                                        operationDataStr != null && operationDataStr.length() > 50 ? operationDataStr.substring(0, 50) : operationDataStr,
+                                                        operationDataStr != null && operationDataStr.length() > 50 ? operationDataStr.substring(operationDataStr.length() - 50) : "");
+                                        }
+                                        itemCount++;
+                                        
+                                        if (operationDataStr != null) {
+                                            // Let parseOperationData handle timestamp extraction
+                                            // Don't strip it here to avoid double-processing
+                                            logger.debug("Processing zset value of length: {}", operationDataStr.length());
+                                            
+                                            java.util.Map<String, Object> operation = parseOperationData(operationDataStr, allOperations.size());
+                                            if (operation != null) {
+                                                operation.put("queueName", queueName);
+                                                operation.put("sourceKey", queueKey);
+                                                operation.put("priority", score); // Store the zset score as priority
+                                                
+                                                // Extra safety check for actionDigest
+                                                Object digest = operation.get("actionDigest");
+                                                if (digest != null && digest instanceof String && ((String) digest).length() < 8) {
+                                                    logger.warn("Found operation with short actionDigest '{}' (length={}), replacing with placeholder", 
+                                                               digest, ((String) digest).length());
+                                                    operation.put("actionDigest", generatePlaceholderDigest());
+                                                }
+                                                
+                                                allOperations.add(operation);
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (Exception e) {
+                                logger.error("Error processing zset key: {} for queue: {}", queueKey, queueName, e);
+                            }
+                        } else {
+                            logger.info("Skipping queue key {} with unsupported type: {}", queueKey, keyType);
+                        }
+                    } catch (Exception e) {
+                        logger.error("Error processing queue key: {} for queue: {}", queueKey, queueName, e);
+                    }
+                }
             }
             
             logger.info("Returning {} total operations from {} queues", allOperations.size(), queueNames.size());
@@ -1061,5 +1217,123 @@ public class ValkeyServiceImpl implements ValkeyService {
         }
         
         return allOperations;
+    }
+    
+    /**
+     * Extract queue name from Redis key using *_queue_* pattern
+     */
+    private String extractQueueNameFromRedisKey(String key) {
+        // Look for patterns like "cpu_queue_priority", "gpu_queue_priority", etc.
+        if (key.contains("_queue_")) {
+            // Split by various delimiters and find the part with _queue_
+            String[] parts = key.split("[:{\\}]");
+            for (String part : parts) {
+                if (part.contains("_queue_")) {
+                    return part;
+                }
+            }
+            
+            // If the key itself contains _queue_, try to extract it directly
+            if (key.contains("cpu_queue_priority")) {
+                return "cpu_queue_priority";
+            } else if (key.contains("gpu_queue_priority")) {
+                return "gpu_queue_priority";
+            }
+        }
+        
+        // If no _queue_ pattern found, return null
+        return null;
+    }
+    /**
+     * Get all dispatched operations from the DispatchedOperations hash
+     */
+    @Override
+    public java.util.List<java.util.Map<String, Object>> getDispatchedOperations() {
+        java.util.List<java.util.Map<String, Object>> dispatchedOperations = new java.util.ArrayList<>();
+        
+        try {
+            logger.info("Getting dispatched operations from DispatchedOperations hash");
+            String dispatchedKey = "DispatchedOperations";
+            
+            if (hasKey(dispatchedKey)) {
+                String keyType = getKeyType(dispatchedKey);
+                logger.info("Processing dispatched operations key: {} of type: {}", dispatchedKey, keyType);
+                
+                if ("hash".equals(keyType)) {
+                    // Handle hash-type dispatched operations
+                    Object hashData = getValueByType(dispatchedKey);
+                    if (hashData instanceof java.util.Map) {
+                        @SuppressWarnings("unchecked")
+                        java.util.Map<String, String> hash = (java.util.Map<String, String>) hashData;
+                        
+                        logger.info("Found {} dispatched operations in hash", hash.size());
+                        
+                        for (java.util.Map.Entry<String, String> entry : hash.entrySet()) {
+                            String operationId = entry.getKey();
+                            String operationData = entry.getValue();
+                            java.util.Map<String, Object> operation = parseOperationData(operationData, dispatchedOperations.size());
+                            if (operation != null) {
+                                operation.put("operationId", operationId);
+                                operation.put("status", "dispatched");
+                                dispatchedOperations.add(operation);
+                            }
+                        }
+                    }
+                } else {
+                    logger.warn("DispatchedOperations key is not a hash, found type: {}", keyType);
+                }
+            } else {
+                logger.warn("DispatchedOperations key does not exist");
+            }
+            
+            logger.info("Returning {} dispatched operations", dispatchedOperations.size());
+            
+        } catch (Exception e) {
+            logger.error("Failed to get dispatched operations", e);
+        }
+        
+        return dispatchedOperations;
+    }
+    
+    /**
+     * Extract operation name specifically from buildfarm executeEntry structure
+     */
+    private String extractBuildfarmOperationName(String jsonData) {
+        // Look for operationName specifically in executeEntry context
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\"executeEntry\"\\s*:\\s*\\{[^}]*\"operationName\"\\s*:\\s*\"([^\"]+)\"");
+        java.util.regex.Matcher matcher = pattern.matcher(jsonData);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        
+        // Fallback to simpler pattern
+        pattern = java.util.regex.Pattern.compile("\"operationName\"\\s*:\\s*\"([^\"]+)\"");
+        matcher = pattern.matcher(jsonData);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        
+        return "Unknown Operation";
+    }
+    
+    /**
+     * Extract action digest hash from buildfarm executeEntry structure
+     */
+    private String extractBuildfarmActionDigest(String jsonData) {
+        // Look for hash specifically in executeEntry > actionDigest context
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\"executeEntry\"\\s*:\\s*\\{[^}]*\"actionDigest\"\\s*:\\s*\\{[^}]*\"hash\"\\s*:\\s*\"([^\"]+)\"");
+        java.util.regex.Matcher matcher = pattern.matcher(jsonData);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        
+        // Fallback to simpler hash pattern
+        pattern = java.util.regex.Pattern.compile("\"hash\"\\s*:\\s*\"([^\"]+)\"");
+        matcher = pattern.matcher(jsonData);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        
+        return null;
     }
 }
