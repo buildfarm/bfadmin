@@ -17,13 +17,8 @@
             </div>
             <div class="card-body">
                 <div class="row align-items-center mb-3">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <span class="text-muted">Operations currently dispatched for execution</span>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <button class="btn btn-refresh" onclick="refreshDispatchedOperations()">
-                            <i class="bi bi-arrow-clockwise"></i> Refresh
-                        </button>
                     </div>
                 </div>
                 
@@ -50,15 +45,6 @@
                     <div class="table-info">
                         <span id="dispatchedTableCount" th:text="${operations.size()}">0</span> operations
                     </div>
-                    <div class="page-size-selector">
-                        <span>Show:</span>
-                        <select id="dispatchedPageSize">
-                            <option value="5">5</option>
-                            <option value="10" selected>10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                        </select>
-                        <span>per page</span>
                     </div>
                 </div>
                 
@@ -66,13 +52,10 @@
                     <table class="table table-hover mb-0" id="dispatchedTable" th:if="${operations != null and operations.size() > 0}">
                         <thead>
                             <tr>
-                                <th class="sortable-header" data-column="index"><i class="bi bi-hash"></i> #</th>
-                                <th class="sortable-header" data-column="operationId"><i class="bi bi-key"></i> Operation ID</th>
+                                <th class="sortable-header" data-column="index"><i class="bi"></i> #</th>
                                 <th class="sortable-header" data-column="operationName"><i class="bi bi-file-text"></i> Operation</th>
                                 <th class="sortable-header" data-column="stage"><i class="bi bi-diagram-3"></i> Stage</th>
-                                <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
                                 <th class="sortable-header" data-column="dispatchedAt"><i class="bi bi-clock"></i> Dispatched At</th>
-                                <th class="sortable-header" data-column="hasMetadata"><i class="bi bi-info-square"></i> Metadata</th>
                                 <th><i class="bi bi-eye"></i> Actions</th>
                             </tr>
                         </thead>
@@ -82,13 +65,7 @@
                                     <span class="text-muted" th:text="${iterStat.count}">1</span>
                                 </td>
                                 <td>
-                                    <small class="font-monospace" th:text="${operation.operationId != null ? (#strings.length(operation.operationId) > 16 ? #strings.substring(operation.operationId, 0, 16) + '...' : operation.operationId) : 'N/A'}">operation-id...</small>
-                                </td>
-                                <td>
                                     <span class="fw-medium" th:text="${operation.operationName != null ? operation.operationName : operation.name}">operation-name</span>
-                                    <br>
-                                    <small class="text-muted" th:if="${operation.actionDigest != null}" th:text="'Digest: ' + ${#strings.length(operation.actionDigest) >= 8 ? #strings.substring(operation.actionDigest, 0, 8) + '...' : operation.actionDigest}">Digest: abc12345...</small>
-                                    <small class="text-muted" th:unless="${operation.actionDigest != null}">Digest: N/A</small>
                                 </td>
                                 <td>
                                     <span class="status-badge" 
@@ -98,26 +75,12 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="status-badge status-info">
-                                        <i class="bi bi-send"></i>
-                                        <span th:text="${operation.status != null ? operation.status : 'Dispatched'}">Dispatched</span>
-                                    </span>
-                                </td>
-                                <td>
                                     <small class="text-muted" th:text="${operation.queuedTimestamp != null ? operation.queuedTimestamp : operation.queuedAt}">2024-01-01T10:00:00</small>
                                 </td>
                                 <td>
-                                    <span th:if="${operation.platform}" class="status-badge status-success">
-                                        <i class="bi bi-check-circle"></i> Yes
-                                    </span>
-                                    <span th:unless="${operation.platform}" class="status-badge status-secondary">
-                                        <i class="bi bi-x-circle"></i> No
-                                    </span>
-                                </td>
-                                <td>
                                     <button class="btn btn-sm btn-outline-info" 
-                                            onclick="showDispatchedOperationDetails(this)"
-                                            th:attr="data-name=${operation.operationName != null ? operation.operationName : operation.name}, data-stage=${operation.stage}, data-operation-id=${operation.operationId}, data-status=${operation.status}, data-dispatched=${operation.queuedTimestamp != null ? operation.queuedTimestamp : operation.queuedAt}, data-raw=${operation.rawData}">
+                                            onclick="showDispatchedOperationRawJson(this)"
+                                            th:attr="data-operation=${operation}">
                                         <i class="bi bi-eye"></i> View
                                     </button>
                                 </td>
@@ -126,19 +89,6 @@
                     </table>
                     
                     <!-- Dispatched Operations Pagination Controls -->
-                    <div class="pagination-controls" th:if="${operations != null and operations.size() > 0}">
-                        <div class="pagination-info">
-                            Showing <span id="dispatchedStart">1</span> to <span id="dispatchedEnd">10</span> of <span id="dispatchedTotal" th:text="${operations.size()}">0</span> operations
-                        </div>
-                        <div class="pagination-buttons">
-                            <button class="pagination-btn" id="dispatchedPrevBtn" onclick="changeDispatchedPage(-1)">
-                                <i class="bi bi-chevron-left"></i> Previous
-                            </button>
-                            <span id="dispatchedPageNumbers"></span>
-                            <button class="pagination-btn" id="dispatchedNextBtn" onclick="changeDispatchedPage(1)">
-                                Next <i class="bi bi-chevron-right"></i>
-                            </button>
-                        </div>
                     </div>
 
                     <div class="alert alert-info m-3" th:if="${operations == null or operations.size() == 0}">
@@ -148,18 +98,21 @@
             </div>
         </div>
 
-        <!-- Dispatched Operation Details Modal -->
+        <!-- Dispatched Operation Raw JSON Modal -->
         <div class="modal fade" id="dispatchedOperationModal" tabindex="-1" aria-labelledby="dispatchedOperationModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="dispatchedOperationModalLabel">Dispatched Operation Details</h5>
+                        <h5 class="modal-title" id="dispatchedOperationModalLabel">Dispatched Operation - Raw JSON</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <pre id="dispatchedOperationDetails" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-size: 0.875rem;"></pre>
+                        <pre id="dispatchedOperationRawJson" class="bg-light p-3 rounded" style="max-height: 500px; overflow-y: auto; font-size: 0.85rem; white-space: pre-wrap;"></pre>
                     </div>
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-primary" onclick="copyToClipboard()">
+                            <i class="bi bi-clipboard"></i> Copy JSON
+                        </button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
@@ -167,12 +120,51 @@
         </div>
     </div>
 
+    <style>
+        .pagination-number {
+            background: none;
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            padding: 0.375rem 0.75rem;
+            margin: 0 2px;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.15s ease-in-out;
+        }
+        
+        .pagination-number:hover {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        
+        .pagination-number.active {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+        
+        .pagination-number.active:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+    </style>
+
     <script th:inline="javascript">
+    console.log('🚀 DISPATCHED PAGE JAVASCRIPT STARTED 🚀');
+    
+    console.log('🚀 DISPATCHED PAGE JAVASCRIPT STARTED 🚀');
+    
     // Log raw dispatched operations data from server for debugging
     console.log('=== FRONTEND RAW DISPATCHED OPERATIONS DATA FROM SERVER ===');
     var serverDispatchedOperationsData = /*[[${operations}]]*/ [];
-    console.log('SERVER DISPATCHED OPERATIONS RAW JSON:', JSON.stringify(serverDispatchedOperationsData, null, 2));
     console.log('SERVER DISPATCHED OPERATIONS COUNT:', serverDispatchedOperationsData.length);
+    
+    // Verify data structure
+    if (serverDispatchedOperationsData.length > 0) {
+        console.log('First operation sample:', serverDispatchedOperationsData[0]);
+        console.log('Operation keys:', Object.keys(serverDispatchedOperationsData[0]));
+    }
     
     // Log each individual dispatched operation for detailed inspection
     if (serverDispatchedOperationsData && serverDispatchedOperationsData.length > 0) {
@@ -185,37 +177,80 @@
     }
     console.log('=== END FRONTEND DISPATCHED DEBUG DATA ===');
     
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('� DOM READY - Starting simple dispatched pagination system');
+        
+        // Wait a moment to ensure table is fully rendered
+        setTimeout(() => {
+            // Override external dispatched.js if it exists
+            if (window.initializeDispatchedOperations) {
+                console.log('� Overriding external dispatched.js');
+                window.initializeDispatchedOperations = function() {};
+            }
+            
+            initializeDispatchedTable();
+        }, 200);
+    });
+    
     // Refresh dispatched operations
     function refreshDispatchedOperations() {
         window.location.reload();
     }
 
-    // Show dispatched operation details in modal
-    function showDispatchedOperationDetails(button) {
-        const operationName = button.getAttribute('data-name') || 'Unknown';
-        const stage = button.getAttribute('data-stage') || 'Unknown';
-        const operationId = button.getAttribute('data-operation-id') || 'Unknown';
-        const status = button.getAttribute('data-status') || 'Unknown';
-        const dispatchedAt = button.getAttribute('data-dispatched') || 'N/A';
-        const rawData = button.getAttribute('data-raw') || 'No raw data available';
-
-        const details = `Dispatched Operation Details:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Name: ${operationName}
-Operation ID: ${operationId}
-Stage: ${stage}
-Status: ${status}
-Dispatched At: ${dispatchedAt}
-
-Raw Data:
-${rawData}`;
-
-        document.getElementById('dispatchedOperationDetails').textContent = details;
+    // Show dispatched operation raw JSON in modal
+    function showDispatchedOperationRawJson(button) {
+        const operationData = button.getAttribute('data-operation');
+        
+        try {
+            // Parse the operation data if it's a string, or use it directly
+            let jsonData;
+            if (typeof operationData === 'string') {
+                jsonData = JSON.parse(operationData);
+            } else {
+                jsonData = operationData;
+            }
+            
+            // Format the JSON with proper indentation
+            const formattedJson = JSON.stringify(jsonData, null, 2);
+            document.getElementById('dispatchedOperationRawJson').textContent = formattedJson;
+        } catch (e) {
+            // If parsing fails, show the raw data as is
+            document.getElementById('dispatchedOperationRawJson').textContent = operationData || 'No operation data available';
+        }
         
         // Show the modal (assuming Bootstrap is loaded)
         const modal = new bootstrap.Modal(document.getElementById('dispatchedOperationModal'));
         modal.show();
+    }
+
+    // Copy JSON to clipboard
+    function copyToClipboard() {
+        const jsonContent = document.getElementById('dispatchedOperationRawJson').textContent;
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(jsonContent).then(() => {
+                // Show a brief success message
+                const copyBtn = document.querySelector('.btn-outline-primary');
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+                copyBtn.classList.remove('btn-outline-primary');
+                copyBtn.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.classList.remove('btn-success');
+                    copyBtn.classList.add('btn-outline-primary');
+                }, 2000);
+            });
+        } else {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = jsonContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        }
     }
 
     // Initialize dispatched operations table with DataTables-like functionality
@@ -226,16 +261,297 @@ ${rawData}`;
         }
     });
 
+    // Simple pagination that works with existing server-rendered table
+    let currentPage = 1;
+    let pageSize = 10;
+    let allTableRows = [];
+    let filteredRows = [];
+    let searchQuery = '';
+
     function initializeDispatchedTable() {
-        // Add table functionality similar to queues table
-        // Pagination, search, etc. can be implemented here
-        console.log('Dispatched operations table initialized');
+        console.log('🔧 INITIALIZING SIMPLE DISPATCHED PAGINATION 🔧');
+        
+        // Get all existing table rows from server-rendered content
+        const tableBody = document.querySelector('#dispatchedTable tbody');
+        if (!tableBody) {
+            console.warn('No table body found - table may not be rendered');
+            return;
+        }
+        
+        allTableRows = Array.from(tableBody.querySelectorAll('tr'));
+        filteredRows = [...allTableRows];
+        
+        console.log('Found', allTableRows.length, 'table rows from server');
+        
+        // Setup event listeners
+        setupEventListeners();
+        
+        // Initial pagination display
+        updateTableDisplay();
+    }
+    
+    function setupEventListeners() {
+        // Search functionality
+        const searchInput = document.getElementById('dispatchedSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                searchQuery = this.value.toLowerCase();
+                filterRows();
+            });
+        }
+        
+        // Page size selector
+        const pageSizeSelector = document.getElementById('dispatchedPageSize');
+        if (pageSizeSelector) {
+            pageSizeSelector.addEventListener('change', function() {
+                pageSize = parseInt(this.value);
+                currentPage = 1;
+                updateTableDisplay();
+            });
+        }
+        
+        console.log('Event listeners setup complete');
+    }
+    
+    function filterRows() {
+        if (!searchQuery) {
+            filteredRows = [...allTableRows];
+        } else {
+            filteredRows = allTableRows.filter(row => {
+                const text = row.textContent.toLowerCase();
+                return text.includes(searchQuery);
+            });
+        }
+        
+        currentPage = 1;
+        updateTableDisplay();
+        console.log('Filtered to', filteredRows.length, 'rows with query:', searchQuery);
+    }
+    
+    function updateTableDisplay() {
+        console.log('📊 UPDATING TABLE DISPLAY - Page', currentPage, 'Size', pageSize);
+        
+        // Hide all rows first
+        allTableRows.forEach(row => {
+            row.style.display = 'none';
+        });
+        
+        // Calculate pagination
+        const totalRows = filteredRows.length;
+        const totalPages = Math.ceil(totalRows / pageSize);
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = Math.min(startIndex + pageSize, totalRows);
+        
+        // Show rows for current page
+        const rowsToShow = filteredRows.slice(startIndex, endIndex);
+        rowsToShow.forEach((row, index) => {
+            row.style.display = '';
+            // Update the row index to show current page position
+            const indexCell = row.querySelector('td:first-child span');
+            if (indexCell) {
+                indexCell.textContent = startIndex + index + 1;
+            }
+        });
+        
+        // Update pagination info and controls
+        updatePaginationInfo(totalRows, startIndex + 1, endIndex);
+        updatePaginationControls(totalPages);
+        
+        console.log(`✅ Displayed ${rowsToShow.length} rows (${startIndex + 1}-${endIndex} of ${totalRows})`);
+    }
+    
+    function updatePaginationInfo(total, start, end) {
+        // Update pagination info text
+        const startEl = document.getElementById('dispatchedStart');
+        const endEl = document.getElementById('dispatchedEnd');
+        const totalEl = document.getElementById('dispatchedTotal');
+        
+        if (startEl) startEl.textContent = total > 0 ? start : 0;
+        if (endEl) endEl.textContent = end;
+        if (totalEl) totalEl.textContent = total;
+        
+        console.log('Updated pagination info:', { total, start, end });
+    }
+    
+    function updatePaginationControls(totalPages) {
+        // Update navigation buttons
+        const prevBtn = document.getElementById('dispatchedPrevBtn');
+        const nextBtn = document.getElementById('dispatchedNextBtn');
+        
+        if (prevBtn) prevBtn.disabled = currentPage <= 1;
+        if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+        
+        // Update page numbers
+        const pageNumbers = document.getElementById('dispatchedPageNumbers');
+        if (pageNumbers) {
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const isActive = i === currentPage;
+                html += `<button class="pagination-number ${isActive ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            pageNumbers.innerHTML = html;
+        }
+        
+        console.log('Updated pagination controls - Total pages:', totalPages, 'Current:', currentPage);
+    }
+    
+    // Navigation functions
+    function changePage(direction) {
+        const totalPages = Math.ceil(filteredRows.length / pageSize);
+        
+        if (direction > 0 && currentPage < totalPages) {
+            currentPage++;
+            updateTableDisplay();
+        } else if (direction < 0 && currentPage > 1) {
+            currentPage--;
+            updateTableDisplay();
+        }
+    }
+    
+    function goToPage(page) {
+        const totalPages = Math.ceil(filteredRows.length / pageSize);
+        
+        if (page >= 1 && page <= totalPages) {
+            currentPage = page;
+            updateTableDisplay();
+        }
+    }
+    
+    // Make functions globally available
+    window.changePage = changePage;
+    window.goToPage = goToPage;
+
+    function renderDispatchedTable() {
+        const totalOperations = dispatchedData.length;
+        const totalPages = Math.ceil(totalOperations / dispatchedPageSize);
+        
+        // Calculate pagination values
+        const startIndex = (dispatchedCurrentPage - 1) * dispatchedPageSize;
+        const endIndex = Math.min(startIndex + dispatchedPageSize, totalOperations);
+        
+        console.log('Updating pagination with:', {
+            totalOperations,
+            totalPages,
+            startIndex,
+            endIndex,
+            currentPage: dispatchedCurrentPage
+        });
+        
+        // Update pagination info
+        const startSpan = document.getElementById('dispatchedStart');
+        const endSpan = document.getElementById('dispatchedEnd');
+        const totalSpan = document.getElementById('dispatchedTotal');
+        
+        if (startSpan) {
+            startSpan.textContent = totalOperations > 0 ? startIndex + 1 : 0;
+            console.log('Updated start span to:', startSpan.textContent);
+        } else {
+            console.error('dispatchedStart element not found');
+        }
+        
+        if (endSpan) {
+            endSpan.textContent = endIndex;
+            console.log('Updated end span to:', endSpan.textContent);
+        } else {
+            console.error('dispatchedEnd element not found');
+        }
+        
+        if (totalSpan) {
+            totalSpan.textContent = totalOperations;
+            console.log('Updated total span to:', totalSpan.textContent);
+        } else {
+            console.error('dispatchedTotal element not found');
+        }
+        
+        // Update page numbers
+        updateDispatchedPageNumbers(totalPages);
+        
+        // Update button states
+        const prevBtn = document.getElementById('dispatchedPrevBtn');
+        const nextBtn = document.getElementById('dispatchedNextBtn');
+        
+        if (prevBtn) {
+            prevBtn.disabled = dispatchedCurrentPage <= 1;
+        }
+        if (nextBtn) {
+            nextBtn.disabled = dispatchedCurrentPage >= totalPages;
+        }
+        
+        console.log(`Dispatched table: page ${dispatchedCurrentPage}/${totalPages}, showing ${startIndex + 1}-${endIndex} of ${totalOperations}`);
+    }
+
+    function updateDispatchedPageNumbers(totalPages) {
+        const pageNumbersSpan = document.getElementById('dispatchedPageNumbers');
+        if (!pageNumbersSpan) return;
+        
+        if (totalPages <= 1) {
+            pageNumbersSpan.innerHTML = '';
+            return;
+        }
+        
+        let pageNumbers = '';
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, dispatchedCurrentPage - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+        
+        // Adjust start page if we're near the end
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const isActive = i === dispatchedCurrentPage ? ' active' : '';
+            pageNumbers += `<button class="pagination-number${isActive}" onclick="goToDispatchedPage(${i})">${i}</button>`;
+        }
+        
+        pageNumbersSpan.innerHTML = pageNumbers;
     }
 
     function changeDispatchedPage(direction) {
-        // Implement pagination logic
-        console.log('Change dispatched page:', direction);
+        const totalPages = Math.ceil(dispatchedData.length / dispatchedPageSize);
+        const newPage = dispatchedCurrentPage + direction;
+        
+        if (newPage >= 1 && newPage <= totalPages) {
+            dispatchedCurrentPage = newPage;
+            renderDispatchedTable();
+        }
     }
+
+    function goToDispatchedPage(page) {
+        const totalPages = Math.ceil(dispatchedData.length / dispatchedPageSize);
+        if (page >= 1 && page <= totalPages) {
+            dispatchedCurrentPage = page;
+            renderDispatchedTable();
+        }
+    }
+
+    // Test if JavaScript is working immediately
+    console.log('🔧 Testing JavaScript execution...');
+    setTimeout(function() {
+        console.log('⏰ JavaScript timeout test - this should appear after page load');
+        
+        // Check if elements exist
+        const startSpan = document.getElementById('dispatchedStart');
+        const endSpan = document.getElementById('dispatchedEnd');
+        const totalSpan = document.getElementById('dispatchedTotal');
+        
+        console.log('DOM elements found:', {
+            dispatchedStart: !!startSpan,
+            dispatchedEnd: !!endSpan,
+            dispatchedTotal: !!totalSpan
+        });
+        
+        if (startSpan) {
+            startSpan.textContent = 'TEST';
+            console.log('✅ Successfully updated dispatchedStart to TEST');
+        }
+    }, 1000);
+
+    // Initialize the table when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('📄 DOM Content Loaded - initializing table');
+        initializeDispatchedTable();
+    });
     </script>
 </body>
 </html>

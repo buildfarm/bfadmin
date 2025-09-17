@@ -42,8 +42,6 @@
                 </div>
             </div>
 
-
-
             <div class="card stats-card green fade-in">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -111,16 +109,6 @@
                     <div class="table-info">
                         <span id="executeWorkerCount" th:text="${executeWorkersTable.size()}">0</span> workers
                     </div>
-                    <div class="page-size-selector">
-                        <span>Show:</span>
-                        <select id="executeWorkerPageSize">
-                            <option value="5">5</option>
-                            <option value="10" selected>10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                        </select>
-                        <span>per page</span>
-                    </div>
                 </div>
                 
                 <div class="table-responsive">
@@ -165,22 +153,6 @@
                         </tbody>
                     </table>
                     
-                    <!-- Execute Worker Pagination Controls -->
-                    <div class="pagination-controls" th:if="${!executeWorkersTable.empty}">
-                        <div class="pagination-info">
-                            Showing <span id="executeWorkerStart">1</span> to <span id="executeWorkerEnd">10</span> of <span id="executeWorkerTotal" th:text="${executeWorkersTable.size()}">0</span> workers
-                        </div>
-                        <div class="pagination-buttons">
-                            <button class="pagination-btn" id="executeWorkerPrevBtn" onclick="changeExecuteWorkerPage(-1)">
-                                <i class="bi bi-chevron-left"></i> Previous
-                            </button>
-                            <span id="executeWorkerPageNumbers"></span>
-                            <button class="pagination-btn" id="executeWorkerNextBtn" onclick="changeExecuteWorkerPage(1)">
-                                Next <i class="bi bi-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
                     <div class="alert alert-info m-3" th:if="${executeWorkersTable.empty}">
                         <i class="bi bi-info-circle"></i> No execute workers found
                     </div>
@@ -205,16 +177,6 @@
                     </div>
                     <div class="table-info">
                         <span id="storageWorkerCount" th:text="${storageWorkersTable.size()}">0</span> workers
-                    </div>
-                    <div class="page-size-selector">
-                        <span>Show:</span>
-                        <select id="storageWorkerPageSize">
-                            <option value="5">5</option>
-                            <option value="10" selected>10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                        </select>
-                        <span>per page</span>
                     </div>
                 </div>
                 
@@ -260,22 +222,6 @@
                         </tbody>
                     </table>
                     
-                    <!-- Storage Worker Pagination Controls -->
-                    <div class="pagination-controls" th:if="${!storageWorkersTable.empty}">
-                        <div class="pagination-info">
-                            Showing <span id="storageWorkerStart">1</span> to <span id="storageWorkerEnd">10</span> of <span id="storageWorkerTotal" th:text="${storageWorkersTable.size()}">0</span> workers
-                        </div>
-                        <div class="pagination-buttons">
-                            <button class="pagination-btn" id="storageWorkerPrevBtn" onclick="changeStorageWorkerPage(-1)">
-                                <i class="bi bi-chevron-left"></i> Previous
-                            </button>
-                            <span id="storageWorkerPageNumbers"></span>
-                            <button class="pagination-btn" id="storageWorkerNextBtn" onclick="changeStorageWorkerPage(1)">
-                                Next <i class="bi bi-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
                     <div class="alert alert-info m-3" th:if="${storageWorkersTable.empty}">
                         <i class="bi bi-info-circle"></i> No storage workers found
                     </div>
@@ -300,16 +246,6 @@
                     </div>
                     <div class="table-info">
                         <span id="serversCount" th:text="${serversTable.size()}">0</span> servers
-                    </div>
-                    <div class="page-size-selector">
-                        <span>Show:</span>
-                        <select id="serversPageSize">
-                            <option value="5">5</option>
-                            <option value="10" selected>10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                        </select>
-                        <span>per page</span>
                     </div>
                 </div>
                     
@@ -351,28 +287,6 @@
                             </tr>
                         </tbody>
                     </table>
-                    
-                    <!-- Servers Pagination Controls -->
-                    <div class="pagination-controls" th:if="${serversTable != null and serversTable.size() > 0}">
-                        <div class="pagination-info">
-                            <span id="serversInfo">Showing 1 to 25 of <span th:text="${serversTable.size()}">0</span> servers</span>
-                        </div>
-                        <div class="pagination-buttons">
-                            <button id="serversFirstBtn" class="pagination-btn" onclick="serversCurrentPage=1; renderServersTable();">
-                                <i class="bi bi-chevron-double-left"></i> First
-                            </button>
-                            <button id="serversPrevBtn" class="pagination-btn" onclick="changeServersPage(-1)">
-                                <i class="bi bi-chevron-left"></i> Previous
-                            </button>
-                            <span id="serversPageNumbers" class="page-numbers"></span>
-                            <button id="serversNextBtn" class="pagination-btn" onclick="changeServersPage(1)">
-                                Next <i class="bi bi-chevron-right"></i>
-                            </button>
-                            <button id="serversLastBtn" class="pagination-btn" onclick="serversCurrentPage=Math.ceil(serversData.length/window.serversPageSize); renderServersTable();">
-                                <i class="bi bi-chevron-double-right"></i> Last
-                            </button>
-                        </div>
-                    </div>
                     
                     <div class="alert alert-info m-3" th:if="${serversTable == null or serversTable.size() == 0}">
                         <i class="bi bi-info-circle"></i> No servers found

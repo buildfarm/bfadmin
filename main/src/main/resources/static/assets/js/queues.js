@@ -1,273 +1,207 @@
 /**
  * BuildFarm Queues JavaScript
- * Handles queue selection, operation loading, pagination, and table interactions
+ * Handles queue selection, operation loading, and table interactions
  */
 
-// Queue operation data and pagination variables
+// Queue operation data and sorting variables
 let operationData = [];
-let operationCurrentPage = 1;
-let operationPageSize = 10;
 let operationSortColumn = '';
 let operationSortDirection = 'asc';
+let selectedQueue = '';
 
+// Initialize the page when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize queue functionality
-    initializeQueueFunctionality();
+    initializeQueues();
     
-    // Add fade-in animations
-    const animatedElements = document.querySelectorAll('.fade-in');
-    animatedElements.forEach((el, index) => {
-        el.style.animationDelay = `${index * 0.1}s`;
-    });
+    // Load initial data if a queue is selected
+    const initialQueue = document.querySelector('.queue-item.selected');
+    if (initialQueue) {
+        const queueName = initialQueue.getAttribute('data-queue');
+        if (queueName) {
+            selectQueue(queueName);
+        }
+    }
 });
 
-function initializeQueueFunctionality() {
-    // Extract initial operation data from the table
-    extractOperationData();
+function initializeQueues() {
+    // Set up queue selection handlers
+    setupQueueHandlers();
     
-    // Setup event listeners
-    setupQueueEventListeners();
+    // Set up table sorting
+    setupTableSorting();
     
-    // Initialize table pagination and sorting
-    if (operationData.length > 0) {
-        renderOperationTable();
-    }
+    // Set up search functionality
+    setupSearchHandlers();
+    
+    // Set up refresh functionality
+    setupRefreshHandlers();
 }
 
-// Extract operation data from existing HTML table
-function extractOperationData() {
-    const table = document.getElementById('operationTable');
-    if (!table) return;
-    
-    const tbody = table.querySelector('tbody');
-    if (!tbody) return;
-    
-    operationData = [];
-    const rows = tbody.querySelectorAll('tr');
-    
-    rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length >= 8) {
-            const operation = {
-                index: cells[0].textContent.trim(),
-                queueName: cells[1].querySelector('span')?.textContent.trim() || '',
-                operationName: cells[2].querySelector('.fw-medium')?.textContent.trim() || '',
-                operationId: cells[2].dataset.operationId || '',
-                actionDigest: cells[2].querySelector('small')?.textContent.replace('Digest: ', '').trim() || '',
-                stage: cells[3].querySelector('span')?.textContent.trim() || '',
-                status: cells[4].querySelector('span')?.textContent.trim() || '',
-                queuedAt: cells[5].textContent.trim(),
-                hasMetadata: cells[6].querySelector('.status-success') !== null,
-                rawData: cells[7].querySelector('button')?.dataset.raw || ''
-            };
-            operationData.push(operation);
-        }
+function setupQueueHandlers() {
+    // Handle queue selection clicks
+    const queueItems = document.querySelectorAll('.queue-item');
+    queueItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const queueName = this.getAttribute('data-queue');
+            selectQueue(queueName);
+        });
     });
-    
-    console.log('Extracted', operationData.length, 'operations');
-    console.log('RAW OPERATIONS DATA FROM HTML:', JSON.stringify(operationData, null, 2));
 }
 
-// Set up event listeners for queue interactions
-function setupQueueEventListeners() {
-    // Search functionality
-    const searchInput = document.getElementById('operationSearch');
+function setupTableSorting() {
+    // Add sorting functionality to table headers
+    const sortableHeaders = document.querySelectorAll('.sortable-header');
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const column = this.getAttribute('data-column');
+            sortOperations(column);
+        });
+    });
+}
+
+function setupSearchHandlers() {
+    // Handle operation search
+    const searchInput = document.getElementById('operationSearchInput');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
-            operationCurrentPage = 1;
+            filterOperations(this.value);
+        });
+    }
+}
+
+function setupRefreshHandlers() {
+    // Handle refresh button
+    const refreshBtn = document.getElementById('refreshOperationsBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            refreshOperations();
+        });
+    }
+}
+
+function selectQueue(queueName) {
+    selectedQueue = queueName;
+    
+    // Update UI to show selected queue
+    updateSelectedQueue(queueName);
+    
+    // Load operations for this queue
+    loadQueueOperations(queueName);
+}
+
+function updateSelectedQueue(queueName) {
+    // Remove previous selection
+    const previousSelected = document.querySelector('.queue-item.selected');
+    if (previousSelected) {
+        previousSelected.classList.remove('selected');
+    }
+    
+    // Add selection to current queue
+    const currentQueue = document.querySelector(`[data-queue="${queueName}"]`);
+    if (currentQueue) {
+        currentQueue.classList.add('selected');
+    }
+    
+    // Update queue name display
+    const queueNameDisplay = document.getElementById('selectedQueueName');
+    if (queueNameDisplay) {
+        queueNameDisplay.textContent = queueName;
+    }
+}
+
+function loadQueueOperations(queueName) {
+    // Show loading state
+    showLoadingState();
+    
+    // Make request to load operations
+    const url = `/api/queues/${encodeURIComponent(queueName)}/operations`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            operationData = data || [];
             renderOperationTable();
+            updateOperationCount();
+        })
+        .catch(error => {
+            console.error('Error loading queue operations:', error);
+            showErrorState('Failed to load queue operations');
         });
+}
+
+function showLoadingState() {
+    const tableBody = document.querySelector('#operationTable tbody');
+    if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm" role="status"></div> Loading operations...</td></tr>';
     }
-    
-    // Page size selector
-    const pageSizeSelect = document.getElementById('operationPageSize');
-    if (pageSizeSelect) {
-        pageSizeSelect.addEventListener('change', function() {
-            operationPageSize = parseInt(this.value);
-            operationCurrentPage = 1;
-            renderOperationTable();
-        });
+}
+
+function showErrorState(message) {
+    const tableBody = document.querySelector('#operationTable tbody');
+    if (tableBody) {
+        tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${message}</td></tr>`;
     }
-    
-    // Setup sorting for operation table
-    setupOperationSorting();
 }
 
-// Setup sorting listeners for operation table
-function setupOperationSorting() {
-    const table = document.getElementById('operationTable');
-    if (!table) return;
-    
-    const headers = table.querySelectorAll('.sortable-header');
-    headers.forEach(header => {
-        header.addEventListener('click', function() {
-            const column = this.dataset.column;
-            handleOperationSort(column);
-        });
-    });
-}
-
-// Handle sorting for operations
-function handleOperationSort(column) {
-    if (operationSortColumn === column) {
-        operationSortDirection = operationSortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-        operationSortColumn = column;
-        operationSortDirection = 'asc';
-    }
-    
-    updateOperationSortHeaders();
-    renderOperationTable();
-}
-
-// Update sort header indicators
-function updateOperationSortHeaders() {
-    const table = document.getElementById('operationTable');
-    if (!table) return;
-    
-    const headers = table.querySelectorAll('.sortable-header');
-    headers.forEach(header => {
-        header.classList.remove('sort-asc', 'sort-desc');
-        if (header.dataset.column === operationSortColumn) {
-            header.classList.add(`sort-${operationSortDirection}`);
-        }
-    });
-}
-
-// Render operation table with pagination and filtering
 function renderOperationTable() {
-    const table = document.getElementById('operationTable');
-    if (!table) return;
+    const tableBody = document.querySelector('#operationTable tbody');
+    if (!tableBody) return;
     
-    const tbody = table.querySelector('tbody');
-    if (!tbody) return;
-    
-    // Get search term
-    const searchInput = document.getElementById('operationSearch');
+    // Get current search term
+    const searchInput = document.getElementById('operationSearchInput');
     const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
     
     // Filter operations based on search
-    let filteredOperations = operationData.filter(operation => {
+    const filteredOperations = operationData.filter(operation => {
         if (!searchTerm) return true;
-        return operation.operationName.toLowerCase().includes(searchTerm) ||
-               operation.queueName.toLowerCase().includes(searchTerm) ||
-               operation.stage.toLowerCase().includes(searchTerm) ||
-               operation.status.toLowerCase().includes(searchTerm) ||
-               operation.operationId.toLowerCase().includes(searchTerm);
+        
+        return (operation.name && operation.name.toLowerCase().includes(searchTerm)) ||
+               (operation.stage && operation.stage.toLowerCase().includes(searchTerm)) ||
+               (operation.status && operation.status.toLowerCase().includes(searchTerm)) ||
+               (operation.worker && operation.worker.toLowerCase().includes(searchTerm)) ||
+               (operation.queuedAt && operation.queuedAt.toLowerCase().includes(searchTerm));
     });
     
-    // Sort operations
-    if (operationSortColumn) {
-        filteredOperations.sort((a, b) => {
-            let valueA = a[operationSortColumn];
-            let valueB = b[operationSortColumn];
-            
-        // Handle different data types
-        if (operationSortColumn === 'operationName' || operationSortColumn === 'stage' || operationSortColumn === 'queueName') {
-            valueA = String(valueA).toLowerCase();
-            valueB = String(valueB).toLowerCase();
-        } else if (operationSortColumn === 'queuedAt') {
-            valueA = new Date(valueA);
-            valueB = new Date(valueB);
-        } else {
-            valueA = String(valueA).toLowerCase();
-            valueB = String(valueB).toLowerCase();
-        }            if (valueA < valueB) {
-                return operationSortDirection === 'asc' ? -1 : 1;
-            } else if (valueA > valueB) {
-                return operationSortDirection === 'asc' ? 1 : -1;
-            }
-            return 0;
-        });
-    }
+    // Clear table
+    tableBody.innerHTML = '';
     
-    // Pagination
-    const totalItems = filteredOperations.length;
-    const totalPages = Math.ceil(totalItems / operationPageSize);
-    const start = (operationCurrentPage - 1) * operationPageSize;
-    const end = Math.min(start + operationPageSize, totalItems);
-    const pageOperations = filteredOperations.slice(start, end);
-    
-    // Clear existing rows
-    tbody.innerHTML = '';
-    
-    // Add filtered and paginated rows
-    pageOperations.forEach((operation, index) => {
-        const row = createOperationRow(operation, index);
-        tbody.appendChild(row);
+    // Add filtered rows
+    filteredOperations.forEach((operation, index) => {
+        const row = createOperationRow(operation, index + 1);
+        tableBody.appendChild(row);
     });
     
-    // Update pagination info
-    updateOperationPaginationInfo(start + 1, end, totalItems, totalPages);
-    updateOperationPaginationControls(totalPages);
-    
-    // Update operation count
-    const countElement = document.getElementById('operationTableCount');
-    if (countElement) {
-        countElement.textContent = totalItems;
+    // Show "no results" message if needed
+    if (filteredOperations.length === 0) {
+        const noResultsRow = document.createElement('tr');
+        noResultsRow.innerHTML = '<td colspan="6" class="text-center text-muted py-4">No operations found</td>';
+        tableBody.appendChild(noResultsRow);
     }
+    
+    // Update count display
+    updateOperationCount(filteredOperations.length);
 }
 
-// Create a table row for an operation
 function createOperationRow(operation, index) {
     const row = document.createElement('tr');
     
-    const stageIcon = operation.stage === 'QUEUED' ? 'bi-clock' : 
-                     operation.stage === 'EXECUTING' ? 'bi-gear' : 
-                     operation.stage === 'COMPLETED' ? 'bi-check-circle' : 
-                     operation.stage === 'FAILED' ? 'bi-x-circle' : 'bi-question-circle';
-    
-    const stageBadgeClass = operation.stage === 'QUEUED' ? 'status-warning' :
-                           operation.stage === 'EXECUTING' ? 'status-info' :
-                           operation.stage === 'COMPLETED' ? 'status-success' : 
-                           operation.stage === 'FAILED' ? 'status-danger' : 'status-secondary';
-    
-    const statusIcon = operation.status === 'Queued' ? 'bi-clock' :
-                      operation.status === 'Executing' ? 'bi-gear' :
-                      operation.status === 'Completed' ? 'bi-check-circle' :
-                      operation.status === 'Failed' ? 'bi-x-circle' : 'bi-question-circle';
-    
-    const statusBadgeClass = operation.status === 'Queued' ? 'status-warning' :
-                            operation.status === 'Executing' ? 'status-info' :
-                            operation.status === 'Completed' ? 'status-success' :
-                            operation.status === 'Failed' ? 'status-danger' : 'status-secondary';
-    
     row.innerHTML = `
-        <td><span class="text-muted">${operation.index}</span></td>
+        <td>${index}</td>
         <td>
-            <span class="queue-badge">${operation.queueName || 'Unknown'}</span>
-        </td>
-        <td data-operation-id="${operation.operationId}">
-            <span class="fw-medium">${operation.operationName}</span>
-            ${operation.actionDigest ? `<br><small class="text-muted">Digest: ${operation.actionDigest.substring(0, 8)}...</small>` : ''}
+            <div class="operation-name">${escapeHtml(operation.name || 'N/A')}</div>
         </td>
         <td>
-            <span class="status-badge ${stageBadgeClass}">
-                <i class="bi ${stageIcon}"></i>
-                <span>${operation.stage}</span>
-            </span>
+            <span class="badge ${getStageClass(operation.stage)}">${escapeHtml(operation.stage || 'Unknown')}</span>
         </td>
         <td>
-            <span class="status-badge ${statusBadgeClass}">
-                <i class="bi ${statusIcon}"></i>
-                <span>${operation.status}</span>
-            </span>
+            <span class="badge ${getStatusClass(operation.status)}">${escapeHtml(operation.status || 'Unknown')}</span>
         </td>
-        <td><small class="text-muted">${operation.queuedAt}</small></td>
+        <td>${escapeHtml(operation.worker || 'N/A')}</td>
+        <td>${escapeHtml(operation.queuedAt || 'N/A')}</td>
         <td>
-            <span class="status-badge ${operation.hasMetadata ? 'status-success' : 'status-secondary'}">
-                <i class="bi ${operation.hasMetadata ? 'bi-check-circle' : 'bi-x-circle'}"></i>
-                ${operation.hasMetadata ? 'Yes' : 'No'}
-            </span>
-        </td>
-        <td>
-            <button class="btn btn-sm btn-outline-info" onclick="showOperationDetails(this)" 
-                    data-name="${operation.operationName}" 
-                    data-stage="${operation.stage}" 
-                    data-status="${operation.status}"
-                    data-queued="${operation.queuedAt}" 
-                    data-raw="${operation.rawData}">
-                <i class="bi bi-eye"></i> View
+            <button class="btn btn-sm btn-outline-primary" onclick="showOperationDetails('${escapeHtml(operation.name || '')}')">
+                <i class="fas fa-eye"></i>
             </button>
         </td>
     `;
@@ -275,190 +209,121 @@ function createOperationRow(operation, index) {
     return row;
 }
 
-// Update pagination info display
-function updateOperationPaginationInfo(start, end, total, totalPages) {
-    const startElement = document.getElementById('operationStart');
-    const endElement = document.getElementById('operationEnd');
-    const totalElement = document.getElementById('operationTotal');
-    
-    if (startElement) startElement.textContent = start;
-    if (endElement) endElement.textContent = end;
-    if (totalElement) totalElement.textContent = total;
-    
-    // Update pagination buttons
-    const prevBtn = document.getElementById('operationPrevBtn');
-    const nextBtn = document.getElementById('operationNextBtn');
-    
-    if (prevBtn) {
-        prevBtn.disabled = operationCurrentPage <= 1;
-    }
-    if (nextBtn) {
-        nextBtn.disabled = operationCurrentPage >= totalPages;
-    }
+function getStageClass(stage) {
+    const stageClasses = {
+        'QUEUED': 'bg-warning',
+        'EXECUTING': 'bg-info',
+        'COMPLETED': 'bg-success',
+        'ERROR': 'bg-danger'
+    };
+    return stageClasses[stage] || 'bg-secondary';
 }
 
-// Update pagination controls
-function updateOperationPaginationControls(totalPages) {
-    const pageNumbersSpan = document.getElementById('operationPageNumbers');
-    if (!pageNumbersSpan) return;
-    
-    pageNumbersSpan.innerHTML = '';
-    
-    if (totalPages <= 1) return;
-    
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, operationCurrentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
-    if (endPage - startPage + 1 < maxVisiblePages) {
-        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-        const pageBtn = document.createElement('button');
-        pageBtn.className = `page-btn ${i === operationCurrentPage ? 'active' : ''}`;
-        pageBtn.textContent = i;
-        pageBtn.onclick = function() {
-            operationCurrentPage = i;
-            renderOperationTable();
-        };
-        pageNumbersSpan.appendChild(pageBtn);
-    }
+function getStatusClass(status) {
+    const statusClasses = {
+        'PENDING': 'bg-warning',
+        'RUNNING': 'bg-info', 
+        'SUCCESS': 'bg-success',
+        'FAILURE': 'bg-danger',
+        'CANCELLED': 'bg-secondary'
+    };
+    return statusClasses[status] || 'bg-secondary';
 }
 
-// Load operations for selected queue
-function loadQueueOperations() {
-    const queueSelect = document.getElementById('queueSelect');
-    if (!queueSelect) return;
-    
-    const selectedQueue = queueSelect.value;
-    if (!selectedQueue) return;
-    
-    console.log('Loading operations for queue:', selectedQueue);
-    
-    // Update current queue name display
-    const currentQueueName = document.getElementById('currentQueueName');
-    if (currentQueueName) {
-        currentQueueName.textContent = selectedQueue;
-    }
-    
-    // Show loading state
-    showLoadingState();
-    
-    // Make AJAX request to get operations
-    fetch(`/api/queue-operations?queueName=${encodeURIComponent(selectedQueue)}`)
-        .then(response => response.json())
-        .then(operations => {
-            console.log('Received', operations.length, 'operations for queue:', selectedQueue);
-            console.log('RAW API RESPONSE JSON:', JSON.stringify(operations, null, 2));
-            
-            // Update operation data
-            operationData = operations.map(op => ({
-                index: op.index || 0,
-                operationName: op.operationName || 'Unknown',
-                operationId: op.operationId || '',
-                stage: op.stage || 'UNKNOWN',
-                status: op.status || 'Unknown',
-                queuedAt: op.queuedAt || 'N/A',
-                hasMetadata: op.hasMetadata || false,
-                rawData: op.rawData || ''
-            }));
-            
-            console.log('MAPPED OPERATIONS DATA:', JSON.stringify(operationData, null, 2));
-            
-            // Reset pagination
-            operationCurrentPage = 1;
-            
-            // Update table
-            renderOperationTable();
-            
-            // Update operation count badge
-            const operationCount = document.getElementById('operationCount');
-            if (operationCount) {
-                operationCount.textContent = operations.length + ' Operations';
-            }
-            
-            hideLoadingState();
-        })
-        .catch(error => {
-            console.error('Error loading queue operations:', error);
-            hideLoadingState();
-            showErrorMessage('Failed to load queue operations');
-        });
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
-// Show loading state
-function showLoadingState() {
-    const table = document.getElementById('operationTable');
-    if (table) {
-        const tbody = table.querySelector('tbody');
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4"><i class="bi bi-hourglass-split"></i> Loading operations...</td></tr>';
+function sortOperations(column) {
+    if (operationSortColumn === column) {
+        operationSortDirection = operationSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        operationSortColumn = column;
+        operationSortDirection = 'asc';
+    }
+    
+    // Update sort indicators
+    updateSortIndicators(column);
+    
+    // Sort the data
+    operationData.sort((a, b) => {
+        let aVal = String(a[column] || '').toLowerCase();
+        let bVal = String(b[column] || '').toLowerCase();
+        
+        if (operationSortDirection === 'asc') {
+            return aVal.localeCompare(bVal);
+        } else {
+            return bVal.localeCompare(aVal);
         }
-    }
-}
-
-// Hide loading state
-function hideLoadingState() {
-    // Loading state will be replaced by renderOperationTable()
-}
-
-// Show error message
-function showErrorMessage(message) {
-    const table = document.getElementById('operationTable');
-    if (table) {
-        const tbody = table.querySelector('tbody');
-        if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-danger"><i class="bi bi-exclamation-triangle"></i> ${message}</td></tr>`;
-        }
-    }
-}
-
-// Refresh operations for current queue
-function refreshOperations() {
-    loadQueueOperations();
-}
-
-// Change operation page
-function changeOperationPage(direction) {
-    const totalItems = operationData.length;
-    const totalPages = Math.ceil(totalItems / operationPageSize);
+    });
     
-    operationCurrentPage += direction;
-    if (operationCurrentPage < 1) operationCurrentPage = 1;
-    if (operationCurrentPage > totalPages) operationCurrentPage = totalPages;
-    
+    // Re-render table
     renderOperationTable();
 }
 
-// Show operation details in modal
-function showOperationDetails(button) {
-    // Extract operation details from data attributes
-    const operationData = {
-        name: button.dataset.name,
-        stage: button.dataset.stage,
-        worker: button.dataset.worker,
-        platform: button.dataset.platform,
-        queued: button.dataset.queued,
-        executeTimeout: button.dataset.executeTimeout,
-        actionTimeout: button.dataset.actionTimeout
-    };
+function updateSortIndicators(column) {
+    // Remove all existing sort classes
+    const headers = document.querySelectorAll('.sortable-header');
+    headers.forEach(header => {
+        header.classList.remove('sorted-asc', 'sorted-desc');
+    });
     
-    // Update modal content
-    const modalTitle = document.getElementById('operationModalLabel');
-    const modalBody = document.getElementById('operationDetails');
-    
-    if (modalTitle) {
-        modalTitle.textContent = `Operation: ${operationData.name || 'Unknown'}`;
+    // Add sort class to current column
+    const currentHeader = document.querySelector(`[data-column="${column}"]`);
+    if (currentHeader) {
+        currentHeader.classList.add(operationSortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+    }
+}
+
+function filterOperations(searchTerm) {
+    // Re-render table with current search term
+    renderOperationTable();
+}
+
+function updateOperationCount(count = null) {
+    const actualCount = count !== null ? count : operationData.length;
+    const countElements = document.querySelectorAll('#operationCount, .operation-count');
+    countElements.forEach(element => {
+        element.textContent = actualCount;
+    });
+}
+
+function refreshOperations() {
+    if (selectedQueue) {
+        loadQueueOperations(selectedQueue);
+    }
+}
+
+function showOperationDetails(operationName) {
+    // Find the operation in our data
+    const operation = operationData.find(op => op.name === operationName);
+    if (!operation) {
+        alert('Operation not found');
+        return;
     }
     
-    if (modalBody) {
-        // Format the operation data for better readability
-        const formatted = JSON.stringify(operationData, null, 2);
-        modalBody.textContent = formatted;
-    }
-    
-    // Show modal using Bootstrap 5 API
-    const modal = new bootstrap.Modal(document.getElementById('operationModal'));
-    modal.show();
+    // Show operation details in modal or alert
+    const details = `Operation Details:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Name: ${operation.name || 'N/A'}
+Stage: ${operation.stage || 'Unknown'}
+Status: ${operation.status || 'Unknown'}
+Worker: ${operation.worker || 'N/A'}
+Queued At: ${operation.queuedAt || 'N/A'}
+
+Additional Details:
+${JSON.stringify(operation, null, 2)}`;
+
+    alert(details);
+}
+
+// Handle search input with debouncing
+function handleSearchInput(event) {
+    clearTimeout(window.searchTimeout);
+    window.searchTimeout = setTimeout(() => {
+        filterOperations(event.target.value);
+    }, 300);
 }

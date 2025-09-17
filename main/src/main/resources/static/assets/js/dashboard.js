@@ -1,6 +1,6 @@
 /**
  * BuildFarm Dashboard JavaScript
- * Handles table pagination, sorting, search, and UI interactions
+ * Handles table sorting, search, and UI interactions
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateRelativeTime();
     setInterval(updateRelativeTime, 60000); // Update every minute
 
-    // Initialize table functionality
+    // Initialize table functionality (search only, no pagination)
     initializeTableFunctionality();
 });
 
@@ -80,26 +80,10 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Table Management Variables
+// Table Management Variables (search only)
 let executeWorkerData = [];
 let storageWorkerData = [];
 let serversData = [];
-let executeWorkerCurrentPage = 1;
-let storageWorkerCurrentPage = 1;
-let serversCurrentPage = 1;
-let executeWorkerPageSize = 10;
-let storageWorkerPageSize = 10;
-let serversPageSize = 25;
-
-// Initialize window variables for pagination
-window.serversPageSize = 25;
-
-let executeWorkerSortColumn = '';
-let executeWorkerSortDirection = 'asc';
-let storageWorkerSortColumn = '';
-let storageWorkerSortDirection = 'asc';
-let serversSortColumn = '';
-let serversSortDirection = 'asc';
 
 // Initialize table functionality
 function initializeTableFunctionality() {
@@ -108,11 +92,6 @@ function initializeTableFunctionality() {
     
     // Set up event listeners
     setupEventListeners();
-    
-    // Initial render
-    renderExecuteWorkerTable();
-    renderStorageWorkerTable();
-    renderServersTable();
 }
 
 // Extract worker data from existing HTML tables
@@ -141,7 +120,6 @@ function extractWorkerDataFromTable(table) {
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
         if (cells.length >= 6) {
-            // Remove content in parentheses from status
             const cleanStatus = cells[3].textContent.trim().replace(/\([^)]*\)/g, '').trim();
             data.push({
                 groupName: cells[0].textContent.trim(),
@@ -150,7 +128,7 @@ function extractWorkerDataFromTable(table) {
                 status: cleanStatus,
                 expireAt: cells[4].textContent.trim(),
                 firstRegisteredAt: cells[5].textContent.trim(),
-                originalHtml: row.innerHTML
+                row: row
             });
         }
     });
@@ -166,7 +144,6 @@ function extractServerDataFromTable(table) {
         const cells = row.querySelectorAll('td');
         
         if (cells.length >= 6) {
-            // Remove content in parentheses from status
             const cleanStatus = cells[3].textContent.trim().replace(/\([^)]*\)/g, '').trim();
             const serverData = {
                 groupName: cells[0].textContent.trim(),
@@ -175,7 +152,7 @@ function extractServerDataFromTable(table) {
                 status: cleanStatus,
                 expireAt: cells[4].textContent.trim(),
                 firstRegisteredAt: cells[5].textContent.trim(),
-                originalHtml: row.innerHTML
+                row: row
             };
             data.push(serverData);
         }
@@ -184,62 +161,28 @@ function extractServerDataFromTable(table) {
     return data;
 }
 
-// Set up event listeners
+// Set up event listeners (search only)
 function setupEventListeners() {
     // Search functionality
     const executeSearch = document.getElementById('executeWorkerSearch');
     const storageSearch = document.getElementById('storageWorkerSearch');
+    const serversSearch = document.getElementById('serversSearch');
 
     if (executeSearch) {
         executeSearch.addEventListener('input', function() {
-            executeWorkerCurrentPage = 1;
-            renderExecuteWorkerTable();
+            filterTable(executeWorkerData, this.value, 'executeWorkerCount');
         });
     }
 
     if (storageSearch) {
         storageSearch.addEventListener('input', function() {
-            storageWorkerCurrentPage = 1;
-            renderStorageWorkerTable();
+            filterTable(storageWorkerData, this.value, 'storageWorkerCount');
         });
     }
-
-    // Page size selectors
-    const executePageSize = document.getElementById('executeWorkerPageSize');
-    const storagePageSize = document.getElementById('storageWorkerPageSize');
-
-    if (executePageSize) {
-        executePageSize.addEventListener('change', function() {
-            executeWorkerPageSize = parseInt(this.value);
-            executeWorkerCurrentPage = 1;
-            renderExecuteWorkerTable();
-        });
-    }
-
-    if (storagePageSize) {
-        storagePageSize.addEventListener('change', function() {
-            storageWorkerPageSize = parseInt(this.value);
-            storageWorkerCurrentPage = 1;
-            renderStorageWorkerTable();
-        });
-    }
-
-    // Servers event listeners
-    const serversSearch = document.getElementById('serversSearch');
-    const serversPageSize = document.getElementById('serversPageSize');
 
     if (serversSearch) {
         serversSearch.addEventListener('input', function() {
-            serversCurrentPage = 1;
-            renderServersTable();
-        });
-    }
-
-    if (serversPageSize) {
-        serversPageSize.addEventListener('change', function() {
-            window.serversPageSize = parseInt(this.value);
-            serversCurrentPage = 1;
-            renderServersTable();
+            filterTable(serversData, this.value, 'serversCount');
         });
     }
 
@@ -253,7 +196,7 @@ function setupSortingListeners(tableId, type) {
     const table = document.getElementById(tableId);
     if (!table) return;
 
-    const headers = table.querySelectorAll('.sortable');
+    const headers = table.querySelectorAll('.sortable-header');
     headers.forEach(header => {
         header.addEventListener('click', function() {
             const column = this.getAttribute('data-column');
@@ -263,41 +206,49 @@ function setupSortingListeners(tableId, type) {
 }
 
 function handleSort(column, type) {
+    let data, sortColumn, sortDirection;
+    
     if (type === 'execute') {
-        if (executeWorkerSortColumn === column) {
-            executeWorkerSortDirection = executeWorkerSortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            executeWorkerSortColumn = column;
-            executeWorkerSortDirection = 'asc';
-        }
-        updateSortHeaders('executeWorkerTable', column, executeWorkerSortDirection);
-        renderExecuteWorkerTable();
+        data = executeWorkerData;
     } else if (type === 'storage') {
-        if (storageWorkerSortColumn === column) {
-            storageWorkerSortDirection = storageWorkerSortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            storageWorkerSortColumn = column;
-            storageWorkerSortDirection = 'asc';
-        }
-        updateSortHeaders('storageWorkerTable', column, storageWorkerSortDirection);
-        renderStorageWorkerTable();
+        data = storageWorkerData;
     } else if (type === 'servers') {
-        if (serversSortColumn === column) {
-            serversSortDirection = serversSortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            serversSortColumn = column;
-            serversSortDirection = 'asc';
-        }
-        updateSortHeaders('serversTable', column, serversSortDirection);
-        renderServersTable();
+        data = serversData;
     }
+
+    // Simple sorting toggle
+    const currentDirection = data.sortDirection || 'asc';
+    const newDirection = (data.sortColumn === column && currentDirection === 'asc') ? 'desc' : 'asc';
+    
+    data.sortColumn = column;
+    data.sortDirection = newDirection;
+
+    // Sort the data
+    data.sort((a, b) => {
+        let aVal = String(a[column]).toLowerCase();
+        let bVal = String(b[column]).toLowerCase();
+        if (newDirection === 'asc') {
+            return aVal.localeCompare(bVal);
+        } else {
+            return bVal.localeCompare(aVal);
+        }
+    });
+
+    // Update table display
+    const tableId = type === 'execute' ? 'executeWorkerTable' : 
+                   type === 'storage' ? 'storageWorkerTable' : 'serversTable';
+    const countId = type === 'execute' ? 'executeWorkerCount' : 
+                   type === 'storage' ? 'storageWorkerCount' : 'serversCount';
+    
+    updateTableDisplay(data, tableId, countId);
+    updateSortHeaders(tableId, column, newDirection);
 }
 
 function updateSortHeaders(tableId, activeColumn, direction) {
     const table = document.getElementById(tableId);
     if (!table) return;
 
-    const headers = table.querySelectorAll('.sortable');
+    const headers = table.querySelectorAll('.sortable-header');
     headers.forEach(header => {
         header.classList.remove('sorted-asc', 'sorted-desc');
         if (header.getAttribute('data-column') === activeColumn) {
@@ -306,268 +257,49 @@ function updateSortHeaders(tableId, activeColumn, direction) {
     });
 }
 
-// Render Execute Worker Table
-function renderExecuteWorkerTable() {
-    const searchTerm = document.getElementById('executeWorkerSearch')?.value.toLowerCase() || '';
-    let filteredData = executeWorkerData.filter(worker => 
-        worker.groupName.toLowerCase().includes(searchTerm) ||
-        worker.endpoint.toLowerCase().includes(searchTerm) ||
-        worker.status.toLowerCase().includes(searchTerm)
-    );
+function filterTable(data, searchTerm, countElementId) {
+    searchTerm = searchTerm.toLowerCase();
+    let visibleCount = 0;
 
-    // Apply sorting
-    if (executeWorkerSortColumn) {
-        filteredData.sort((a, b) => {
-            let aVal = a[executeWorkerSortColumn].toLowerCase();
-            let bVal = b[executeWorkerSortColumn].toLowerCase();
-            if (executeWorkerSortDirection === 'asc') {
-                return aVal.localeCompare(bVal);
-            } else {
-                return bVal.localeCompare(aVal);
-            }
-        });
-    }
-
-    // Apply pagination
-    const totalItems = filteredData.length;
-    const totalPages = Math.ceil(totalItems / executeWorkerPageSize);
-    const startIndex = (executeWorkerCurrentPage - 1) * executeWorkerPageSize;
-    const endIndex = Math.min(startIndex + executeWorkerPageSize, totalItems);
-    const pageData = filteredData.slice(startIndex, endIndex);
-
-    // Update table
-    const table = document.getElementById('executeWorkerTable');
-    if (table) {
-        const tbody = table.querySelector('tbody');
-        tbody.innerHTML = '';
-        pageData.forEach(worker => {
-            const row = document.createElement('tr');
-            row.innerHTML = worker.originalHtml;
-            tbody.appendChild(row);
-        });
-    }
-
-    // Update pagination info
-    updatePaginationInfo('execute', startIndex + 1, endIndex, totalItems, totalPages);
-}
-
-// Render Storage Worker Table
-function renderStorageWorkerTable() {
-    const searchTerm = document.getElementById('storageWorkerSearch')?.value.toLowerCase() || '';
-    let filteredData = storageWorkerData.filter(worker => 
-        worker.groupName.toLowerCase().includes(searchTerm) ||
-        worker.endpoint.toLowerCase().includes(searchTerm) ||
-        worker.status.toLowerCase().includes(searchTerm)
-    );
-
-    // Apply sorting
-    if (storageWorkerSortColumn) {
-        filteredData.sort((a, b) => {
-            let aVal = a[storageWorkerSortColumn].toLowerCase();
-            let bVal = b[storageWorkerSortColumn].toLowerCase();
-            if (storageWorkerSortDirection === 'asc') {
-                return aVal.localeCompare(bVal);
-            } else {
-                return bVal.localeCompare(aVal);
-            }
-        });
-    }
-
-    // Apply pagination
-    const totalItems = filteredData.length;
-    const totalPages = Math.ceil(totalItems / storageWorkerPageSize);
-    const startIndex = (storageWorkerCurrentPage - 1) * storageWorkerPageSize;
-    const endIndex = Math.min(startIndex + storageWorkerPageSize, totalItems);
-    const pageData = filteredData.slice(startIndex, endIndex);
-
-    // Update table
-    const table = document.getElementById('storageWorkerTable');
-    if (table) {
-        const tbody = table.querySelector('tbody');
-        tbody.innerHTML = '';
-        pageData.forEach(worker => {
-            const row = document.createElement('tr');
-            row.innerHTML = worker.originalHtml;
-            tbody.appendChild(row);
-        });
-    }
-
-    // Update pagination info
-    updatePaginationInfo('storage', startIndex + 1, endIndex, totalItems, totalPages);
-}
-
-// Render Servers Table
-function renderServersTable() {
-    const searchTerm = document.getElementById('serversSearch')?.value.toLowerCase() || '';
-    
-    let filteredData = serversData.filter(server => 
-        server.groupName.toLowerCase().includes(searchTerm) ||
-        server.endpoint.toLowerCase().includes(searchTerm) ||
-        server.serverType.toLowerCase().includes(searchTerm) ||
-        server.status.toLowerCase().includes(searchTerm)
-    );
-
-    // Apply sorting
-    if (serversSortColumn) {
-        filteredData.sort((a, b) => {
-            let aVal = a[serversSortColumn].toLowerCase();
-            let bVal = b[serversSortColumn].toLowerCase();
-            if (serversSortDirection === 'asc') {
-                return aVal.localeCompare(bVal);
-            } else {
-                return bVal.localeCompare(aVal);
-            }
-        });
-    }
-
-    // Apply pagination
-    const totalItems = filteredData.length;
-    const totalPages = Math.ceil(totalItems / window.serversPageSize);
-    const startIndex = (serversCurrentPage - 1) * window.serversPageSize;
-    const endIndex = Math.min(startIndex + window.serversPageSize, totalItems);
-    const pageData = filteredData.slice(startIndex, endIndex);
-
-    // Update table
-    const table = document.getElementById('serversTable');
-    if (table) {
-        const tbody = table.querySelector('tbody');
-        if (tbody) {
-            tbody.innerHTML = '';
-            pageData.forEach((server, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = server.originalHtml;
-                tbody.appendChild(row);
-            });
-        }
-    }
-
-    // Update pagination info - only if pagination elements exist
-    const infoElement = document.getElementById('serversInfo');
-    if (infoElement) {
-        updatePaginationInfo('servers', startIndex + 1, endIndex, totalItems, totalPages);
-    }
-}
-
-// Update pagination info and controls
-function updatePaginationInfo(type, start, end, total, totalPages) {            
-    // Defensive check - ensure we have valid parameters
-    if (!type || total === undefined || total === null) {
-        return;
-    }
-    
-    let prefix, currentPage;
-    if (type === 'execute') {
-        prefix = 'executeWorker';
-        currentPage = executeWorkerCurrentPage;
-    } else if (type === 'storage') {
-        prefix = 'storageWorker';
-        currentPage = storageWorkerCurrentPage;
-    } else if (type === 'servers') {
-        prefix = 'servers';
-        currentPage = serversCurrentPage;
-    } else {
-        return;
-    }
-
-    // Update info text - handle different element structures
-    if (type === 'servers') {
-        const infoElement = document.getElementById('serversInfo');
-        if (infoElement) {
-            infoElement.textContent = `Showing ${start} to ${end} of ${total} servers`;
-        }
-        const countElement = document.getElementById('serversCount');
-        if (countElement) {
-            countElement.textContent = total;
-        }
-    } else {
-        // For worker tables
-        const startEl = document.getElementById(prefix + 'Start');
-        const endEl = document.getElementById(prefix + 'End');
-        const totalEl = document.getElementById(prefix + 'Total');
-        const countEl = document.getElementById(prefix + 'Count');
+    data.forEach(item => {
+        const matchesSearch = !searchTerm || 
+            item.groupName.toLowerCase().includes(searchTerm) ||
+            item.endpoint.toLowerCase().includes(searchTerm) ||
+            (item.workerType && item.workerType.toLowerCase().includes(searchTerm)) ||
+            (item.serverType && item.serverType.toLowerCase().includes(searchTerm)) ||
+            item.status.toLowerCase().includes(searchTerm);
         
-        if (startEl) startEl.textContent = total > 0 ? start : 0;
-        if (endEl) endEl.textContent = end;
-        if (totalEl) totalEl.textContent = total;
-        if (countEl) countEl.textContent = total;
-    }
-
-    // Update pagination buttons - handle different button naming for servers
-    let prevBtn, nextBtn, firstBtn, lastBtn, pageNumbersSpan;
-    
-    if (type === 'servers') {
-        prevBtn = document.getElementById('serversPrevBtn');
-        nextBtn = document.getElementById('serversNextBtn');
-        firstBtn = document.getElementById('serversFirstBtn');
-        lastBtn = document.getElementById('serversLastBtn');
-        pageNumbersSpan = document.getElementById('serversPageNumbers');
-    } else {
-        prevBtn = document.getElementById(prefix + 'PrevBtn');
-        nextBtn = document.getElementById(prefix + 'NextBtn');
-        firstBtn = document.getElementById(prefix + 'FirstBtn');
-        lastBtn = document.getElementById(prefix + 'LastBtn');
-        pageNumbersSpan = document.getElementById(prefix + 'PageNumbers');
-    }
-
-    if (prevBtn) prevBtn.disabled = currentPage <= 1;
-    if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
-    if (firstBtn) firstBtn.disabled = currentPage <= 1;
-    if (lastBtn) lastBtn.disabled = currentPage >= totalPages;
-
-    // Generate page numbers
-    if (pageNumbersSpan) {
-        pageNumbersSpan.innerHTML = '';
-        for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
-            const pageBtn = document.createElement('button');
-            pageBtn.className = 'pagination-btn' + (i === currentPage ? ' active' : '');
-            pageBtn.textContent = i;
-            pageBtn.onclick = () => {
-                if (type === 'execute') {
-                    executeWorkerCurrentPage = i;
-                    renderExecuteWorkerTable();
-                } else if (type === 'storage') {
-                    storageWorkerCurrentPage = i;
-                    renderStorageWorkerTable();
-                } else if (type === 'servers') {
-                    serversCurrentPage = i;
-                    renderServersTable();
-                }
-            };
-            pageNumbersSpan.appendChild(pageBtn);
+        if (item.row) {
+            item.row.style.display = matchesSearch ? '' : 'none';
+            if (matchesSearch) visibleCount++;
         }
+    });
+
+    // Update count
+    const countElement = document.getElementById(countElementId);
+    if (countElement) {
+        countElement.textContent = visibleCount;
     }
 }
 
-// Page navigation functions
-function changeExecuteWorkerPage(direction) {
-    const totalItems = executeWorkerData.length;
-    const totalPages = Math.ceil(totalItems / executeWorkerPageSize);
+function updateTableDisplay(data, tableId, countElementId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
 
-    executeWorkerCurrentPage += direction;
-    if (executeWorkerCurrentPage < 1) executeWorkerCurrentPage = 1;
-    if (executeWorkerCurrentPage > totalPages) executeWorkerCurrentPage = totalPages;
+    const tbody = table.querySelector('tbody');
+    tbody.innerHTML = '';
 
-    renderExecuteWorkerTable();
-}
+    let visibleCount = 0;
+    data.forEach(item => {
+        if (item.row && item.row.style.display !== 'none') {
+            tbody.appendChild(item.row.cloneNode(true));
+            visibleCount++;
+        }
+    });
 
-function changeStorageWorkerPage(direction) {
-    const totalItems = storageWorkerData.length;
-    const totalPages = Math.ceil(totalItems / storageWorkerPageSize);
-
-    storageWorkerCurrentPage += direction;
-    if (storageWorkerCurrentPage < 1) storageWorkerCurrentPage = 1;
-    if (storageWorkerCurrentPage > totalPages) storageWorkerCurrentPage = totalPages;
-
-    renderStorageWorkerTable();
-}
-
-function changeServersPage(direction) {
-    const totalItems = serversData.length;
-    const totalPages = Math.ceil(totalItems / window.serversPageSize);
-
-    serversCurrentPage += direction;
-    if (serversCurrentPage < 1) serversCurrentPage = 1;
-    if (serversCurrentPage > totalPages) serversCurrentPage = totalPages;
-
-    renderServersTable();
+    // Update count
+    const countElement = document.getElementById(countElementId);
+    if (countElement) {
+        countElement.textContent = visibleCount;
+    }
 }

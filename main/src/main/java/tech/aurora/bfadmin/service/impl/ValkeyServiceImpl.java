@@ -23,8 +23,7 @@ public class ValkeyServiceImpl implements ValkeyService {
     @Value("${valkey.cluster.nodes:localhost:7000}")
     private String clusterNodes;
     
-    @Value("${buildfarm.queues.names:cpu_queue_priority,gpu_queue_priority}")
-    private java.util.List<String> queueNames;
+
     
     @Value("${buildfarm.queues.key.pattern:{Execution}:QueuedOperations}")
     private String queueKeyPattern;
@@ -638,11 +637,44 @@ public class ValkeyServiceImpl implements ValkeyService {
     }
 
     /**
-     * Get all configured queue names from properties
+     * Get all queue names dynamically from Redis using *_queue_* pattern
      */
     public java.util.List<String> getQueueNames() {
-        logger.info("Returning {} configured queue names: {}", queueNames.size(), queueNames);
-        return new java.util.ArrayList<>(queueNames);
+        java.util.List<String> dynamicQueueNames = new java.util.ArrayList<>();
+        
+        try {
+            logger.info("Discovering queue names from Redis using *_queue_* pattern");
+            
+            // Step 1: Find all keys matching *_queue_* pattern
+            java.util.Set<String> queueKeys = getKeys("*_queue_*");
+            logger.info("Found {} keys matching *_queue_* pattern: {}", queueKeys.size(), queueKeys);
+            
+            // Step 2: Extract unique queue names from the discovered keys
+            java.util.Set<String> uniqueQueueNames = new java.util.HashSet<>();
+            for (String key : queueKeys) {
+                String queueName = extractQueueNameFromRedisKey(key);
+                if (queueName != null && !queueName.isEmpty()) {
+                    uniqueQueueNames.add(queueName);
+                }
+            }
+            
+            // Step 3: Convert to sorted list for consistent ordering
+            dynamicQueueNames.addAll(uniqueQueueNames);
+            java.util.Collections.sort(dynamicQueueNames);
+            
+            logger.info("Discovered {} unique queue names from Redis: {}", dynamicQueueNames.size(), dynamicQueueNames);
+            
+            // If no queues found in Redis, return empty list
+            if (dynamicQueueNames.isEmpty()) {
+                logger.warn("No queues found in Redis with *_queue_* pattern, returning empty queue list");
+            }
+            
+        } catch (Exception e) {
+            logger.error("Failed to discover queue names from Redis, returning empty queue list", e);
+            dynamicQueueNames = new java.util.ArrayList<>();
+        }
+        
+        return dynamicQueueNames;
     }
 
     /**
@@ -1042,22 +1074,12 @@ public class ValkeyServiceImpl implements ValkeyService {
         try {
             logger.info("Getting all operations from buildfarm queue pattern");
             
-            // Step 1: Discover queue names from Redis using the *_queue_* pattern
-            java.util.Set<String> queueKeys = getKeys("*_queue_*");
-            logger.info("Found {} queue keys with *_queue_* pattern: {}", queueKeys.size(), queueKeys);
+            // Step 1: Use the new dynamic queue discovery method
+            java.util.List<String> discoveredQueueNames = getQueueNames();
+            logger.info("Using {} discovered queue names: {}", discoveredQueueNames.size(), discoveredQueueNames);
             
-            // Step 2: Extract queue names from the discovered keys
-            java.util.Set<String> queueNames = new java.util.HashSet<>();
-            for (String key : queueKeys) {
-                String queueName = extractQueueNameFromRedisKey(key);
-                if (queueName != null && !queueName.isEmpty()) {
-                    queueNames.add(queueName);
-                }
-            }
-            logger.info("Extracted {} unique queue names: {}", queueNames.size(), queueNames);
-            
-            // Step 3: For each queue name, load all related keys and operations
-            for (String queueName : queueNames) {
+            // Step 2: For each discovered queue name, load all related keys and operations
+            for (String queueName : discoveredQueueNames) {
                 logger.info("Processing queue: {}", queueName);
                 
                 // Look for all keys related to this queue
@@ -1218,7 +1240,7 @@ public class ValkeyServiceImpl implements ValkeyService {
                 }
             }
             
-            logger.info("Returning {} total operations from {} queues", allOperations.size(), queueNames.size());
+            logger.info("Returning {} total operations from {} queues", allOperations.size(), discoveredQueueNames.size());
             
         } catch (Exception e) {
             logger.error("Failed to get all queue operations", e);
@@ -1231,25 +1253,64 @@ public class ValkeyServiceImpl implements ValkeyService {
      * Extract queue name from Redis key using *_queue_* pattern
      */
     private String extractQueueNameFromRedisKey(String key) {
+        if (key == null || key.isEmpty()) {
+            return null;
+        }
+        
+        logger.debug("Extracting queue name from key: {}", key);
+        
         // Look for patterns like "cpu_queue_priority", "gpu_queue_priority", etc.
         if (key.contains("_queue_")) {
-            // Split by various delimiters and find the part with _queue_
-            String[] parts = key.split("[:{\\}]");
+            // First try to find the queue name in common Redis key patterns
+            // Pattern 1: {namespace}:cpu_queue_priority or {namespace}:QueuedOperations:cpu_queue_priority
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("([a-zA-Z0-9_]+_queue_[a-zA-Z0-9_]+)");
+            java.util.regex.Matcher matcher = pattern.matcher(key);
+            if (matcher.find()) {
+                String queueName = matcher.group(1);
+                logger.debug("Extracted queue name '{}' from key '{}'", queueName, key);
+                return queueName;
+            }
+            
+            // Pattern 2: Split by delimiters and find the part with _queue_
+            String[] parts = key.split("[:{\\}\\[\\]]");
             for (String part : parts) {
-                if (part.contains("_queue_")) {
+                if (part.contains("_queue_") && !part.isEmpty()) {
+                    logger.debug("Extracted queue name '{}' from key part '{}'", part, key);
                     return part;
                 }
             }
             
-            // If the key itself contains _queue_, try to extract it directly
+            // Pattern 3: Direct match for known queue patterns
             if (key.contains("cpu_queue_priority")) {
                 return "cpu_queue_priority";
             } else if (key.contains("gpu_queue_priority")) {
                 return "gpu_queue_priority";
             }
+            
+            // Pattern 4: Extract any substring that looks like a queue name
+            int queueIndex = key.indexOf("_queue_");
+            if (queueIndex > 0) {
+                // Find the start of the queue name (look backwards for word boundary)
+                int start = queueIndex;
+                while (start > 0 && Character.isLetterOrDigit(key.charAt(start - 1))) {
+                    start--;
+                }
+                
+                // Find the end of the queue name (look forwards for word boundary)
+                int end = queueIndex + "_queue_".length();
+                while (end < key.length() && (Character.isLetterOrDigit(key.charAt(end)) || key.charAt(end) == '_')) {
+                    end++;
+                }
+                
+                if (end > start) {
+                    String extractedName = key.substring(start, end);
+                    logger.debug("Extracted queue name '{}' using boundary detection from key '{}'", extractedName, key);
+                    return extractedName;
+                }
+            }
         }
         
-        // If no _queue_ pattern found, return null
+        logger.debug("No queue name found in key: {}", key);
         return null;
     }
     /**

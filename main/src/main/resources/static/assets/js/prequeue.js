@@ -1,432 +1,181 @@
 /**
- * BuildFarm Prequeue JavaScript
- * Handles prequeued operation loading, pagination, and table interactions
+ * BuildFarm Prequeue Operations JavaScript
+ * Handles prequeued operation loading and table interactions
  */
 
-// Prequeue operation data and pagination variables
-let operationData = [];
-let operationCurrentPage = 1;
-let operationPageSize = 10;
-let operationSortColumn = '';
-let operationSortDirection = 'asc';
+// Prequeue operation data and sorting variables
+let prequeueOperations = [];
+let prequeueSortColumn = 'operationName';
+let prequeueSortDirection = 'asc';
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize prequeue functionality
-    initializePrequeueFunctionality();
-    
-    // Add fade-in animations
-    const animatedElements = document.querySelectorAll('.fade-in');
-    animatedElements.forEach((el, index) => {
-        el.style.animationDelay = `${index * 0.1}s`;
-    });
+    // Initialize the prequeue operations table
+    initializePrequeueTable();
 });
 
-function initializePrequeueFunctionality() {
-    // Extract initial operation data from the table
-    extractOperationData();
+function initializePrequeueTable() {
+    // Extract data from server-rendered table
+    extractPrequeueOperations();
     
-    // Setup event listeners
+    // Set up event listeners
     setupPrequeueEventListeners();
-    
-    // Initialize table pagination and sorting
-    if (operationData.length > 0) {
-        renderOperationTable();
-    }
 }
 
-// Extract operation data from existing HTML table
-function extractOperationData() {
-    const table = document.getElementById('operationTable');
-    if (!table) return;
+function extractPrequeueOperations() {
+    const tableBody = document.querySelector('#prequeueTable tbody');
+    if (!tableBody) return;
     
-    const tbody = table.querySelector('tbody');
-    if (!tbody) return;
+    const rows = tableBody.querySelectorAll('tr');
+    prequeueOperations = [];
     
-    operationData = [];
-    const rows = tbody.querySelectorAll('tr');
-    
-    rows.forEach(row => {
+    rows.forEach((row, index) => {
         const cells = row.querySelectorAll('td');
-        if (cells.length >= 7) {
-            const operation = {
-                index: cells[0].textContent.trim(),
-                operationName: cells[1].querySelector('.fw-medium')?.textContent.trim() || '',
-                operationId: cells[1].dataset.operationId || '',
-                actionDigest: cells[1].querySelector('small')?.textContent.replace('Digest: ', '').trim() || '',
-                stage: cells[2].querySelector('span')?.textContent.trim() || '',
-                status: cells[3].querySelector('span')?.textContent.trim() || '',
+        if (cells.length >= 5) {
+            prequeueOperations.push({
+                operationName: cells[1].textContent.trim(),
+                stage: cells[2].textContent.trim(),
+                status: cells[3].textContent.trim(),
                 queuedAt: cells[4].textContent.trim(),
-                hasMetadata: cells[5].querySelector('.status-success') !== null,
-                rawData: cells[6].querySelector('button')?.dataset.raw || ''
-            };
-            operationData.push(operation);
+                row: row.cloneNode(true)
+            });
         }
     });
     
-    console.log('Extracted', operationData.length, 'prequeued operations');
-    console.log('RAW PREQUEUED OPERATIONS DATA FROM HTML:', JSON.stringify(operationData, null, 2));
+    console.log('Loaded prequeue operations:', prequeueOperations.length);
 }
 
-// Set up event listeners for prequeue interactions
 function setupPrequeueEventListeners() {
     // Search functionality
-    const searchInput = document.getElementById('operationSearch');
+    const searchInput = document.getElementById('operationSearchInput');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
-            operationCurrentPage = 1;
-            renderOperationTable();
+            filterPrequeueOperations(this.value);
         });
     }
     
-    // Page size selector
-    const pageSizeSelect = document.getElementById('operationPageSize');
-    if (pageSizeSelect) {
-        pageSizeSelect.addEventListener('change', function() {
-            operationPageSize = parseInt(this.value);
-            operationCurrentPage = 1;
-            renderOperationTable();
-        });
-    }
-    
-    // Setup sorting for operation table
-    setupOperationSorting();
-}
-
-// Setup sorting listeners for operation table
-function setupOperationSorting() {
-    const table = document.getElementById('operationTable');
-    if (!table) return;
-    
-    const headers = table.querySelectorAll('.sortable-header');
+    // Sorting functionality
+    const headers = document.querySelectorAll('#prequeueTable .sortable-header');
     headers.forEach(header => {
         header.addEventListener('click', function() {
-            const column = this.dataset.column;
-            handleOperationSort(column);
+            const column = this.getAttribute('data-column');
+            sortPrequeueOperations(column);
         });
     });
 }
 
-// Handle sorting for operations
-function handleOperationSort(column) {
-    if (operationSortColumn === column) {
-        operationSortDirection = operationSortDirection === 'asc' ? 'desc' : 'asc';
+function filterPrequeueOperations(searchTerm) {
+    const tableBody = document.querySelector('#prequeueTable tbody');
+    if (!tableBody) return;
+    
+    searchTerm = searchTerm.toLowerCase();
+    let visibleCount = 0;
+    
+    tableBody.innerHTML = '';
+    
+    prequeueOperations.forEach((operation, index) => {
+        const matchesSearch = !searchTerm || 
+            operation.operationName.toLowerCase().includes(searchTerm) ||
+            operation.stage.toLowerCase().includes(searchTerm) ||
+            operation.status.toLowerCase().includes(searchTerm) ||
+            operation.queuedAt.toLowerCase().includes(searchTerm);
+        
+        if (matchesSearch) {
+            const row = operation.row.cloneNode(true);
+            // Update the index
+            row.querySelector('td:first-child span').textContent = visibleCount + 1;
+            tableBody.appendChild(row);
+            visibleCount++;
+        }
+    });
+    
+    // Update count displays
+    updatePrequeueCount(visibleCount);
+    
+    // Show "no results" message if needed
+    if (visibleCount === 0) {
+        const noResultsRow = document.createElement('tr');
+        noResultsRow.innerHTML = '<td colspan="5" class="text-center text-muted py-4">No prequeue operations found</td>';
+        tableBody.appendChild(noResultsRow);
+    }
+}
+
+function sortPrequeueOperations(column) {
+    if (prequeueSortColumn === column) {
+        prequeueSortDirection = prequeueSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
-        operationSortColumn = column;
-        operationSortDirection = 'asc';
+        prequeueSortColumn = column;
+        prequeueSortDirection = 'asc';
     }
     
-    updateOperationSortHeaders();
-    renderOperationTable();
-}
-
-// Update sort header indicators
-function updateOperationSortHeaders() {
-    const table = document.getElementById('operationTable');
-    if (!table) return;
-    
-    const headers = table.querySelectorAll('.sortable-header');
+    // Update sort headers
+    const headers = document.querySelectorAll('#prequeueTable .sortable-header');
     headers.forEach(header => {
-        header.classList.remove('sort-asc', 'sort-desc');
-        if (header.dataset.column === operationSortColumn) {
-            header.classList.add(`sort-${operationSortDirection}`);
+        header.classList.remove('sorted-asc', 'sorted-desc');
+        if (header.getAttribute('data-column') === column) {
+            header.classList.add(prequeueSortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
         }
+    });
+    
+    // Sort the data
+    prequeueOperations.sort((a, b) => {
+        let aVal = String(a[column]).toLowerCase();
+        let bVal = String(b[column]).toLowerCase();
+        if (prequeueSortDirection === 'asc') {
+            return aVal.localeCompare(bVal);
+        } else {
+            return bVal.localeCompare(aVal);
+        }
+    });
+    
+    // Re-render the table
+    const searchInput = document.getElementById('operationSearchInput');
+    const searchTerm = searchInput ? searchInput.value : '';
+    filterPrequeueOperations(searchTerm);
+}
+
+function updatePrequeueCount(count) {
+    // Update operation count displays
+    const countElements = document.querySelectorAll('#operationCount, .operation-count');
+    countElements.forEach(element => {
+        element.textContent = count;
     });
 }
 
-// Render operation table with pagination and filtering
-function renderOperationTable() {
-    const table = document.getElementById('operationTable');
-    if (!table) return;
-    
-    const tbody = table.querySelector('tbody');
-    if (!tbody) return;
-    
-    // Get search term
-    const searchInput = document.getElementById('operationSearch');
-    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-    
-    // Filter operations based on search
-    let filteredOperations = operationData.filter(operation => {
-        if (!searchTerm) return true;
-        return operation.operationName.toLowerCase().includes(searchTerm) ||
-               operation.stage.toLowerCase().includes(searchTerm) ||
-               operation.status.toLowerCase().includes(searchTerm) ||
-               operation.operationId.toLowerCase().includes(searchTerm);
-    });
-    
-    // Sort operations
-    if (operationSortColumn) {
-        filteredOperations.sort((a, b) => {
-            let valueA = a[operationSortColumn];
-            let valueB = b[operationSortColumn];
-            
-            // Handle different data types
-            if (operationSortColumn === 'operationName' || operationSortColumn === 'stage' || operationSortColumn === 'status') {
-                valueA = String(valueA).toLowerCase();
-                valueB = String(valueB).toLowerCase();
-            } else if (operationSortColumn === 'queuedAt') {
-                valueA = new Date(valueA);
-                valueB = new Date(valueB);
-            } else {
-                valueA = String(valueA).toLowerCase();
-                valueB = String(valueB).toLowerCase();
-            }
-            
-            if (valueA < valueB) {
-                return operationSortDirection === 'asc' ? -1 : 1;
-            } else if (valueA > valueB) {
-                return operationSortDirection === 'asc' ? 1 : -1;
-            }
-            return 0;
-        });
-    }
-    
-    // Pagination
-    const totalItems = filteredOperations.length;
-    const totalPages = Math.ceil(totalItems / operationPageSize);
-    const start = (operationCurrentPage - 1) * operationPageSize;
-    const end = Math.min(start + operationPageSize, totalItems);
-    const pageOperations = filteredOperations.slice(start, end);
-    
-    // Clear existing rows
-    tbody.innerHTML = '';
-    
-    // Add filtered and paginated rows
-    pageOperations.forEach((operation, index) => {
-        const row = createOperationRow(operation, start + index + 1);
-        tbody.appendChild(row);
-    });
-    
-    // Update pagination info
-    updateOperationPaginationInfo(start + 1, end, totalItems, totalPages);
-    updateOperationPaginationControls(totalPages);
-    
-    // Update operation count
-    const countElement = document.getElementById('operationTableCount');
-    if (countElement) {
-        countElement.textContent = totalItems;
-    }
+// Handle search input with debouncing
+function handleSearchInput(event) {
+    clearTimeout(window.searchTimeout);
+    window.searchTimeout = setTimeout(() => {
+        filterPrequeueOperations(event.target.value);
+    }, 300);
 }
 
-// Create a table row for an operation
-function createOperationRow(operation, index) {
-    const row = document.createElement('tr');
-    
-    row.innerHTML = `
-        <td><span class="text-muted">${index}</span></td>
-        <td data-operation-id="${operation.operationId}">
-            <span class="fw-medium">${operation.operationName}</span>
-            ${operation.actionDigest ? `<br><small class="text-muted">Digest: ${operation.actionDigest.substring(0, 8)}...</small>` : ''}
-        </td>
-        <td>
-            <span class="status-badge status-warning">
-                <i class="bi bi-clock-history"></i>
-                <span>${operation.stage}</span>
-            </span>
-        </td>
-        <td>
-            <span class="status-badge status-warning">
-                <i class="bi bi-clock-history"></i>
-                <span>${operation.status}</span>
-            </span>
-        </td>
-        <td><small class="text-muted">${operation.queuedAt}</small></td>
-        <td>
-            <span class="status-badge ${operation.hasMetadata ? 'status-success' : 'status-secondary'}">
-                <i class="bi ${operation.hasMetadata ? 'bi-check-circle' : 'bi-x-circle'}"></i>
-                ${operation.hasMetadata ? 'Yes' : 'No'}
-            </span>
-        </td>
-        <td>
-            <button class="btn btn-sm btn-outline-info" onclick="showOperationDetails(this)" 
-                    data-name="${operation.operationName}" 
-                    data-stage="${operation.stage}" 
-                    data-status="${operation.status}"
-                    data-queued="${operation.queuedAt}" 
-                    data-raw="${operation.rawData}">
-                <i class="bi bi-eye"></i> View
-            </button>
-        </td>
-    `;
-    
-    return row;
-}
-
-// Update pagination info display
-function updateOperationPaginationInfo(start, end, total, totalPages) {
-    const startElement = document.getElementById('operationStart');
-    const endElement = document.getElementById('operationEnd');
-    const totalElement = document.getElementById('operationTotal');
-    
-    if (startElement) startElement.textContent = start;
-    if (endElement) endElement.textContent = end;
-    if (totalElement) totalElement.textContent = total;
-    
-    // Update pagination buttons
-    const prevBtn = document.getElementById('operationPrevBtn');
-    const nextBtn = document.getElementById('operationNextBtn');
-    
-    if (prevBtn) {
-        prevBtn.disabled = operationCurrentPage <= 1;
-    }
-    if (nextBtn) {
-        nextBtn.disabled = operationCurrentPage >= totalPages;
-    }
-}
-
-// Update pagination controls
-function updateOperationPaginationControls(totalPages) {
-    const pageNumbersSpan = document.getElementById('operationPageNumbers');
-    if (!pageNumbersSpan) return;
-    
-    pageNumbersSpan.innerHTML = '';
-    
-    if (totalPages <= 1) return;
-    
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, operationCurrentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
-    if (endPage - startPage + 1 < maxVisiblePages) {
-        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-        const pageBtn = document.createElement('button');
-        pageBtn.className = `page-btn ${i === operationCurrentPage ? 'active' : ''}`;
-        pageBtn.textContent = i;
-        pageBtn.onclick = function() {
-            operationCurrentPage = i;
-            renderOperationTable();
-        };
-        pageNumbersSpan.appendChild(pageBtn);
-    }
-}
-
-// Refresh prequeued operations
-function refreshPrequeueOperations() {
-    console.log('Refreshing prequeued operations');
-    
-    // Show loading state
-    showLoadingState();
-    
-    // Make AJAX request to get latest prequeued operations
-    fetch('/api/prequeued-operations')
-        .then(response => response.json())
-        .then(operations => {
-            console.log('Received', operations.length, 'prequeued operations');
-            console.log('RAW API RESPONSE JSON:', JSON.stringify(operations, null, 2));
-            
-            // Update operation data
-            operationData = operations.map(op => ({
-                index: op.index || 0,
-                operationName: op.operationName || 'Unknown',
-                operationId: op.operationId || '',
-                actionDigest: op.actionDigest || '',
-                stage: op.stage || 'PREQUEUED',
-                status: op.status || 'Prequeued',
-                queuedAt: op.queuedAt || 'N/A',
-                hasMetadata: op.hasMetadata || false,
-                rawData: op.rawData || ''
-            }));
-            
-            console.log('MAPPED PREQUEUED OPERATIONS DATA:', JSON.stringify(operationData, null, 2));
-            
-            // Reset pagination
-            operationCurrentPage = 1;
-            
-            // Update table
-            renderOperationTable();
-            
-            // Update operation count badge
-            const operationCount = document.getElementById('operationCount');
-            if (operationCount) {
-                operationCount.textContent = operations.length + ' Operations';
-            }
-            
-            hideLoadingState();
-        })
-        .catch(error => {
-            console.error('Error loading prequeued operations:', error);
-            hideLoadingState();
-            showErrorMessage('Failed to load prequeued operations');
-        });
-}
-
-// Show loading state
-function showLoadingState() {
-    const table = document.getElementById('operationTable');
-    if (table) {
-        const tbody = table.querySelector('tbody');
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4"><i class="bi bi-hourglass-split"></i> Loading prequeued operations...</td></tr>';
-        }
-    }
-}
-
-// Hide loading state
-function hideLoadingState() {
-    // Loading state will be replaced by renderOperationTable()
-}
-
-// Show error message
-function showErrorMessage(message) {
-    const table = document.getElementById('operationTable');
-    if (table) {
-        const tbody = table.querySelector('tbody');
-        if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-danger"><i class="bi bi-exclamation-triangle"></i> ${message}</td></tr>`;
-        }
-    }
-}
-
-// Change operation page
-function changeOperationPage(direction) {
-    const totalItems = operationData.length;
-    const totalPages = Math.ceil(totalItems / operationPageSize);
-    
-    operationCurrentPage += direction;
-    if (operationCurrentPage < 1) operationCurrentPage = 1;
-    if (operationCurrentPage > totalPages) operationCurrentPage = totalPages;
-    
-    renderOperationTable();
-}
-
-// Show operation details in modal
+// Show operation details
 function showOperationDetails(button) {
-    // Extract operation details from data attributes
-    const operationData = {
-        name: button.dataset.name,
-        stage: button.dataset.stage,
-        status: button.dataset.status,
-        queued: button.dataset.queued,
-        rawData: button.dataset.raw
-    };
+    const operationName = button.getAttribute('data-name') || 'Unknown';
+    const stage = button.getAttribute('data-stage') || 'Unknown';
+    const status = button.getAttribute('data-status') || 'Unknown';
+    const queuedAt = button.getAttribute('data-queued') || 'N/A';
+    const rawData = button.getAttribute('data-raw') || 'No raw data available';
+
+    const details = `Operation Details:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Name: ${operationName}
+Stage: ${stage}
+Status: ${status}
+Queued At: ${queuedAt}
+
+Raw Data:
+${rawData}`;
+
+    document.getElementById('operationDetails').textContent = details;
     
-    // Update modal content
-    const modalTitle = document.getElementById('operationModalLabel');
-    const modalBody = document.getElementById('operationDetails');
-    
-    if (modalTitle) {
-        modalTitle.textContent = `Prequeued Operation: ${operationData.name || 'Unknown'}`;
-    }
-    
-    if (modalBody) {
-        // Format the operation data for better readability
-        const formatted = JSON.stringify(operationData, null, 2);
-        modalBody.textContent = formatted;
-    }
-    
-    // Show modal using Bootstrap 5 API
+    // Show the modal
     const modal = new bootstrap.Modal(document.getElementById('operationModal'));
     modal.show();
 }
 
-// Handle search input with debounce
-function handleSearchInput(event) {
-    // Trigger search on Enter key or automatically after typing
-    if (event.key === 'Enter' || event.type === 'input') {
-        operationCurrentPage = 1;
-        renderOperationTable();
-    }
+// Refresh prequeue operations
+function refreshPrequeueOperations() {
+    window.location.reload();
 }

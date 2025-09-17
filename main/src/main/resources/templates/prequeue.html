@@ -17,13 +17,8 @@
             </div>
             <div class="card-body">
                 <div class="row align-items-center mb-3">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <span class="text-muted">Showing operations from the prequeue waiting for processing</span>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <button class="btn btn-refresh" onclick="refreshPrequeueOperations()">
-                            <i class="bi bi-arrow-clockwise"></i> Refresh
-                        </button>
                     </div>
                 </div>
                 
@@ -51,14 +46,6 @@
                                class="form-control"
                                onkeyup="handleSearchInput(event)">
                     </div>
-                    <div class="table-pagination-controls">
-                        <span>Show</span>
-                        <select id="operationPageSize" class="form-select">
-                            <option value="10" selected>10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
                         <span>entries</span>
                     </div>
                 </div>
@@ -97,8 +84,6 @@
                                 <td><span class="text-muted" th:text="${iterStat.count}">1</span></td>
                                 <td th:data-operation-id="${operation.operationId}">
                                     <span class="fw-medium" th:text="${operation.operationName}">Operation Name</span>
-                                    <br th:if="${operation.actionDigest}">
-                                    <small class="text-muted" th:if="${operation.actionDigest}" th:text="'Digest: ' + ${operation.actionDigest}">Digest: abc123...</small>
                                 </td>
                                 <td>
                                     <span class="status-badge status-warning">
@@ -137,25 +122,6 @@
                     </table>
                 </div>
 
-                <!-- Pagination Info -->
-                <div class="table-footer" th:if="${operations != null and operations.size() > 0}">
-                    <div class="pagination-info">
-                        Showing <span id="operationStart">1</span> to <span id="operationEnd" th:text="${operations.size()}">10</span> 
-                        of <span id="operationTotal" th:text="${operations.size()}">0</span> entries
-                        <span class="text-muted">
-                            (filtered from <span id="operationTableCount" th:text="${operations.size()}">0</span> total entries)
-                        </span>
-                    </div>
-                    <div class="pagination-controls">
-                        <button id="operationPrevBtn" class="page-btn" onclick="changeOperationPage(-1)" disabled>
-                            <i class="bi bi-chevron-left"></i> Previous
-                        </button>
-                        <span id="operationPageNumbers"></span>
-                        <button id="operationNextBtn" class="page-btn" onclick="changeOperationPage(1)" disabled>
-                            Next <i class="bi bi-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
