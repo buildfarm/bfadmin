@@ -1,9 +1,166 @@
 /**
  * BuildFarm Queues JavaScript
+ * Handles async data loading, table sorting and delete operations for the queues table
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Set up table sorting
+    // Load queues data asynchronously
+    loadQueuesData();
+});
+
+// Global variables
+let allOperations = [];
+let queueNames = [];
+let sortDirection = {};
+
+// Load queues data from async API
+async function loadQueuesData() {
+    try {
+        const response = await fetch('/api/queues/data');
+        const data = await response.json();
+        
+        if (data.error) {
+            showError(data.error);
+            return;
+        }
+        
+        // Store the data
+        allOperations = data.operations || [];
+        queueNames = data.queueNames || [];
+        
+        // Update UI
+        updateQueueSummary();
+        loadOperationsTable();
+        
+    } catch (error) {
+        console.error('Failed to load queues data:', error);
+        showError('Failed to load queues data: ' + error.message);
+    }
+}
+
+// Update queue summary
+function updateQueueSummary() {
+    const summary = document.getElementById('queueSummary');
+    const operationCount = document.getElementById('operationCount');
+    const noQueuesAlert = document.getElementById('noQueuesAlert');
+    
+    if (queueNames.length === 0) {
+        summary.classList.add('d-none');
+        noQueuesAlert.classList.remove('d-none');
+        operationCount.textContent = '0 Operations';
+        return;
+    }
+    
+    summary.innerHTML = `
+        <span class="text-muted">Showing operations from <strong>${queueNames.length}</strong> queues: 
+        ${queueNames.map(queue => `<span class="badge bg-secondary me-1">${queue}</span>`).join('')}
+        </span>
+    `;
+    
+    operationCount.textContent = `${allOperations.length} Operations`;
+}
+
+// Load operations table
+function loadOperationsTable() {
+    const loading = document.getElementById('operationsLoading');
+    const container = document.getElementById('operationsTableContainer');
+    const noOperationsAlert = document.getElementById('noOperationsAlert');
+    
+    loading.classList.add('d-none');
+    
+    if (allOperations.length === 0) {
+        noOperationsAlert.classList.remove('d-none');
+        return;
+    }
+    
+    container.classList.remove('d-none');
+    populateOperationsTable();
+    setupSortingListeners();
+}
+
+// Populate operations table
+function populateOperationsTable() {
+    const table = document.getElementById('operationTable');
+    if (!table) return;
+    
+    const tbody = table.querySelector('tbody');
+    tbody.innerHTML = '';
+    
+    allOperations.forEach((operation, index) => {
+        const row = document.createElement('tr');
+        row.className = 'operation-row';
+        
+        const stageBadgeClass = getStageStatusClass(operation.stage);
+        const stageIcon = getStageIcon(operation.stage);
+        const queueBadgeClass = getQueueStatusClass(operation.queueName);
+        
+        row.innerHTML = `
+            <td><span class="text-muted">${index + 1}</span></td>
+            <td>
+                <span class="status-badge ${queueBadgeClass}">
+                    <i class="bi bi-collection"></i>
+                    <span>${operation.queueName}</span>
+                </span>
+            </td>
+            <td>
+                <span class="text-info">${operation.operationName || operation.name}</span>
+            </td>
+            <td>
+                <span class="status-badge ${stageBadgeClass}">
+                    <i class="bi bi-${stageIcon}"></i>
+                    <span>${operation.stage}</span>
+                </span>
+            </td>
+            <td>
+                <small class="text-muted">${operation.queuedTimestamp || operation.queuedAt}</small>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger" 
+                        onclick="deleteOperation(this)"
+                        data-name="${operation.operationName || operation.name}"
+                        data-queue="${operation.queueName}"
+                        title="Delete operation">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Get stage status CSS class
+function getStageStatusClass(stage) {
+    switch(stage) {
+        case 'QUEUED': return 'status-warning';
+        case 'EXECUTING': return 'status-info';
+        case 'COMPLETED': return 'status-success';
+        case 'FAILED': return 'status-danger';
+        default: return 'status-secondary';
+    }
+}
+
+// Get stage icon
+function getStageIcon(stage) {
+    switch(stage) {
+        case 'QUEUED': return 'clock';
+        case 'EXECUTING': return 'gear';
+        case 'COMPLETED': return 'check-circle';
+        case 'FAILED': return 'x-circle';
+        default: return 'question-circle';
+    }
+}
+
+// Get queue status CSS class
+function getQueueStatusClass(queueName) {
+    switch(queueName) {
+        case 'prequeue': return 'status-warning';
+        case 'cpu': return 'status-success';
+        default: return 'status-info';
+    }
+}
+
+// Set up sorting listeners
+function setupSortingListeners() {
     const sortableHeaders = document.querySelectorAll('.sortable-header');
     sortableHeaders.forEach(header => {
         header.addEventListener('click', function() {
@@ -11,41 +168,9 @@ document.addEventListener('DOMContentLoaded', function() {
             sortOperationTable(column);
         });
     });
-});
-
-    const tableBody = document.querySelector('#operationTable tbody');
-    if (!tableBody) return;
-    
-    const rows = tableBody.querySelectorAll('tr');
-    let visibleCount = 0;
-    
-    
-    rows.forEach((row, index) => {
-        const cells = row.querySelectorAll('td');
-        
-        const rowText = row.textContent.toLowerCase();
-        
-            row.style.display = '';
-            // Update the index number
-            const indexCell = cells[0];
-            if (indexCell) {
-                indexCell.textContent = visibleCount + 1;
-            }
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    // Update operation count
-    const countElements = document.querySelectorAll('#operationCount, .operation-count');
-    countElements.forEach(element => {
-        element.textContent = visibleCount;
-    });
 }
 
-let sortDirection = {};
-
+// Sort operations table
 function sortOperationTable(column) {
     const tableBody = document.querySelector('#operationTable tbody');
     if (!tableBody) return;
@@ -142,8 +267,6 @@ function deleteOperation(button) {
     button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
     button.disabled = true;
     
-    console.log(`Attempting to delete operation: ${operationName} from queue: ${queueName}`);
-    
     // Make delete request
     fetch(`/api/queues/${encodeURIComponent(queueName)}/operations/${encodeURIComponent(operationName)}`, {
         method: 'DELETE',
@@ -152,7 +275,6 @@ function deleteOperation(button) {
         }
     })
     .then(response => {
-        console.log(`Delete response status: ${response.status}`);
         if (response.ok) {
             return response.json();
         } else {
@@ -162,7 +284,6 @@ function deleteOperation(button) {
         }
     })
     .then(data => {
-        console.log('Delete response data:', data);
         if (data.success) {
             // Remove the row from the table
             row.remove();
@@ -171,7 +292,7 @@ function deleteOperation(button) {
             const remainingRows = document.querySelectorAll('#operationTable tbody tr').length;
             const countElements = document.querySelectorAll('#operationCount, .operation-count');
             countElements.forEach(element => {
-                element.textContent = remainingRows;
+                element.textContent = remainingRows + ' Operations';
             });
             
             // Re-index remaining rows
@@ -180,47 +301,58 @@ function deleteOperation(button) {
                 row.cells[0].textContent = index + 1;
             });
             
+            // Update global data
+            allOperations = allOperations.filter(op => 
+                (op.operationName || op.name) !== operationName || op.queueName !== queueName
+            );
+            
             // Show success message
             showTemporaryMessage('Operation deleted successfully', 'success');
         } else {
-            throw new Error(data.message || 'Unknown error occurred');
+            throw new Error(data.message || 'Delete operation failed');
         }
     })
     .catch(error => {
         console.error('Error deleting operation:', error);
+        showTemporaryMessage(`Failed to delete operation: ${error.message}`, 'error');
         
-        // Restore button state
+        // Restore button
         button.innerHTML = originalContent;
         button.disabled = false;
-        
-        // Show error message
-        showTemporaryMessage(`Failed to delete operation: ${error.message}`, 'error');
     });
 }
 
 // Show temporary message to user
 function showTemporaryMessage(message, type) {
-    // Remove any existing messages
-    const existingMessages = document.querySelectorAll('.temp-message');
-    existingMessages.forEach(msg => msg.remove());
-    
-    // Create message element
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed temp-message`;
-    messageDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
-    messageDiv.innerHTML = `
-        <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'}"></i>
+    // Create alert element
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
         ${message}
-        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     
-    // Add to page
-    document.body.appendChild(messageDiv);
+    // Insert at top of content
+    const content = document.getElementById('content');
+    content.insertBefore(alertDiv, content.firstChild);
     
     // Auto-remove after 5 seconds
     setTimeout(() => {
-        if (messageDiv.parentNode) {
-            messageDiv.remove();
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
         }
     }, 5000);
+}
+
+// Show error message
+function showError(message) {
+    const content = document.getElementById('content');
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'alert alert-danger';
+    errorDiv.innerHTML = `
+        <i class="bi bi-exclamation-triangle"></i>
+        <strong>Error:</strong> ${message}
+    `;
+    content.insertBefore(errorDiv, content.firstChild);
 }

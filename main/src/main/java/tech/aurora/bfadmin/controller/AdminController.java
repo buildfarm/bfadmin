@@ -40,26 +40,12 @@ public class AdminController {
     if (ui) {
       String helloMessage = adminService.getHelloMessage();
       
-      // Get enhanced system status
-      java.util.Map<String, Object> systemStatus = adminService.getSystemStatus();
-      
-      // Get table data for workers
-      java.util.List<java.util.Map<String, Object>> executeWorkersTable = adminService.getExecuteWorkersTable();
-      java.util.List<java.util.Map<String, Object>> storageWorkersTable = adminService.getStorageWorkersTable();
-      
-      // Get table data for servers
-      java.util.List<java.util.Map<String, Object>> serversTable = adminService.getServersTable();
-      
+      // Only add basic attributes for fast page load
       model.addAttribute("helloMessage", helloMessage);
-      model.addAttribute("systemStatus", systemStatus);
-      model.addAttribute("executeWorkersTable", executeWorkersTable);
-      model.addAttribute("storageWorkersTable", storageWorkersTable);
-      model.addAttribute("serversTable", serversTable);
       model.addAttribute("activePage", "dashboard");
       model.addAttribute("currentPage", "dashboard");
       
-      logger.info("Dashboard accessed, system status: {}, {} execute workers, {} storage workers, {} servers", 
-                  systemStatus.get("systemHealthText"), executeWorkersTable.size(), storageWorkersTable.size(), serversTable.size());
+      logger.info("Dashboard page loaded (data will be loaded asynchronously)");
       return "dashboard";
     } else {
       model.addAttribute("status", "999");
@@ -72,38 +58,11 @@ public class AdminController {
   @RequestMapping("/queues")
   public String getQueues(Model model) {
     if (ui) {
-      // Get all operations from all queues
-      java.util.List<java.util.Map<String, Object>> allOperations = adminService.getAllQueueOperations();
-      java.util.List<String> queueNames = adminService.getQueueNames();
-      
-      model.addAttribute("operations", allOperations);
-      model.addAttribute("queueNames", queueNames);
+      // Only add basic attributes for fast page load
       model.addAttribute("activePage", "queues");
       model.addAttribute("currentPage", "queues");
       
-      logger.info("Queues page accessed, found {} total operations across {} queues", allOperations.size(), queueNames.size());
-      
-      // Log raw JSON of operations for debugging
-      try {
-        String operationsJson = objectMapper.writeValueAsString(allOperations);
-        logger.info("RAW OPERATIONS JSON: {}", operationsJson);
-        
-        // Also log individual operation samples
-        if (!allOperations.isEmpty()) {
-          logger.info("First operation sample: {}", allOperations.get(0));
-          logger.info("Total operations count: {}", allOperations.size());
-          
-          // Log first few operations in detail
-          for (int i = 0; i < Math.min(3, allOperations.size()); i++) {
-            String singleOpJson = objectMapper.writeValueAsString(allOperations.get(i));
-            logger.info("Operation {} JSON: {}", i, singleOpJson);
-          }
-        } else {
-          logger.warn("Operations list is empty or null");
-        }
-      } catch (JsonProcessingException e) {
-        logger.error("Failed to convert operations to JSON", e);
-      }
+      logger.info("Queues page loaded (data will be loaded asynchronously)");
       
       return "queues";
     } else {
@@ -148,30 +107,11 @@ public class AdminController {
   @RequestMapping("/dispatched")
   public String getDispatchedOperations(Model model) {
     if (ui) {
-      // Get all dispatched operations
-      java.util.List<java.util.Map<String, Object>> dispatchedOperations = adminService.getDispatchedOperations();
-      
-      model.addAttribute("operations", dispatchedOperations);
+      // Only add basic attributes for fast page load
       model.addAttribute("activePage", "dispatched");
       model.addAttribute("currentPage", "dispatched");
       
-      logger.info("Dispatched operations page accessed, found {} operations", dispatchedOperations.size());
-      
-      // Log raw JSON of dispatched operations for debugging
-      try {
-        String operationsJson = objectMapper.writeValueAsString(dispatchedOperations);
-        logger.info("RAW DISPATCHED OPERATIONS JSON: {}", operationsJson);
-        
-        // Also log individual operation samples
-        if (!dispatchedOperations.isEmpty()) {
-          logger.info("First dispatched operation sample: {}", dispatchedOperations.get(0));
-          logger.info("Total dispatched operations count: {}", dispatchedOperations.size());
-        } else {
-          logger.warn("Dispatched operations list is empty");
-        }
-      } catch (JsonProcessingException e) {
-        logger.error("Failed to convert dispatched operations to JSON", e);
-      }
+      logger.info("Dispatched operations page loaded (data will be loaded asynchronously)");
       
       return "dispatched";
     } else {
@@ -202,30 +142,11 @@ public class AdminController {
   @RequestMapping("/prequeue")
   public String getPrequeuedOperations(Model model) {
     if (ui) {
-      // Get all prequeued operations
-      java.util.List<java.util.Map<String, Object>> prequeuedOperations = adminService.getPrequeuedOperations();
-      
-      model.addAttribute("operations", prequeuedOperations);
+      // Only add basic attributes for fast page load
       model.addAttribute("activePage", "prequeue");
       model.addAttribute("currentPage", "prequeue");
       
-      logger.info("Prequeued operations page accessed, found {} operations", prequeuedOperations.size());
-      
-      // Log raw JSON of prequeued operations for debugging
-      try {
-        String operationsJson = objectMapper.writeValueAsString(prequeuedOperations);
-        logger.info("RAW PREQUEUED OPERATIONS JSON: {}", operationsJson);
-        
-        // Also log individual operation samples
-        if (!prequeuedOperations.isEmpty()) {
-          logger.info("First prequeued operation sample: {}", prequeuedOperations.get(0));
-          logger.info("Total prequeued operations count: {}", prequeuedOperations.size());
-        } else {
-          logger.warn("Prequeued operations list is empty");
-        }
-      } catch (JsonProcessingException e) {
-        logger.error("Failed to convert prequeued operations to JSON", e);
-      }
+      logger.info("Prequeue operations page loaded (data will be loaded asynchronously)");
       
       return "prequeue";
     } else {
@@ -253,6 +174,133 @@ public class AdminController {
     return operations;
   }
   
+  // Async API endpoints for background data loading
+  @RequestMapping("/api/dashboard/data")
+  @ResponseBody
+  public java.util.Map<String, Object> getDashboardDataAsync() {
+    logger.info("Dashboard data requested via async API");
+    if (!ui) {
+      java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+      errorResponse.put("error", "UI is not enabled");
+      return errorResponse;
+    }
+    
+    try {
+      java.util.Map<String, Object> data = new java.util.HashMap<>();
+      
+      // Get system status
+      java.util.Map<String, Object> systemStatus = adminService.getSystemStatus();
+      data.put("systemStatus", systemStatus);
+      
+      // Get worker tables
+      java.util.List<java.util.Map<String, Object>> executeWorkersTable = adminService.getExecuteWorkersTable();
+      java.util.List<java.util.Map<String, Object>> storageWorkersTable = adminService.getStorageWorkersTable();
+      data.put("executeWorkersTable", executeWorkersTable);
+      data.put("storageWorkersTable", storageWorkersTable);
+      
+      // Get servers table
+      java.util.List<java.util.Map<String, Object>> serversTable = adminService.getServersTable();
+      data.put("serversTable", serversTable);
+      
+      logger.info("Dashboard async data: {} execute workers, {} storage workers, {} servers", 
+                  executeWorkersTable.size(), storageWorkersTable.size(), serversTable.size());
+      
+      return data;
+    } catch (Exception e) {
+      logger.error("Failed to get dashboard data async", e);
+      java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+      errorResponse.put("error", "Failed to load dashboard data: " + e.getMessage());
+      return errorResponse;
+    }
+  }
+  
+  @RequestMapping("/api/queues/data")
+  @ResponseBody
+  public java.util.Map<String, Object> getQueuesDataAsync() {
+    logger.info("Queues data requested via async API");
+    if (!ui) {
+      java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+      errorResponse.put("error", "UI is not enabled");
+      return errorResponse;
+    }
+    
+    try {
+      java.util.Map<String, Object> data = new java.util.HashMap<>();
+      
+      // Get all operations from all queues
+      java.util.List<java.util.Map<String, Object>> allOperations = adminService.getAllQueueOperations();
+      java.util.List<String> queueNames = adminService.getQueueNames();
+      
+      data.put("operations", allOperations);
+      data.put("queueNames", queueNames);
+      
+      logger.info("Queues async data: {} total operations across {} queues", allOperations.size(), queueNames.size());
+      
+      return data;
+    } catch (Exception e) {
+      logger.error("Failed to get queues data async", e);
+      java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+      errorResponse.put("error", "Failed to load queues data: " + e.getMessage());
+      return errorResponse;
+    }
+  }
+  
+  @RequestMapping("/api/prequeue/data")
+  @ResponseBody
+  public java.util.Map<String, Object> getPrequeueDataAsync() {
+    logger.info("Prequeue data requested via async API");
+    if (!ui) {
+      java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+      errorResponse.put("error", "UI is not enabled");
+      return errorResponse;
+    }
+    
+    try {
+      java.util.Map<String, Object> data = new java.util.HashMap<>();
+      
+      // Get all prequeued operations
+      java.util.List<java.util.Map<String, Object>> prequeuedOperations = adminService.getPrequeuedOperations();
+      data.put("operations", prequeuedOperations);
+      
+      logger.info("Prequeue async data: {} operations", prequeuedOperations.size());
+      
+      return data;
+    } catch (Exception e) {
+      logger.error("Failed to get prequeue data async", e);
+      java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+      errorResponse.put("error", "Failed to load prequeue data: " + e.getMessage());
+      return errorResponse;
+    }
+  }
+  
+  @RequestMapping("/api/dispatched/data")
+  @ResponseBody
+  public java.util.Map<String, Object> getDispatchedDataAsync() {
+    logger.info("Dispatched data requested via async API");
+    if (!ui) {
+      java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+      errorResponse.put("error", "UI is not enabled");
+      return errorResponse;
+    }
+    
+    try {
+      java.util.Map<String, Object> data = new java.util.HashMap<>();
+      
+      // Get all dispatched operations
+      java.util.List<java.util.Map<String, Object>> dispatchedOperations = adminService.getDispatchedOperations();
+      data.put("operations", dispatchedOperations);
+      
+      logger.info("Dispatched async data: {} operations", dispatchedOperations.size());
+      
+      return data;
+    } catch (Exception e) {
+      logger.error("Failed to get dispatched data async", e);
+      java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+      errorResponse.put("error", "Failed to load dispatched data: " + e.getMessage());
+      return errorResponse;
+    }
+  }
+
   @RequestMapping(value = "/api/queues/{queueName}/operations/{operationName}", method = RequestMethod.DELETE)
   @ResponseBody
   public ResponseEntity<java.util.Map<String, Object>> deleteOperation(

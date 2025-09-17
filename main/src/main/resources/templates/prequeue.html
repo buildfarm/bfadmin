@@ -12,7 +12,12 @@
             <div class="card-header">
                 <h5 class="card-title">
                     <span><i class="bi bi-clock-history"></i> Prequeued Operations</span>
-                    <span class="status-badge status-warning" id="operationCount" th:text="${operations.size()} + ' Operations'">0 Operations</span>
+                    <span class="status-badge status-warning" id="operationCount">
+                        <div class="spinner-border spinner-border-sm me-1" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        Loading...
+                    </span>
                 </h5>
             </div>
             <div class="card-body">
@@ -22,99 +27,48 @@
                     </div>
                 </div>
                 
-                <div th:if="${operations.empty}" class="alert alert-info">
+                <div class="alert alert-info d-none" id="emptyPrequeueAlert">
                     <i class="bi bi-info-circle"></i> No prequeued operations found
                 </div>
             </div>
         </div>
 
         <!-- Operations Table -->
-        <div class="card fade-in" th:unless="${operations.empty}">
+        <div class="card fade-in">
             <div class="card-header">
                 <h5 class="card-title">
                     <span><i class="bi bi-list-task"></i> Prequeued Operations</span>
                 </h5>
             </div>
             <div class="card-body p-0">
-                <!-- Table Controls -->
-                <div class="table-controls" th:if="${operations != null and operations.size() > 0}">
+                <div class="text-center py-4" id="prequeueLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading prequeue operations...</span>
                     </div>
-                        <span>entries</span>
-                    </div>
+                    <p class="mt-2 text-muted">Loading prequeue operations...</p>
                 </div>
-
-                <!-- Operations Table -->
-                <div class="table-container">
-                    <table class="table table-hover" id="operationTable">
+                
+                <div class="table-responsive d-none" id="prequeueTableContainer">
+                    <table class="table table-hover mb-0" id="prequeueTable">
                         <thead>
                             <tr>
-                                <th class="sortable-header" data-column="index">
-                                    <span>Index</span>
-                                    <i class="bi bi-chevron-expand sort-icon"></i>
-                                </th>
-                                <th class="sortable-header" data-column="operationName">
-                                    <span>Operation</span>
-                                    <i class="bi bi-chevron-expand sort-icon"></i>
-                                </th>
-                                <th class="sortable-header" data-column="stage">
-                                    <span>Stage</span>
-                                    <i class="bi bi-chevron-expand sort-icon"></i>
-                                </th>
-                                <th class="sortable-header" data-column="status">
-                                    <span>Status</span>
-                                    <i class="bi bi-chevron-expand sort-icon"></i>
-                                </th>
-                                <th class="sortable-header" data-column="queuedAt">
-                                    <span>Queued At</span>
-                                    <i class="bi bi-chevron-expand sort-icon"></i>
-                                </th>
-                                <th>Metadata</th>
-                                <th>Actions</th>
+                                <th class="sortable-header" data-column="index">#</th>
+                                <th class="sortable-header" data-column="operationName"><i class="bi bi-file-text"></i> Operation</th>
+                                <th class="sortable-header" data-column="priority"><i class="bi bi-arrow-up"></i> Priority</th>
+                                <th class="sortable-header" data-column="stage"><i class="bi bi-diagram-3"></i> Stage</th>
+                                <th class="sortable-header" data-column="queuedAt"><i class="bi bi-clock"></i> Queued At</th>
+                                <th><i class="bi bi-trash"></i> Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="operation, iterStat : ${operations}">
-                                <td><span class="text-muted" th:text="${iterStat.count}">1</span></td>
-                                <td th:data-operation-id="${operation.operationId}">
-                                    <span class="fw-medium" th:text="${operation.operationName}">Operation Name</span>
-                                </td>
-                                <td>
-                                    <span class="status-badge status-warning">
-                                        <i class="bi bi-clock-history"></i>
-                                        <span th:text="${operation.stage}">PREQUEUED</span>
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="status-badge status-warning">
-                                        <i class="bi bi-clock-history"></i>
-                                        <span th:text="${operation.status}">Prequeued</span>
-                                    </span>
-                                </td>
-                                <td>
-                                    <small class="text-muted" th:text="${operation.queuedAt}">2025-09-16 17:37:03</small>
-                                </td>
-                                <td>
-                                    <span class="status-badge" th:class="${operation.hasMetadata ? 'status-success' : 'status-secondary'}">
-                                        <i class="bi" th:class="${operation.hasMetadata ? 'bi-check-circle' : 'bi-x-circle'}"></i>
-                                        <span th:text="${operation.hasMetadata ? 'Yes' : 'No'}">Yes</span>
-                                    </span>
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-info" 
-                                            onclick="showOperationDetails(this)"
-                                            th:data-name="${operation.operationName}"
-                                            th:data-stage="${operation.stage}"
-                                            th:data-status="${operation.status}"
-                                            th:data-queued="${operation.queuedAt}"
-                                            th:data-raw="${operation.rawData}">
-                                        <i class="bi bi-eye"></i> View
-                                    </button>
-                                </td>
-                            </tr>
+                            <!-- Data will be populated by JavaScript -->
                         </tbody>
                     </table>
                 </div>
-
+                
+                <div class="alert alert-info m-3 d-none" id="noPrequeueOperationsAlert">
+                    <i class="bi bi-info-circle"></i> No prequeued operations found
+                </div>
             </div>
         </div>
     </div>

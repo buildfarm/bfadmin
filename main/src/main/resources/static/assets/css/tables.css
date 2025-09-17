@@ -5,6 +5,9 @@
     background: transparent;
     color: var(--text-primary);
     margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
 
 .table thead th {
     background: var(--dark-bg);
@@ -15,40 +18,105 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     padding: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
 
 .table tbody td {
     border-top: 1px solid var(--border-color);
     padding: 16px;
     vertical-align: middle;
+    background: var(--surface-bg);
+}
 
 .table tbody tr:hover {
     background: rgba(139, 92, 246, 0.05);
+}
+
+.table tbody tr:hover td {
+    background: rgba(139, 92, 246, 0.05);
+}
 
 .table-responsive {
     border-radius: 8px;
     overflow: hidden;
-
-    outline: none;
-    border-color: var(--accent-blue);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+}
 
 .table-info {
     color: var(--text-secondary);
     font-size: 0.875rem;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color);
+}
 
 /* Sorting Styles */
 .sortable-header {
     cursor: pointer;
     user-select: none;
     position: relative;
-    transition: color 0.2s;
+    transition: all 0.2s ease;
+}
 
 .sortable-header:hover {
     color: var(--accent-blue);
+    transform: translateY(-1px);
+}
 
 .sortable-header.sorted-asc::after {
     content: " ↑";
     color: var(--accent-blue);
+    font-weight: bold;
+}
 
 .sortable-header.sorted-desc::after {
     content: " ↓";
     color: var(--accent-blue);
+    font-weight: bold;
+}
+
+/* Table integration with cards */
+.card .table-responsive {
+    margin: 0;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+}
+
+.card .table thead th {
+    border-bottom: 2px solid var(--border-color);
+}
+
+.card .table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Empty state styling */
+.alert.m-3 {
+    margin: 1.5rem !important;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+/* Status badge improvements for tables */
+.table .status-badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* Action button styling in tables */
+.table .btn-sm {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.table .btn-sm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

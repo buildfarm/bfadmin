@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title}">Build Farm Admin Dashboard</title>
+    <th:block th:replace="${title}">
+        <title>Build Farm Admin Dashboard</title>
+    </th:block>
     
     <!-- External CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -54,7 +56,7 @@
     <script src="https://unpkg.com/@mui/material@latest/umd/material-ui.production.min.js"></script>
     
     <!-- Custom JS -->
-    <script th:src="@{/assets/js/dashboard.js}"></script>
+    <script th:if="${currentPage == 'dashboard'}" th:src="@{/assets/js/dashboard.js}"></script>
     <script th:if="${currentPage == 'queues'}" th:src="@{/assets/js/queues.js}"></script>
     <script th:if="${currentPage == 'prequeue'}" th:src="@{/assets/js/prequeue.js}"></script>
     <script th:if="${currentPage == 'dispatched'}" th:src="@{/assets/js/dispatched.js}"></script>

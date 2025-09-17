@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" 
-      xmlns:th="http://www.thymeleaf.org" 
+<html lang="en" xmlns:th="http://www.thymeleaf.org" 
       th:replace="~{fragments/layout :: layout(~{::title}, ~{::#content})}">
 <head>
     <title>BuildFarm Dashboard</title>
@@ -16,10 +15,11 @@
                         <p class="text-muted mb-0" th:text="${helloMessage}">System monitoring dashboard</p>
                     </div>
                     <div class="d-flex align-items-center">
-                        <span class="status-badge" 
-                              th:classappend="${systemStatus['systemHealthClass'] == 'success' ? 'status-success' : (systemStatus['systemHealthClass'] == 'danger' ? 'status-danger' : 'status-warning')}"
-                              th:text="${systemStatus['systemHealthText']}">
-                            <i class="bi bi-check-circle"></i> Healthy
+                        <span class="status-badge status-warning" id="systemHealthBadge">
+                            <div class="spinner-border spinner-border-sm me-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            Loading...
                         </span>
                     </div>
                 </div>
@@ -27,7 +27,8 @@
         </div>
 
         <!-- System Status Grid -->
-        <div class="status-grid">
+        <div class="status-grid" id="systemStatusGrid">
+            <!-- Loading state for status cards -->
             <div class="card stats-card fade-in">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -35,49 +36,57 @@
                             <i class="bi bi-database"></i>
                         </div>
                         <div class="ms-3 stats-content">
-                            <h3 th:text="${systemStatus['valkeyStatus'] != null ? systemStatus['valkeyStatus'] : 'Unknown'}">Connected</h3>
+                            <div class="placeholder-glow">
+                                <span class="placeholder col-6"></span>
+                            </div>
                             <p>Valkey Cluster</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card stats-card green fade-in">
+            <div class="card stats-card fade-in">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="stats-icon">
                             <i class="bi bi-cpu"></i>
                         </div>
                         <div class="ms-3 stats-content">
-                            <h3 th:text="${systemStatus['activeExecuteCount'] + '/' + systemStatus['executeWorkerCount']}">1/1</h3>
+                            <div class="placeholder-glow">
+                                <span class="placeholder col-4"></span>
+                            </div>
                             <p>Execute Workers</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card stats-card orange fade-in">
+            <div class="card stats-card fade-in">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="stats-icon">
                             <i class="bi bi-hdd"></i>
                         </div>
                         <div class="ms-3 stats-content">
-                            <h3 th:text="${systemStatus['activeStorageCount'] + '/' + systemStatus['storageWorkerCount']}">1/1</h3>
+                            <div class="placeholder-glow">
+                                <span class="placeholder col-4"></span>
+                            </div>
                             <p>Storage Workers</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card stats-card purple fade-in">
+            <div class="card stats-card fade-in">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="stats-icon">
                             <i class="bi bi-server"></i>
                         </div>
                         <div class="ms-3 stats-content">
-                            <h3 th:text="${serversTable != null ? serversTable.size() : 0}">0</h3>
+                            <div class="placeholder-glow">
+                                <span class="placeholder col-4"></span>
+                            </div>
                             <p>Servers</p>
                         </div>
                     </div>
@@ -85,10 +94,10 @@
             </div>
         </div>
 
-        <!-- Error Alert -->
-        <div class="alert alert-danger fade-in" th:if="${systemStatus['error'] != null}">
+        <!-- Error Alert (hidden initially) -->
+        <div class="alert alert-danger fade-in d-none" id="errorAlert">
             <i class="bi bi-exclamation-triangle"></i>
-            <span th:text="${systemStatus['error']}">Error message</span>
+            <span id="errorMessage">Error message</span>
         </div>
 
         <!-- Execute Workers Table -->
@@ -96,13 +105,24 @@
             <div class="card-header">
                 <h5 class="card-title">
                     <span><i class="bi bi-cpu"></i> Execute Workers</span>
-                    <span class="status-badge status-info" th:text="${executeWorkersTable.size()} + ' Workers'">0 Workers</span>
+                    <span class="status-badge status-info" id="executeWorkerCount">
+                        <div class="spinner-border spinner-border-sm me-1" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        Loading...
+                    </span>
                 </h5>
             </div>
             <div class="card-body p-0">
+                <div class="text-center py-4" id="executeWorkersLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading execute workers...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading execute workers...</p>
+                </div>
                 
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0" id="executeWorkerTable" th:if="${!executeWorkersTable.empty}">
+                <div class="table-responsive d-none" id="executeWorkersTableContainer">
+                    <table class="table table-hover mb-0" id="executeWorkerTable">
                         <thead>
                             <tr>
                                 <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
@@ -114,38 +134,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="worker : ${executeWorkersTable}">
-                                <td>
-                                    <span class="status-badge status-secondary" th:text="${worker['groupName'] != null ? worker['groupName'] : 'default'}">default</span>
-                                </td>
-                                <td>
-                                    <span class="text-info" th:text="${worker['endpoint']}">endpoint</span>
-                                </td>
-                                <td>
-                                    <span class="status-badge status-success">
-                                        <i class="bi bi-cpu"></i> 
-                                        <span th:text="${worker['workerType']}">Execute</span>
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="status-badge" 
-                                          th:classappend="${worker['status'] != null && worker['status'].toString().startsWith('Active') ? 'status-success' : (worker['status'] == 'Expired' ? 'status-danger' : 'status-warning')}">
-                                        <i th:class="${worker['status'] != null && worker['status'].toString().startsWith('Active') ? 'bi bi-check-circle' : (worker['status'] == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${worker['status']}">Active</span>
-                                    </span>
-                                </td>
-                                <td>
-                                    <small class="text-muted" th:text="${worker['expireAt']}">expiry</small>
-                                </td>
-                                <td>
-                                    <small class="text-muted" th:text="${worker['firstRegisteredAt']}">registered</small>
-                                </td>
-                            </tr>
+                            <!-- Data will be populated by JavaScript -->
                         </tbody>
                     </table>
-                    
-                    <div class="alert alert-info m-3" th:if="${executeWorkersTable.empty}">
-                        <i class="bi bi-info-circle"></i> No execute workers found
-                    </div>
+                </div>
+                
+                <div class="alert alert-info m-3 d-none" id="executeWorkersEmptyMessage">
+                    <i class="bi bi-info-circle"></i> No execute workers found
                 </div>
             </div>
         </div>
@@ -155,13 +150,24 @@
             <div class="card-header">
                 <h5 class="card-title">
                     <span><i class="bi bi-hdd"></i> Storage Workers</span>
-                    <span class="status-badge status-info" th:text="${storageWorkersTable.size()} + ' Workers'">0 Workers</span>
+                    <span class="status-badge status-info" id="storageWorkerCount">
+                        <div class="spinner-border spinner-border-sm me-1" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        Loading...
+                    </span>
                 </h5>
             </div>
             <div class="card-body p-0">
+                <div class="text-center py-4" id="storageWorkersLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading storage workers...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading storage workers...</p>
+                </div>
                 
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0" id="storageWorkerTable" th:if="${!storageWorkersTable.empty}">
+                <div class="table-responsive d-none" id="storageWorkersTableContainer">
+                    <table class="table table-hover mb-0" id="storageWorkerTable">
                         <thead>
                             <tr>
                                 <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
@@ -173,38 +179,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="worker : ${storageWorkersTable}">
-                                <td>
-                                    <span class="status-badge status-secondary" th:text="${worker['groupName'] != null ? worker['groupName'] : 'default'}">default</span>
-                                </td>
-                                <td>
-                                    <span class="text-info" th:text="${worker['endpoint']}">endpoint</span>
-                                </td>
-                                <td>
-                                    <span class="status-badge status-info">
-                                        <i class="bi bi-hdd"></i> 
-                                        <span th:text="${worker['workerType']}">Storage</span>
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="status-badge" 
-                                          th:classappend="${worker['status'] != null && worker['status'].toString().startsWith('Active') ? 'status-success' : (worker['status'] == 'Expired' ? 'status-danger' : 'status-warning')}">
-                                        <i th:class="${worker['status'] != null && worker['status'].toString().startsWith('Active') ? 'bi bi-check-circle' : (worker['status'] == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${worker['status']}">Active</span>
-                                    </span>
-                                </td>
-                                <td>
-                                    <small class="text-muted" th:text="${worker['expireAt']}">expiry</small>
-                                </td>
-                                <td>
-                                    <small class="text-muted" th:text="${worker['firstRegisteredAt']}">registered</small>
-                                </td>
-                            </tr>
+                            <!-- Data will be populated by JavaScript -->
                         </tbody>
                     </table>
-                    
-                    <div class="alert alert-info m-3" th:if="${storageWorkersTable.empty}">
-                        <i class="bi bi-info-circle"></i> No storage workers found
-                    </div>
+                </div>
+                
+                <div class="alert alert-info m-3 d-none" id="storageWorkersEmptyMessage">
+                    <i class="bi bi-info-circle"></i> No storage workers found
                 </div>
             </div>
         </div>
@@ -214,13 +195,24 @@
             <div class="card-header">
                 <h5 class="card-title">
                     <span><i class="bi bi-server"></i> Servers</span>
-                    <span class="status-badge status-info" th:text="${serversTable.size()} + ' Servers'">0 Servers</span>
+                    <span class="status-badge status-info" id="serversCount">
+                        <div class="spinner-border spinner-border-sm me-1" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        Loading...
+                    </span>
                 </h5>
             </div>
             <div class="card-body p-0">
-                    
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0" id="serversTable" th:if="${serversTable != null and serversTable.size() > 0}">
+                <div class="text-center py-4" id="serversLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading servers...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading servers...</p>
+                </div>
+                
+                <div class="table-responsive d-none" id="serversTableContainer">
+                    <table class="table table-hover mb-0" id="serversTable">
                         <thead>
                             <tr>
                                 <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
@@ -232,35 +224,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="server : ${serversTable}">
-                                <td>
-                                    <span class="status-badge status-secondary" th:text="${server['groupName'] != null ? server['groupName'] : 'default'}">default</span>
-                                </td>
-                                <td>
-                                    <span class="text-info" th:text="${server['endpoint']}">endpoint</span>
-                                </td>
-                                <td>
-                                    <span class="status-badge" 
-                                          th:classappend="${server['serverType'] == 'Scheduler' ? 'status-info' : (server['serverType'] == 'CAS' ? 'status-primary' : 'status-success')}">
-                                        <i th:class="${server['serverType'] == 'Scheduler' ? 'bi bi-gear' : (server['serverType'] == 'CAS' ? 'bi bi-database' : 'bi bi-server')}"></i> 
-                                        <span th:text="${server['serverType']}">Scheduler</span>
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="status-badge" 
-                                          th:classappend="${server['status'] != null && server['status'].toString().startsWith('Active') ? 'status-success' : (server['status'] == 'Expired' ? 'status-danger' : 'status-warning')}">
-                                        <i th:class="${server['status'] != null && server['status'].toString().startsWith('Active') ? 'bi bi-check-circle' : (server['status'] == 'Expired' ? 'bi bi-x-circle' : 'bi bi-exclamation-circle')}"></i><span th:text="${server['status']}">Active</span>
-                                    </span>
-                                </td>
-                                <td><small class="text-muted" th:text="${server['expireAt']}">2024-01-01 11:00:00</small></td>
-                                <td><small class="text-muted" th:text="${server['firstRegisteredAt']}">2024-01-01 10:00:00</small></td>
-                            </tr>
+                            <!-- Data will be populated by JavaScript -->
                         </tbody>
                     </table>
-                    
-                    <div class="alert alert-info m-3" th:if="${serversTable == null or serversTable.size() == 0}">
-                        <i class="bi bi-info-circle"></i> No servers found
-                    </div>
+                </div>
+                
+                <div class="alert alert-info m-3 d-none" id="serversEmptyMessage">
+                    <i class="bi bi-info-circle"></i> No servers found
                 </div>
             </div>
         </div>

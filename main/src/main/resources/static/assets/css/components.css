@@ -352,3 +352,32 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
 }
+
+/* Pagination Styles for Dispatched Page */
+.pagination-number {
+    background: none;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    padding: 0.375rem 0.75rem;
+    margin: 0 2px;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.pagination-number:hover {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.pagination-number.active {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.pagination-number.active:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}

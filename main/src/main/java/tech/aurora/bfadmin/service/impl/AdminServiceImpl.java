@@ -231,7 +231,18 @@ public class AdminServiceImpl implements AdminService {
       status.put("activeStorageCount", activeStorage);
       status.put("activeTotalCount", activeExecute + activeStorage);
       
-
+      // Get server counts
+      java.util.List<java.util.Map<String, Object>> servers = getServersTable();
+      int serverCount = servers.size();
+      status.put("serverCount", serverCount);
+      
+      // Count active servers
+      int activeServer = (int) servers.stream()
+        .filter(s -> s.get("status") != null && s.get("status").toString().startsWith("Active"))
+        .count();
+      
+      status.put("activeServerCount", activeServer);
+      status.put("serverClass", serverCount > 0 ? "success" : "warning");
       
       // Overall system health
       boolean systemHealthy = valkeyConnected && totalWorkers > 0 && (activeExecute + activeStorage) > 0;

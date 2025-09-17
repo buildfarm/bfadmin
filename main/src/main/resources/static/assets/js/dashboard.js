@@ -1,6 +1,6 @@
 /**
  * BuildFarm Dashboard JavaScript
- * Handles table sorting and UI interactions
+ * Handles async data loading, table sorting and UI interactions
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -8,20 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const animatedElements = document.querySelectorAll('.fade-in');
     animatedElements.forEach((el, index) => {
         el.style.animationDelay = `${index * 0.1}s`;
-    });
-
-    // Add pulse animation to status badges
-    const statusBadges = document.querySelectorAll('.status-success');
-    statusBadges.forEach(badge => {
-        if (badge.textContent.includes('Connected') || badge.textContent.includes('Active')) {
-            badge.classList.add('pulse');
-        }
-    });
-
-    // Initialize tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
     // Add hover effects to nav links
@@ -35,13 +21,305 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Load dashboard data asynchronously
+    loadDashboardData();
+    
     // Update timestamps
     updateRelativeTime();
     setInterval(updateRelativeTime, 60000); // Update every minute
-
-    // Initialize table functionality (no pagination)
-    initializeTableFunctionality();
 });
+
+// Global variables for table data
+let executeWorkerData = [];
+let storageWorkerData = [];
+let serversData = [];
+
+// Load dashboard data from async API
+async function loadDashboardData() {
+    try {
+        const response = await fetch('/api/dashboard/data');
+        const data = await response.json();
+        
+        if (data.error) {
+            showError(data.error);
+            return;
+        }
+        
+        // Update system status
+        updateSystemStatus(data.systemStatus);
+        
+        // Load workers and servers tables
+        loadExecuteWorkers(data.executeWorkersTable);
+        loadStorageWorkers(data.storageWorkersTable);
+        loadServers(data.serversTable);
+        
+    } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+        showError('Failed to load dashboard data: ' + error.message);
+    }
+}
+
+// Update system status cards
+function updateSystemStatus(systemStatus) {
+    const statusCards = document.querySelectorAll('#systemStatusGrid .card');
+    const systemHealthBadge = document.getElementById('systemHealthBadge');
+    
+    if (systemHealthBadge) {
+        systemHealthBadge.innerHTML = `
+            <i class="bi bi-${systemStatus.systemHealthy ? 'check-circle' : 'exclamation-triangle'}"></i>
+            ${systemStatus.systemHealthText}`;
+        systemHealthBadge.className = `status-badge status-${systemStatus.systemHealthClass}`;
+    }
+    
+    // Update individual status cards with real data
+    if (statusCards.length >= 4) {
+        // Valkey status
+        statusCards[0].querySelector('.ms-3.stats-content').innerHTML = `
+            <h3>${systemStatus.valkeyStatus}</h3>
+            <p>Valkey Cluster</p>`;
+        statusCards[0].className = `card stats-card ${systemStatus.valkeyConnected ? 'green' : 'red'} fade-in`;
+        
+        // Execute workers
+        statusCards[1].querySelector('.ms-3.stats-content').innerHTML = `
+            <h3>${systemStatus.activeExecuteCount}/${systemStatus.executeWorkerCount}</h3>
+            <p>Execute Workers</p>`;
+        statusCards[1].className = `card stats-card ${systemStatus.executeWorkerClass === 'success' ? 'green' : 'orange'} fade-in`;
+        
+        // Storage workers
+        statusCards[2].querySelector('.ms-3.stats-content').innerHTML = `
+            <h3>${systemStatus.activeStorageCount}/${systemStatus.storageWorkerCount}</h3>
+            <p>Storage Workers</p>`;
+        statusCards[2].className = `card stats-card ${systemStatus.storageWorkerClass === 'success' ? 'green' : 'orange'} fade-in`;
+        
+        // Servers
+        statusCards[3].querySelector('.ms-3.stats-content').innerHTML = `
+            <h3>${systemStatus.activeServerCount}/${systemStatus.serverCount}</h3>
+            <p>Servers</p>`;
+        statusCards[3].className = `card stats-card ${systemStatus.serverClass === 'success' ? 'green' : 'purple'} fade-in`;
+    }
+    
+    // Show error if present
+    if (systemStatus.error) {
+        showError(systemStatus.error);
+    }
+}
+
+// Load execute workers table
+function loadExecuteWorkers(workers) {
+    const loading = document.getElementById('executeWorkersLoading');
+    const container = document.getElementById('executeWorkersTableContainer');
+    const emptyMessage = document.getElementById('executeWorkersEmptyMessage');
+    const countBadge = document.getElementById('executeWorkerCount');
+    
+    loading.classList.add('d-none');
+    
+    if (workers && workers.length > 0) {
+        container.classList.remove('d-none');
+        populateWorkersTable('executeWorkerTable', workers);
+        countBadge.textContent = `${workers.length} Workers`;
+        executeWorkerData = workers;
+        setupSortingListeners('executeWorkerTable', 'execute');
+    } else {
+        emptyMessage.classList.remove('d-none');
+        countBadge.textContent = '0 Workers';
+    }
+}
+
+// Load storage workers table
+function loadStorageWorkers(workers) {
+    const loading = document.getElementById('storageWorkersLoading');
+    const container = document.getElementById('storageWorkersTableContainer');
+    const emptyMessage = document.getElementById('storageWorkersEmptyMessage');
+    const countBadge = document.getElementById('storageWorkerCount');
+    
+    loading.classList.add('d-none');
+    
+    if (workers && workers.length > 0) {
+        container.classList.remove('d-none');
+        populateWorkersTable('storageWorkerTable', workers);
+        countBadge.textContent = `${workers.length} Workers`;
+        storageWorkerData = workers;
+        setupSortingListeners('storageWorkerTable', 'storage');
+    } else {
+        emptyMessage.classList.remove('d-none');
+        countBadge.textContent = '0 Workers';
+    }
+}
+
+// Load servers table
+function loadServers(servers) {
+    const loading = document.getElementById('serversLoading');
+    const container = document.getElementById('serversTableContainer');
+    const emptyMessage = document.getElementById('serversEmptyMessage');
+    const countBadge = document.getElementById('serversCount');
+    
+    loading.classList.add('d-none');
+    
+    if (servers && servers.length > 0) {
+        container.classList.remove('d-none');
+        populateServersTable('serversTable', servers);
+        countBadge.textContent = `${servers.length} Servers`;
+        serversData = servers;
+        setupSortingListeners('serversTable', 'servers');
+    } else {
+        emptyMessage.classList.remove('d-none');
+        countBadge.textContent = '0 Servers';
+    }
+}
+
+// Populate workers table
+function populateWorkersTable(tableId, workers) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    
+    const tbody = table.querySelector('tbody');
+    tbody.innerHTML = '';
+    
+    workers.forEach((worker, index) => {
+        const row = document.createElement('tr');
+        const isActive = worker.status && worker.status.toString().startsWith('Active');
+        const isExpired = worker.status === 'Expired';
+        
+        row.innerHTML = `
+            <td><span class="status-badge status-secondary">${worker.groupName || 'default'}</span></td>
+            <td><span class="text-info">${worker.endpoint}</span></td>
+            <td>
+                <span class="status-badge ${tableId === 'executeWorkerTable' ? 'status-success' : 'status-info'}">
+                    <i class="bi bi-${tableId === 'executeWorkerTable' ? 'cpu' : 'hdd'}"></i> 
+                    <span>${worker.workerType}</span>
+                </span>
+            </td>
+            <td>
+                <span class="status-badge ${isActive ? 'status-success' : (isExpired ? 'status-danger' : 'status-warning')}">
+                    <i class="bi bi-${isActive ? 'check-circle' : (isExpired ? 'x-circle' : 'exclamation-circle')}"></i>
+                    <span>${worker.status}</span>
+                </span>
+            </td>
+            <td><small class="text-muted">${worker.expireAt}</small></td>
+            <td><small class="text-muted">${worker.firstRegisteredAt}</small></td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Populate servers table
+function populateServersTable(tableId, servers) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    
+    const tbody = table.querySelector('tbody');
+    tbody.innerHTML = '';
+    
+    servers.forEach((server, index) => {
+        const row = document.createElement('tr');
+        const isActive = server.status && server.status.toString().startsWith('Active');
+        const isExpired = server.status === 'Expired';
+        
+        row.innerHTML = `
+            <td><span class="status-badge status-secondary">${server.groupName || 'default'}</span></td>
+            <td><span class="text-info">${server.endpoint}</span></td>
+            <td>
+                <span class="status-badge ${server.serverType === 'Scheduler' ? 'status-info' : (server.serverType === 'CAS' ? 'status-primary' : 'status-success')}">
+                    <i class="bi bi-${server.serverType === 'Scheduler' ? 'gear' : (server.serverType === 'CAS' ? 'database' : 'server')}"></i> 
+                    <span>${server.serverType}</span>
+                </span>
+            </td>
+            <td>
+                <span class="status-badge ${isActive ? 'status-success' : (isExpired ? 'status-danger' : 'status-warning')}">
+                    <i class="bi bi-${isActive ? 'check-circle' : (isExpired ? 'x-circle' : 'exclamation-circle')}"></i>
+                    <span>${server.status}</span>
+                </span>
+            </td>
+            <td><small class="text-muted">${server.expireAt}</small></td>
+            <td><small class="text-muted">${server.firstRegisteredAt}</small></td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Set up sorting listeners for tables
+function setupSortingListeners(tableId, type) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    const headers = table.querySelectorAll('.sortable-header');
+    headers.forEach(header => {
+        header.addEventListener('click', function() {
+            const column = this.getAttribute('data-column');
+            handleSort(column, type);
+        });
+    });
+}
+
+// Handle table sorting
+function handleSort(column, type) {
+    let data;
+    
+    if (type === 'execute') {
+        data = executeWorkerData;
+    } else if (type === 'storage') {
+        data = storageWorkerData;
+    } else if (type === 'servers') {
+        data = serversData;
+    }
+
+    if (!data || data.length === 0) return;
+
+    // Simple sorting toggle
+    const currentDirection = data.sortDirection || 'asc';
+    const newDirection = (data.sortColumn === column && currentDirection === 'asc') ? 'desc' : 'asc';
+    
+    data.sortColumn = column;
+    data.sortDirection = newDirection;
+
+    // Sort the data
+    data.sort((a, b) => {
+        let aVal = String(a[column] || '').toLowerCase();
+        let bVal = String(b[column] || '').toLowerCase();
+        if (newDirection === 'asc') {
+            return aVal.localeCompare(bVal);
+        } else {
+            return bVal.localeCompare(aVal);
+        }
+    });
+
+    // Repopulate table with sorted data
+    const tableId = type === 'execute' ? 'executeWorkerTable' : 
+                   type === 'storage' ? 'storageWorkerTable' : 'serversTable';
+    
+    if (type === 'servers') {
+        populateServersTable(tableId, data);
+    } else {
+        populateWorkersTable(tableId, data);
+    }
+    
+    updateSortHeaders(tableId, column, newDirection);
+}
+
+// Update sort headers visual indicators
+function updateSortHeaders(tableId, activeColumn, direction) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    const headers = table.querySelectorAll('.sortable-header');
+    headers.forEach(header => {
+        header.classList.remove('sorted-asc', 'sorted-desc');
+        if (header.getAttribute('data-column') === activeColumn) {
+            header.classList.add(direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        }
+    });
+}
+
+// Show error message
+function showError(message) {
+    const errorAlert = document.getElementById('errorAlert');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    if (errorAlert && errorMessage) {
+        errorMessage.textContent = message;
+        errorAlert.classList.remove('d-none');
+    }
+}
 
 // Format relative time
 function updateRelativeTime() {
@@ -79,188 +357,3 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
-
-// Table Management Variables (table sorting)
-let executeWorkerData = [];
-let storageWorkerData = [];
-let serversData = [];
-
-// Initialize table functionality
-function initializeTableFunctionality() {
-    // Extract data from existing tables
-    extractTableData();
-    
-    // Set up event listeners
-    setupEventListeners();
-}
-
-// Extract worker data from existing HTML tables
-function extractTableData() {
-    const executeTable = document.getElementById('executeWorkerTable');
-    const storageTable = document.getElementById('storageWorkerTable');
-    const serversTable = document.getElementById('serversTable');
-
-    if (executeTable) {
-        executeWorkerData = extractWorkerDataFromTable(executeTable);
-    }
-
-    if (storageTable) {
-        storageWorkerData = extractWorkerDataFromTable(storageTable);
-    }
-
-    if (serversTable) {
-        serversData = extractServerDataFromTable(serversTable);
-    }
-}
-
-function extractWorkerDataFromTable(table) {
-    const rows = table.querySelectorAll('tbody tr');
-    const data = [];
-
-    rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length >= 6) {
-            const cleanStatus = cells[3].textContent.trim().replace(/\([^)]*\)/g, '').trim();
-            data.push({
-                groupName: cells[0].textContent.trim(),
-                endpoint: cells[1].textContent.trim(),
-                workerType: cells[2].textContent.trim(),
-                status: cleanStatus,
-                expireAt: cells[4].textContent.trim(),
-                firstRegisteredAt: cells[5].textContent.trim(),
-                row: row
-            });
-        }
-    });
-
-    return data;
-}
-
-function extractServerDataFromTable(table) {
-    const rows = table.querySelectorAll('tbody tr');
-    const data = [];
-
-    rows.forEach((row, index) => {
-        const cells = row.querySelectorAll('td');
-        
-        if (cells.length >= 6) {
-            const cleanStatus = cells[3].textContent.trim().replace(/\([^)]*\)/g, '').trim();
-            const serverData = {
-                groupName: cells[0].textContent.trim(),
-                endpoint: cells[1].textContent.trim(),
-                serverType: cells[2].textContent.trim(),
-                status: cleanStatus,
-                expireAt: cells[4].textContent.trim(),
-                firstRegisteredAt: cells[5].textContent.trim(),
-                row: row
-            };
-            data.push(serverData);
-        }
-    });
-
-    return data;
-}
-
-// Set up event listeners (table sorting)
-function setupEventListeners() {
-    }
-
-        });
-    }
-
-        });
-    }
-
-    // Sorting functionality
-    setupSortingListeners('executeWorkerTable', 'execute');
-    setupSortingListeners('storageWorkerTable', 'storage');
-    setupSortingListeners('serversTable', 'servers');
-}
-
-function setupSortingListeners(tableId, type) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-
-    const headers = table.querySelectorAll('.sortable-header');
-    headers.forEach(header => {
-        header.addEventListener('click', function() {
-            const column = this.getAttribute('data-column');
-            handleSort(column, type);
-        });
-    });
-}
-
-function handleSort(column, type) {
-    let data, sortColumn, sortDirection;
-    
-    if (type === 'execute') {
-        data = executeWorkerData;
-    } else if (type === 'storage') {
-        data = storageWorkerData;
-    } else if (type === 'servers') {
-        data = serversData;
-    }
-
-    // Simple sorting toggle
-    const currentDirection = data.sortDirection || 'asc';
-    const newDirection = (data.sortColumn === column && currentDirection === 'asc') ? 'desc' : 'asc';
-    
-    data.sortColumn = column;
-    data.sortDirection = newDirection;
-
-    // Sort the data
-    data.sort((a, b) => {
-        let aVal = String(a[column]).toLowerCase();
-        let bVal = String(b[column]).toLowerCase();
-        if (newDirection === 'asc') {
-            return aVal.localeCompare(bVal);
-        } else {
-            return bVal.localeCompare(aVal);
-        }
-    });
-
-    // Update table display
-    const tableId = type === 'execute' ? 'executeWorkerTable' : 
-                   type === 'storage' ? 'storageWorkerTable' : 'serversTable';
-    const countId = type === 'execute' ? 'executeWorkerCount' : 
-                   type === 'storage' ? 'storageWorkerCount' : 'serversCount';
-    
-    updateTableDisplay(data, tableId, countId);
-    updateSortHeaders(tableId, column, newDirection);
-}
-
-function updateSortHeaders(tableId, activeColumn, direction) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-
-    const headers = table.querySelectorAll('.sortable-header');
-    headers.forEach(header => {
-        header.classList.remove('sorted-asc', 'sorted-desc');
-        if (header.getAttribute('data-column') === activeColumn) {
-            header.classList.add(direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-        }
-    });
-}
-
-
-function updateTableDisplay(data, tableId, countElementId) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-
-    const tbody = table.querySelector('tbody');
-    tbody.innerHTML = '';
-
-    let visibleCount = 0;
-    data.forEach(item => {
-        if (item.row) {
-            tbody.appendChild(item.row.cloneNode(true));
-            visibleCount++;
-        }
-    });
-
-    // Update count
-    const countElement = document.getElementById(countElementId);
-    if (countElement) {
-        countElement.textContent = visibleCount;
-    }
-}
