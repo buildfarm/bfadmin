@@ -1,6 +1,6 @@
 /**
  * BuildFarm Dashboard JavaScript
- * Handles table sorting, search, and UI interactions
+ * Handles table sorting and UI interactions
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateRelativeTime();
     setInterval(updateRelativeTime, 60000); // Update every minute
 
-    // Initialize table functionality (search only, no pagination)
+    // Initialize table functionality (no pagination)
     initializeTableFunctionality();
 });
 
@@ -80,7 +80,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Table Management Variables (search only)
+// Table Management Variables (table sorting)
 let executeWorkerData = [];
 let storageWorkerData = [];
 let serversData = [];
@@ -161,28 +161,13 @@ function extractServerDataFromTable(table) {
     return data;
 }
 
-// Set up event listeners (search only)
+// Set up event listeners (table sorting)
 function setupEventListeners() {
-    // Search functionality
-    const executeSearch = document.getElementById('executeWorkerSearch');
-    const storageSearch = document.getElementById('storageWorkerSearch');
-    const serversSearch = document.getElementById('serversSearch');
+    }
 
-    if (executeSearch) {
-        executeSearch.addEventListener('input', function() {
-            filterTable(executeWorkerData, this.value, 'executeWorkerCount');
         });
     }
 
-    if (storageSearch) {
-        storageSearch.addEventListener('input', function() {
-            filterTable(storageWorkerData, this.value, 'storageWorkerCount');
-        });
-    }
-
-    if (serversSearch) {
-        serversSearch.addEventListener('input', function() {
-            filterTable(serversData, this.value, 'serversCount');
         });
     }
 
@@ -257,30 +242,6 @@ function updateSortHeaders(tableId, activeColumn, direction) {
     });
 }
 
-function filterTable(data, searchTerm, countElementId) {
-    searchTerm = searchTerm.toLowerCase();
-    let visibleCount = 0;
-
-    data.forEach(item => {
-        const matchesSearch = !searchTerm || 
-            item.groupName.toLowerCase().includes(searchTerm) ||
-            item.endpoint.toLowerCase().includes(searchTerm) ||
-            (item.workerType && item.workerType.toLowerCase().includes(searchTerm)) ||
-            (item.serverType && item.serverType.toLowerCase().includes(searchTerm)) ||
-            item.status.toLowerCase().includes(searchTerm);
-        
-        if (item.row) {
-            item.row.style.display = matchesSearch ? '' : 'none';
-            if (matchesSearch) visibleCount++;
-        }
-    });
-
-    // Update count
-    const countElement = document.getElementById(countElementId);
-    if (countElement) {
-        countElement.textContent = visibleCount;
-    }
-}
 
 function updateTableDisplay(data, tableId, countElementId) {
     const table = document.getElementById(tableId);
@@ -291,7 +252,7 @@ function updateTableDisplay(data, tableId, countElementId) {
 
     let visibleCount = 0;
     data.forEach(item => {
-        if (item.row && item.row.style.display !== 'none') {
+        if (item.row) {
             tbody.appendChild(item.row.cloneNode(true));
             visibleCount++;
         }

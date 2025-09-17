@@ -17,7 +17,7 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MAIN_DIR="${PROJECT_DIR}/main"
 JAR_FILE="${MAIN_DIR}/target/bfadmin.jar"
 DEFAULT_PORT=8080
-JAVA_OPTS="${JAVA_OPTS:--Xmx1g -Xms512m}"
+JAVA_OPTS="${JAVA_OPTS:--Xmx1g -Xms512m -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true}"
 
 # Function to print colored output
 print_info() {

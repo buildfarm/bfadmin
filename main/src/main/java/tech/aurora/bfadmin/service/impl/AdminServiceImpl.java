@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
+import java.util.List;
 
 @Service
 public class AdminServiceImpl implements AdminService {
@@ -312,6 +313,142 @@ public class AdminServiceImpl implements AdminService {
     } catch (Exception e) {
       logger.error("Failed to get prequeued operations from Valkey", e);
       return new java.util.ArrayList<>();
+    }
+  }
+
+  @Override
+  public boolean deleteOperation(String queueName, String operationName) {
+    logger.info("Delete operation requested for queue: {}, operation: {}", queueName, operationName);
+    try {
+      boolean deleted = false;
+      int deletionAttempts = 0;
+      
+      // Based on the logs, operations are stored in sorted sets like {:2}cpu_queue_priority, {:0}cpu_queue_priority, etc.
+      // Try to remove from queue sorted sets
+      String[] queueKeys = {
+        "{:0}" + queueName,
+        "{:1}" + queueName,
+        "{:2}" + queueName,
+        "{:3}" + queueName,
+        "{:4}" + queueName,
+        "{:5}" + queueName
+      };
+      
+      for (String queueKey : queueKeys) {
+        if (valkeyService.hasKey(queueKey)) {
+          logger.info("Checking sorted set key: {}", queueKey);
+          
+          // Get all values from the sorted set and find the one containing our operation name
+          List<String> zsetValues = valkeyService.getZSetValues(queueKey);
+          logger.info("Found {} values in sorted set {}", zsetValues.size(), queueKey);
+          
+          for (String zsetValue : zsetValues) {
+            if (zsetValue.contains(operationName)) {
+              logger.info("Found operation in sorted set, removing value: {}", zsetValue.substring(0, Math.min(100, zsetValue.length())) + "...");
+              Long removed = valkeyService.removeFromZSet(queueKey, zsetValue);
+              logger.info("Remove from sorted set {} returned: {}", queueKey, removed);
+              if (removed > 0) {
+                logger.info("Successfully removed operation from sorted set: {}", queueKey);
+                deleted = true;
+                deletionAttempts++;
+                break; // Found and removed, no need to continue in this zset
+              }
+            }
+          }
+        } else {
+          logger.debug("Sorted set key does not exist: {}", queueKey);
+        }
+      }
+      
+      // 1. Try to remove from prequeued operations list
+      String prequeuedKey = "{Arrival}:PreQueuedOperations";
+      if (valkeyService.hasKey(prequeuedKey)) {
+        logger.info("Checking prequeued operations list: {}", prequeuedKey);
+        List<String> items = valkeyService.getListAsString(prequeuedKey);
+        logger.info("Found {} items in prequeued operations list", items.size());
+        
+        for (String item : items) {
+          if (item.contains(operationName)) {
+            logger.info("Found operation in prequeued list, removing: {}", item);
+            Long removed = valkeyService.removeFromList(prequeuedKey, item);
+            logger.info("Remove from list returned: {}", removed);
+            if (removed > 0) {
+              logger.info("Successfully removed operation from prequeued list");
+              deleted = true;
+              deletionAttempts++;
+            }
+          }
+        }
+      } else {
+        logger.info("PreQueuedOperations key does not exist");
+      }
+      
+      // 2. Try to remove from queued operations hash
+      String queuedKey = "{Execution}:QueuedOperations";
+      if (valkeyService.hasKey(queuedKey)) {
+        logger.info("Checking queued operations hash: {}", queuedKey);
+        Boolean removed = valkeyService.removeFromHash(queuedKey, operationName);
+        logger.info("Remove from hash returned: {}", removed);
+        if (removed) {
+          logger.info("Successfully removed operation from queued operations hash");
+          deleted = true;
+          deletionAttempts++;
+        }
+      } else {
+        logger.info("QueuedOperations hash key does not exist");
+      }
+      
+      // 3. Try to remove from dispatched operations (by queue)
+      String dispatchedKey = "{Execution}:DispatchedOperations:" + queueName;
+      if (valkeyService.hasKey(dispatchedKey)) {
+        logger.info("Checking dispatched operations hash: {}", dispatchedKey);
+        Boolean removed = valkeyService.removeFromHash(dispatchedKey, operationName);
+        logger.info("Remove from dispatched hash returned: {}", removed);
+        if (removed) {
+          logger.info("Successfully removed operation from dispatched operations hash");
+          deleted = true;
+          deletionAttempts++;
+        }
+      } else {
+        logger.info("DispatchedOperations hash key does not exist for queue: {}", queueName);
+      }
+      
+      // 4. Try direct key deletion as fallback
+      String[] possibleKeys = {
+        operationName,
+        queueName + ":" + operationName,
+        "{Arrival}:" + queueName + ":" + operationName,
+        "{Execution}:" + queueName + ":" + operationName,
+        "Operation:" + operationName,
+        operationName + ":queued",
+        operationName + ":operation"
+      };
+      
+      for (String keyToTry : possibleKeys) {
+        if (valkeyService.hasKey(keyToTry)) {
+          logger.info("Found direct operation key: {}, attempting deletion", keyToTry);
+          if (valkeyService.deleteKey(keyToTry)) {
+            logger.info("Successfully deleted direct operation key: {}", keyToTry);
+            deleted = true;
+            deletionAttempts++;
+          }
+        }
+      }
+      
+      logger.info("Deletion summary - attempts: {}, successful: {}, final result: {}", 
+                  deletionAttempts, deleted, deleted);
+      
+      if (deleted) {
+        logger.info("Successfully deleted operation: {} from queue: {}", operationName, queueName);
+      } else {
+        logger.warn("No matching keys found for operation: {} in queue: {}", operationName, queueName);
+      }
+      
+      return deleted;
+      
+    } catch (Exception e) {
+      logger.error("Failed to delete operation: {} from queue: {}", operationName, queueName, e);
+      return false;
     }
   }
 }

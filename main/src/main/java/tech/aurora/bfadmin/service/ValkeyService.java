@@ -94,4 +94,42 @@ public interface ValkeyService {
      * @return list of prequeued operations
      */
     java.util.List<java.util.Map<String, Object>> getPrequeuedOperations();
+    
+    /**
+     * Remove an element from a Redis list
+     * @param key the list key
+     * @param value the value to remove
+     * @return number of elements removed
+     */
+    Long removeFromList(String key, String value);
+    
+    /**
+     * Remove a field from a Redis hash
+     * @param key the hash key
+     * @param field the field to remove
+     * @return true if field was removed, false otherwise
+     */
+    Boolean removeFromHash(String key, String field);
+    
+    /**
+     * Get all items from a Redis list as strings
+     * @param key the list key
+     * @return list of string items
+     */
+    java.util.List<String> getListAsString(String key);
+    
+    /**
+     * Remove an element from a Redis sorted set (zset)
+     * @param key the sorted set key
+     * @param value the value to remove
+     * @return number of elements removed
+     */
+    Long removeFromZSet(String key, String value);
+    
+    /**
+     * Get all values from a Redis sorted set as strings
+     * @param key the sorted set key
+     * @return list of string values
+     */
+    java.util.List<String> getZSetValues(String key);
 }

@@ -38,9 +38,6 @@
             <div class="card-body p-0">
                 <!-- Table Controls -->
                 <div class="table-controls" th:if="${operations != null and operations.size() > 0}">
-                    <div class="table-search">
-                        <i class="bi bi-search"></i>
-                        <input type="text" id="dispatchedSearch" placeholder="Search dispatched operations..." />
                     </div>
                     <div class="table-info">
                         <span id="dispatchedTableCount" th:text="${operations.size()}">0</span> operations
@@ -266,7 +263,6 @@
     let pageSize = 10;
     let allTableRows = [];
     let filteredRows = [];
-    let searchQuery = '';
 
     function initializeDispatchedTable() {
         console.log('🔧 INITIALIZING SIMPLE DISPATCHED PAGINATION 🔧');
@@ -291,11 +287,6 @@
     }
     
     function setupEventListeners() {
-        // Search functionality
-        const searchInput = document.getElementById('dispatchedSearch');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                searchQuery = this.value.toLowerCase();
                 filterRows();
             });
         }
@@ -314,18 +305,15 @@
     }
     
     function filterRows() {
-        if (!searchQuery) {
             filteredRows = [...allTableRows];
         } else {
             filteredRows = allTableRows.filter(row => {
                 const text = row.textContent.toLowerCase();
-                return text.includes(searchQuery);
             });
         }
         
         currentPage = 1;
         updateTableDisplay();
-        console.log('Filtered to', filteredRows.length, 'rows with query:', searchQuery);
     }
     
     function updateTableDisplay() {

@@ -45,11 +45,6 @@ function extractPrequeueOperations() {
 }
 
 function setupPrequeueEventListeners() {
-    // Search functionality
-    const searchInput = document.getElementById('operationSearchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            filterPrequeueOperations(this.value);
         });
     }
     
@@ -63,23 +58,15 @@ function setupPrequeueEventListeners() {
     });
 }
 
-function filterPrequeueOperations(searchTerm) {
     const tableBody = document.querySelector('#prequeueTable tbody');
     if (!tableBody) return;
     
-    searchTerm = searchTerm.toLowerCase();
     let visibleCount = 0;
     
     tableBody.innerHTML = '';
     
     prequeueOperations.forEach((operation, index) => {
-        const matchesSearch = !searchTerm || 
-            operation.operationName.toLowerCase().includes(searchTerm) ||
-            operation.stage.toLowerCase().includes(searchTerm) ||
-            operation.status.toLowerCase().includes(searchTerm) ||
-            operation.queuedAt.toLowerCase().includes(searchTerm);
         
-        if (matchesSearch) {
             const row = operation.row.cloneNode(true);
             // Update the index
             row.querySelector('td:first-child span').textContent = visibleCount + 1;
@@ -128,9 +115,6 @@ function sortPrequeueOperations(column) {
     });
     
     // Re-render the table
-    const searchInput = document.getElementById('operationSearchInput');
-    const searchTerm = searchInput ? searchInput.value : '';
-    filterPrequeueOperations(searchTerm);
 }
 
 function updatePrequeueCount(count) {
@@ -141,11 +125,6 @@ function updatePrequeueCount(count) {
     });
 }
 
-// Handle search input with debouncing
-function handleSearchInput(event) {
-    clearTimeout(window.searchTimeout);
-    window.searchTimeout = setTimeout(() => {
-        filterPrequeueOperations(event.target.value);
     }, 300);
 }
 

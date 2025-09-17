@@ -30,4 +30,7 @@ public interface AdminService {
   java.util.List<java.util.Map<String, Object>> getDispatchedOperations();
   
   java.util.List<java.util.Map<String, Object>> getPrequeuedOperations();
+  
+  // Operation management methods
+  boolean deleteOperation(String queueName, String operationName);
 }

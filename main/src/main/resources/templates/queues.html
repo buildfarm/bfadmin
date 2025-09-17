@@ -16,19 +16,12 @@
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row align-items-center mb-3">
-                    <div class="col-md-6">
-                        <span class="text-muted">Showing operations from <strong th:text="${queueNames.size()}">0</strong> queues: 
-                        <span th:each="queue, iterStat : ${queueNames}">
-                            <span th:text="${queue}">queue</span><span th:unless="${iterStat.last}">, </span>
-                        </span>
-                        </span>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <button class="btn btn-refresh" onclick="refreshAllOperations()">
-                            <i class="bi bi-arrow-clockwise"></i> Refresh All
-                        </button>
-                    </div>
+                <div class="mb-3">
+                    <span class="text-muted">Showing operations from <strong th:text="${queueNames.size()}">0</strong> queues: 
+                    <span th:each="queue, iterStat : ${queueNames}">
+                        <span th:text="${queue}">queue</span><span th:unless="${iterStat.last}">, </span>
+                    </span>
+                    </span>
                 </div>
                 
                 <div th:if="${queueNames.empty}" class="alert alert-info">
@@ -45,17 +38,6 @@
                 </h5>
             </div>
             <div class="card-body p-0">
-                <!-- Table Controls -->
-                <div class="table-controls" th:if="${operations != null and operations.size() > 0}">
-                    <div class="table-search">
-                        <i class="bi bi-search"></i>
-                        <input type="text" id="operationSearch" placeholder="Search operations..." />
-                    </div>
-                    <div class="table-info">
-                        <span id="operationCount" th:text="${operations.size()}">0</span> operations
-                    </div>
-                </div>
-                
                 <div class="table-responsive">
                     <table class="table table-hover mb-0" id="operationTable" th:if="${operations != null and operations.size() > 0}">
                         <thead>
@@ -96,7 +78,7 @@
                                 <td>
                                     <button class="btn btn-sm btn-outline-danger" 
                                             onclick="deleteOperation(this)"
-                                            th:attr="data-name=${operation.operationName != null ? operation.operationName : operation.name}"
+                                            th:attr="data-name=${operation.operationName != null ? operation.operationName : operation.name}, data-queue=${operation.queueName}"
                                             title="Delete operation">
                                         <i class="bi bi-trash"></i>
                                     </button>

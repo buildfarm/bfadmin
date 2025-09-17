@@ -8,8 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -247,5 +251,47 @@ public class AdminController {
     }
     
     return operations;
+  }
+  
+  @RequestMapping(value = "/api/queues/{queueName}/operations/{operationName}", method = RequestMethod.DELETE)
+  @ResponseBody
+  public ResponseEntity<java.util.Map<String, Object>> deleteOperation(
+      @PathVariable String queueName, 
+      @PathVariable String operationName) {
+    
+    logger.info("Delete operation requested - Queue: {}, Operation: {}", queueName, operationName);
+    
+    if (!ui) {
+      java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+      errorResponse.put("success", false);
+      errorResponse.put("message", "UI is not enabled");
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(errorResponse);
+    }
+    
+    try {
+      boolean deleted = adminService.deleteOperation(queueName, operationName);
+      
+      java.util.Map<String, Object> response = new java.util.HashMap<>();
+      response.put("success", deleted);
+      
+      if (deleted) {
+        response.put("message", "Operation deleted successfully");
+        logger.info("Successfully deleted operation: {} from queue: {}", operationName, queueName);
+        return ResponseEntity.ok(response);
+      } else {
+        response.put("message", "Operation not found or could not be deleted");
+        logger.warn("Failed to delete operation: {} from queue: {}", operationName, queueName);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+      }
+      
+    } catch (Exception e) {
+      logger.error("Error deleting operation: {} from queue: {}", operationName, queueName, e);
+      
+      java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+      errorResponse.put("success", false);
+      errorResponse.put("message", "Internal server error: " + e.getMessage());
+      
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
   }
 }

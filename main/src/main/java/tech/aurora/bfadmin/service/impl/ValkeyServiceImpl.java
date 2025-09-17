@@ -1454,4 +1454,73 @@ public class ValkeyServiceImpl implements ValkeyService {
         
         return prequeuedOperations;
     }
+    
+    @Override
+    public Long removeFromList(String key, String value) {
+        try {
+            logger.debug("Removing value from list key: {}", key);
+            return valkeyTemplate.opsForList().remove(key, 0, value);
+        } catch (Exception e) {
+            logger.error("Error removing from list {}: {}", key, e.getMessage());
+            return 0L;
+        }
+    }
+    
+    @Override
+    public Boolean removeFromHash(String key, String field) {
+        try {
+            logger.debug("Removing field '{}' from hash key: {}", field, key);
+            return valkeyTemplate.opsForHash().delete(key, field) > 0;
+        } catch (Exception e) {
+            logger.error("Error removing from hash {} field {}: {}", key, field, e.getMessage());
+            return false;
+        }
+    }
+    
+    @Override
+    public java.util.List<String> getListAsString(String key) {
+        try {
+            java.util.List<Object> items = valkeyTemplate.opsForList().range(key, 0, -1);
+            if (items == null) {
+                return new java.util.ArrayList<>();
+            }
+            java.util.List<String> result = new java.util.ArrayList<>();
+            for (Object item : items) {
+                result.add(item != null ? item.toString() : "");
+            }
+            return result;
+        } catch (Exception e) {
+            logger.error("Error getting list as string for key {}: {}", key, e.getMessage());
+            return new java.util.ArrayList<>();
+        }
+    }
+    
+    @Override
+    public Long removeFromZSet(String key, String value) {
+        try {
+            logger.debug("Removing value from sorted set key: {}", key);
+            return valkeyTemplate.opsForZSet().remove(key, value);
+        } catch (Exception e) {
+            logger.error("Error removing from sorted set {}: {}", key, e.getMessage());
+            return 0L;
+        }
+    }
+    
+    @Override
+    public java.util.List<String> getZSetValues(String key) {
+        try {
+            java.util.Set<Object> values = valkeyTemplate.opsForZSet().range(key, 0, -1);
+            if (values == null) {
+                return new java.util.ArrayList<>();
+            }
+            java.util.List<String> result = new java.util.ArrayList<>();
+            for (Object value : values) {
+                result.add(value != null ? value.toString() : "");
+            }
+            return result;
+        } catch (Exception e) {
+            logger.error("Error getting sorted set values for key {}: {}", key, e.getMessage());
+            return new java.util.ArrayList<>();
+        }
+    }
 }

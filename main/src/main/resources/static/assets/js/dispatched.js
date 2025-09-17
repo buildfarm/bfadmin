@@ -1,6 +1,5 @@
 /**
  * BuildFarm Dispatched Operations JavaScript
- * Handles dispatched operations table functionality, search, and sorting
  */
 
 // Dispatched operation data and sorting variables
@@ -44,11 +43,6 @@ function extractDispatchedOperations() {
 }
 
 function setupDispatchedEventListeners() {
-    // Search functionality
-    const searchInput = document.getElementById('dispatchedSearch');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            filterDispatchedOperations(this.value);
         });
     }
     
@@ -62,22 +56,15 @@ function setupDispatchedEventListeners() {
     });
 }
 
-function filterDispatchedOperations(searchTerm) {
     const tableBody = document.querySelector('#dispatchedTable tbody');
     if (!tableBody) return;
     
-    searchTerm = searchTerm.toLowerCase();
     let visibleCount = 0;
     
     tableBody.innerHTML = '';
     
     dispatchedOperations.forEach((operation, index) => {
-        const matchesSearch = !searchTerm || 
-            operation.operationName.toLowerCase().includes(searchTerm) ||
-            operation.stage.toLowerCase().includes(searchTerm) ||
-            operation.executedAt.toLowerCase().includes(searchTerm);
         
-        if (matchesSearch) {
             const row = operation.row.cloneNode(true);
             // Update the index
             row.querySelector('td:first-child span').textContent = visibleCount + 1;
@@ -129,9 +116,6 @@ function sortDispatchedOperations(column) {
     });
     
     // Re-render the table
-    const searchInput = document.getElementById('dispatchedSearch');
-    const searchTerm = searchInput ? searchInput.value : '';
-    filterDispatchedOperations(searchTerm);
 }
 
 // Show operation details

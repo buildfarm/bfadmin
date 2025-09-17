@@ -100,16 +100,6 @@
                 </h5>
             </div>
             <div class="card-body p-0">
-                <!-- Table Controls -->
-                <div class="table-controls" th:if="${!executeWorkersTable.empty}">
-                    <div class="table-search">
-                        <i class="bi bi-search"></i>
-                        <input type="text" id="executeWorkerSearch" placeholder="Search workers..." />
-                    </div>
-                    <div class="table-info">
-                        <span id="executeWorkerCount" th:text="${executeWorkersTable.size()}">0</span> workers
-                    </div>
-                </div>
                 
                 <div class="table-responsive">
                     <table class="table table-hover mb-0" id="executeWorkerTable" th:if="${!executeWorkersTable.empty}">
@@ -169,16 +159,6 @@
                 </h5>
             </div>
             <div class="card-body p-0">
-                <!-- Storage Worker Table Controls -->
-                <div class="table-controls" th:if="${!storageWorkersTable.empty}">
-                    <div class="table-search">
-                        <i class="bi bi-search"></i>
-                        <input type="text" id="storageWorkerSearch" placeholder="Search workers..." />
-                    </div>
-                    <div class="table-info">
-                        <span id="storageWorkerCount" th:text="${storageWorkersTable.size()}">0</span> workers
-                    </div>
-                </div>
                 
                 <div class="table-responsive">
                     <table class="table table-hover mb-0" id="storageWorkerTable" th:if="${!storageWorkersTable.empty}">
@@ -238,16 +218,6 @@
                 </h5>
             </div>
             <div class="card-body p-0">
-                <!-- Servers Table Controls -->
-                <div class="table-controls" th:if="${serversTable != null and serversTable.size() > 0}">
-                    <div class="table-search">
-                        <i class="bi bi-search"></i>
-                        <input type="text" id="serversSearch" placeholder="Search servers..." />
-                    </div>
-                    <div class="table-info">
-                        <span id="serversCount" th:text="${serversTable.size()}">0</span> servers
-                    </div>
-                </div>
                     
                 <div class="table-responsive">
                     <table class="table table-hover mb-0" id="serversTable" th:if="${serversTable != null and serversTable.size() > 0}">
