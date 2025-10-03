@@ -1,0 +1,5 @@
+build --host_platform=//build/platforms:host_platform
+build --extra_execution_platforms=//build/platforms:host_platform
+common --repo_env AV_TARGET_OS=jammy
+test --sandbox_tmpfs_path=/data/logs/local/
+build --config=vdesk --internal_spawn_scheduler --spawn_strategy=dynamic --dynamic_local_strategy=worker,sandboxed,local --jobs=128
