@@ -18,6 +18,7 @@ MAIN_DIR="${PROJECT_DIR}/main"
 JAR_FILE="${MAIN_DIR}/target/bfadmin.jar"
 DEFAULT_PORT=8080
 JAVA_OPTS="${JAVA_OPTS:--Xmx1g -Xms512m -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true}"
+MVN_CMD="mvn"  # Default Maven command
 
 # Function to print colored output
 print_info() {
@@ -38,14 +39,19 @@ print_error() {
 
 # Function to check if Java is installed
 check_java() {
-    if ! command -v java &> /dev/null; then
-        print_error "Java is not installed. Please install Java 11 or later."
+    # Set JAVA_HOME to Java 21 if available
+    if [ -d "/usr/lib/jvm/java-21-openjdk-amd64" ]; then
+        export JAVA_HOME="/usr/lib/jvm/java-21-openjdk-amd64"
+        export PATH="$JAVA_HOME/bin:$PATH"
+        print_success "Using Java 21: $JAVA_HOME"
+    elif ! command -v java &> /dev/null; then
+        print_error "Java is not installed. Please install Java 21 or later."
         exit 1
     fi
     
     JAVA_VERSION=$(java -version 2>&1 | head -n1 | cut -d'"' -f2 | cut -d'.' -f1)
-    if [ "$JAVA_VERSION" -lt 11 ]; then
-        print_warning "Java version is $JAVA_VERSION. Java 11 or later is recommended."
+    if [ "$JAVA_VERSION" -lt 21 ]; then
+        print_warning "Java version is $JAVA_VERSION. Java 21 is required for this application."
     else
         print_success "Java version $JAVA_VERSION detected"
     fi
@@ -53,13 +59,18 @@ check_java() {
 
 # Function to check if Maven is installed
 check_maven() {
-    if ! command -v mvn &> /dev/null; then
-        print_error "Maven is not installed. Please install Maven 3.6 or later."
+    # Check if Maven wrapper exists
+    if [ -f "$MAIN_DIR/mvnw" ]; then
+        print_success "Maven wrapper found"
+        MVN_CMD="./mvnw"
+    elif ! command -v mvn &> /dev/null; then
+        print_error "Maven is not installed and Maven wrapper not found. Please install Maven 3.6 or later."
         exit 1
+    else
+        MVN_CMD="mvn"
+        MVN_VERSION=$(mvn -version | head -n1 | cut -d' ' -f3)
+        print_success "Maven version $MVN_VERSION detected"
     fi
-    
-    MVN_VERSION=$(mvn -version | head -n1 | cut -d' ' -f3)
-    print_success "Maven version $MVN_VERSION detected"
 }
 
 # Function to check if port is available
@@ -80,7 +91,7 @@ build_application() {
     
     # Clean and build
     print_info "Running Maven clean and package..."
-    if mvn clean package -DskipTests; then
+    if $MVN_CMD clean package -DskipTests; then
         print_success "Build completed successfully"
     else
         print_error "Build failed"
