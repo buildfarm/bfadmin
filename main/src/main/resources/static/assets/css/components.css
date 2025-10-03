@@ -49,11 +49,6 @@
 }
 
 /* Bootstrap Integration with Default Colors */
-body {
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: #ffffff;
-    color: #212529;
-}
 
 /* Bootstrap Table - Default Colors */
 .table {
@@ -308,20 +303,6 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 16px;
     margin-bottom: 32px;
-}
-
-/* Status Cards */
-.mat-stats-card {
-    background: #ffffff;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 20px;
-    transition: all 0.2s ease;
-}
-
-.mat-stats-card:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 .mat-stats-card.purple {
