@@ -4,8 +4,8 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Add fade-in animation to elements
-    const animatedElements = document.querySelectorAll('.fade-in');
+    // Add fade-in animation to elements (updated for Material UI)
+    const animatedElements = document.querySelectorAll('.mat-fade-in');
     animatedElements.forEach((el, index) => {
         el.style.animationDelay = `${index * 0.1}s`;
     });
@@ -61,41 +61,69 @@ async function loadDashboardData() {
 
 // Update system status cards
 function updateSystemStatus(systemStatus) {
-    const statusCards = document.querySelectorAll('#systemStatusGrid .card');
+    const statusCards = document.querySelectorAll('#systemStatusGrid .mat-stats-card');
     const systemHealthBadge = document.getElementById('systemHealthBadge');
     
     if (systemHealthBadge) {
         systemHealthBadge.innerHTML = `
-            <i class="bi bi-${systemStatus.systemHealthy ? 'check-circle' : 'exclamation-triangle'}"></i>
+            <span class="material-icons me-2">${systemStatus.systemHealthy ? 'check_circle' : 'warning'}</span>
             ${systemStatus.systemHealthText}`;
-        systemHealthBadge.className = `status-badge status-${systemStatus.systemHealthClass}`;
+        systemHealthBadge.className = `mat-chip status-${systemStatus.systemHealthClass}`;
     }
     
     // Update individual status cards with real data
     if (statusCards.length >= 4) {
         // Valkey status
-        statusCards[0].querySelector('.ms-3.stats-content').innerHTML = `
-            <h3>${systemStatus.valkeyStatus}</h3>
-            <p>Valkey Cluster</p>`;
-        statusCards[0].className = `card stats-card ${systemStatus.valkeyConnected ? 'green' : 'red'} fade-in`;
+        const valkeyContent = statusCards[0].querySelector('.stats-content');
+        if (valkeyContent) {
+            // Hide placeholder
+            const placeholder = valkeyContent.querySelector('.placeholder-glow');
+            if (placeholder) placeholder.style.display = 'none';
+            
+            valkeyContent.innerHTML = `
+                <h3>${systemStatus.valkeyStatus}</h3>
+                <p class="mat-body-medium">Valkey Cluster</p>`;
+        }
+        statusCards[0].className = `mat-stats-card stats-card ${systemStatus.valkeyConnected ? 'green' : 'red'} mat-fade-in`;
         
         // Execute workers
-        statusCards[1].querySelector('.ms-3.stats-content').innerHTML = `
-            <h3>${systemStatus.activeExecuteCount}/${systemStatus.executeWorkerCount}</h3>
-            <p>Execute Workers</p>`;
-        statusCards[1].className = `card stats-card ${systemStatus.executeWorkerClass === 'success' ? 'green' : 'orange'} fade-in`;
+        const executeContent = statusCards[1].querySelector('.stats-content');
+        if (executeContent) {
+            // Hide placeholder
+            const placeholder = executeContent.querySelector('.placeholder-glow');
+            if (placeholder) placeholder.style.display = 'none';
+            
+            executeContent.innerHTML = `
+                <h3>${systemStatus.activeExecuteCount}/${systemStatus.executeWorkerCount}</h3>
+                <p class="mat-body-medium">Execute Workers</p>`;
+        }
+        statusCards[1].className = `mat-stats-card stats-card ${systemStatus.executeWorkerClass === 'success' ? 'green' : 'orange'} mat-fade-in`;
         
         // Storage workers
-        statusCards[2].querySelector('.ms-3.stats-content').innerHTML = `
-            <h3>${systemStatus.activeStorageCount}/${systemStatus.storageWorkerCount}</h3>
-            <p>Storage Workers</p>`;
-        statusCards[2].className = `card stats-card ${systemStatus.storageWorkerClass === 'success' ? 'green' : 'orange'} fade-in`;
+        const storageContent = statusCards[2].querySelector('.stats-content');
+        if (storageContent) {
+            // Hide placeholder
+            const placeholder = storageContent.querySelector('.placeholder-glow');
+            if (placeholder) placeholder.style.display = 'none';
+            
+            storageContent.innerHTML = `
+                <h3>${systemStatus.activeStorageCount}/${systemStatus.storageWorkerCount}</h3>
+                <p class="mat-body-medium">Storage Workers</p>`;
+        }
+        statusCards[2].className = `mat-stats-card stats-card ${systemStatus.storageWorkerClass === 'success' ? 'green' : 'orange'} mat-fade-in`;
         
         // Servers
-        statusCards[3].querySelector('.ms-3.stats-content').innerHTML = `
-            <h3>${systemStatus.activeServerCount}/${systemStatus.serverCount}</h3>
-            <p>Servers</p>`;
-        statusCards[3].className = `card stats-card ${systemStatus.serverClass === 'success' ? 'green' : 'purple'} fade-in`;
+        const serversContent = statusCards[3].querySelector('.stats-content');
+        if (serversContent) {
+            // Hide placeholder
+            const placeholder = serversContent.querySelector('.placeholder-glow');
+            if (placeholder) placeholder.style.display = 'none';
+            
+            serversContent.innerHTML = `
+                <h3>${systemStatus.activeServerCount}/${systemStatus.serverCount}</h3>
+                <p class="mat-body-medium">Servers</p>`;
+        }
+        statusCards[3].className = `mat-stats-card stats-card ${systemStatus.serverClass === 'success' ? 'green' : 'purple'} mat-fade-in`;
     }
     
     // Show error if present
@@ -116,12 +144,12 @@ function loadExecuteWorkers(workers) {
     if (workers && workers.length > 0) {
         container.classList.remove('d-none');
         populateWorkersTable('executeWorkerTable', workers);
-        countBadge.textContent = `${workers.length} Workers`;
+        countBadge.innerHTML = `${workers.length} Workers`;
         executeWorkerData = workers;
         setupSortingListeners('executeWorkerTable', 'execute');
     } else {
         emptyMessage.classList.remove('d-none');
-        countBadge.textContent = '0 Workers';
+        countBadge.innerHTML = '0 Workers';
     }
 }
 
@@ -137,12 +165,12 @@ function loadStorageWorkers(workers) {
     if (workers && workers.length > 0) {
         container.classList.remove('d-none');
         populateWorkersTable('storageWorkerTable', workers);
-        countBadge.textContent = `${workers.length} Workers`;
+        countBadge.innerHTML = `${workers.length} Workers`;
         storageWorkerData = workers;
         setupSortingListeners('storageWorkerTable', 'storage');
     } else {
         emptyMessage.classList.remove('d-none');
-        countBadge.textContent = '0 Workers';
+        countBadge.innerHTML = '0 Workers';
     }
 }
 
@@ -158,12 +186,12 @@ function loadServers(servers) {
     if (servers && servers.length > 0) {
         container.classList.remove('d-none');
         populateServersTable('serversTable', servers);
-        countBadge.textContent = `${servers.length} Servers`;
+        countBadge.innerHTML = `${servers.length} Servers`;
         serversData = servers;
         setupSortingListeners('serversTable', 'servers');
     } else {
         emptyMessage.classList.remove('d-none');
-        countBadge.textContent = '0 Servers';
+        countBadge.innerHTML = '0 Servers';
     }
 }
 
@@ -181,18 +209,16 @@ function populateWorkersTable(tableId, workers) {
         const isExpired = worker.status === 'Expired';
         
         row.innerHTML = `
-            <td><span class="status-badge status-secondary">${worker.groupName || 'default'}</span></td>
+            <td><span class="mat-chip status-secondary">${worker.groupName || 'default'}</span></td>
             <td><span class="text-info">${worker.endpoint}</span></td>
             <td>
-                <span class="status-badge ${tableId === 'executeWorkerTable' ? 'status-success' : 'status-info'}">
-                    <i class="bi bi-${tableId === 'executeWorkerTable' ? 'cpu' : 'hdd'}"></i> 
-                    <span>${worker.workerType}</span>
+                <span class="mat-chip ${tableId === 'executeWorkerTable' ? 'status-success' : 'status-info'}">
+                    ${worker.workerType}
                 </span>
             </td>
             <td>
-                <span class="status-badge ${isActive ? 'status-success' : (isExpired ? 'status-danger' : 'status-warning')}">
-                    <i class="bi bi-${isActive ? 'check-circle' : (isExpired ? 'x-circle' : 'exclamation-circle')}"></i>
-                    <span>${worker.status}</span>
+                <span class="mat-chip ${isActive ? 'status-success' : (isExpired ? 'status-danger' : 'status-warning')}">
+                    ${worker.status}
                 </span>
             </td>
             <td><small class="text-muted">${worker.expireAt}</small></td>
@@ -216,18 +242,16 @@ function populateServersTable(tableId, servers) {
         const isExpired = server.status === 'Expired';
         
         row.innerHTML = `
-            <td><span class="status-badge status-secondary">${server.groupName || 'default'}</span></td>
+            <td><span class="mat-chip status-secondary">${server.groupName || 'default'}</span></td>
             <td><span class="text-info">${server.endpoint}</span></td>
             <td>
-                <span class="status-badge ${server.serverType === 'Scheduler' ? 'status-info' : (server.serverType === 'CAS' ? 'status-primary' : 'status-success')}">
-                    <i class="bi bi-${server.serverType === 'Scheduler' ? 'gear' : (server.serverType === 'CAS' ? 'database' : 'server')}"></i> 
-                    <span>${server.serverType}</span>
+                <span class="mat-chip ${server.serverType === 'Scheduler' ? 'status-info' : (server.serverType === 'CAS' ? 'status-primary' : 'status-success')}">
+                    ${server.serverType}
                 </span>
             </td>
             <td>
-                <span class="status-badge ${isActive ? 'status-success' : (isExpired ? 'status-danger' : 'status-warning')}">
-                    <i class="bi bi-${isActive ? 'check-circle' : (isExpired ? 'x-circle' : 'exclamation-circle')}"></i>
-                    <span>${server.status}</span>
+                <span class="mat-chip ${isActive ? 'status-success' : (isExpired ? 'status-danger' : 'status-warning')}">
+                    ${server.status}
                 </span>
             </td>
             <td><small class="text-muted">${server.expireAt}</small></td>

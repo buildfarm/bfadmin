@@ -7,21 +7,26 @@
         <title>Build Farm Admin Dashboard</title>
     </th:block>
     
-    <!-- External CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- Material UI CSS -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Material Design Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://unpkg.com/@mui/material@latest/umd/material-ui.production.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- Material UI Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- BuildFarm Dashboard Favicon -->
     <link rel="icon" type="image/x-icon" href="/assets/img/favicon.ico">
     <link rel="icon" type="image/svg+svg" href="/assets/img/favicon.svg">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/favicon-180.png">
-    <meta name="theme-color" content="#161b22">
+    <meta name="theme-color" content="#1976d2">
     
     <!-- Custom CSS -->
     <link rel="stylesheet" th:href="@{/assets/css/variables.css}">
@@ -30,74 +35,215 @@
     <link rel="stylesheet" th:href="@{/assets/css/tables.css}">
     <link rel="stylesheet" th:href="@{/assets/css/responsive.css}">
 </head>
-<body>
-    <!-- Sidebar -->
+<body class="mat-app-background">
+    <!-- Navigation Drawer (Sidebar) -->
     <div th:replace="~{fragments/layout :: sidebar}"></div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Header -->
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+        <!-- App Bar (Header) -->
         <div th:replace="~{fragments/layout :: header}"></div>
 
-        <!-- Content -->
-        <div class="content">
-            <th:block th:replace="${content}">
-                <!-- Page content will be injected here -->
-            </th:block>
-        </div>
+        <!-- Content Area -->
+        <main class="content-area mat-elevation-0">
+            <div class="container-fluid">
+                <th:block th:replace="${content}">
+                    <!-- Page content will be injected here -->
+                </th:block>
+            </div>
+        </main>
     </div>
 
-    <!-- External JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Material UI JS -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@mui/material@latest/umd/material-ui.production.min.js"></script>
+    <!-- Backdrop for mobile menu -->
+    <div class="backdrop d-lg-none" id="backdrop" onclick="toggleSidebar()"></div>
+
+    <!-- Bootstrap 5.3 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom JS -->
     <script th:if="${currentPage == 'dashboard'}" th:src="@{/assets/js/dashboard.js}"></script>
     <script th:if="${currentPage == 'queues'}" th:src="@{/assets/js/queues.js}"></script>
     <script th:if="${currentPage == 'prequeue'}" th:src="@{/assets/js/prequeue.js}"></script>
     <script th:if="${currentPage == 'dispatched'}" th:src="@{/assets/js/dispatched.js}"></script>
+    
+    <!-- Material UI-inspired interactions -->
+    <script>
+        // Ripple effect for buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.mat-button, .mat-raised-button, .mat-fab');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.classList.add('ripple');
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        });
+
+        // Toggle sidebar for mobile
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.mat-sidenav');
+            const backdrop = document.getElementById('backdrop');
+            
+            sidebar.classList.toggle('mat-sidenav-opened');
+            backdrop.classList.toggle('show');
+        }
+
+        // Dark theme functionality
+        function initTheme() {
+            // Get saved theme from localStorage or default to light
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const toggle = document.getElementById('darkModeToggle');
+            
+            // Apply the saved theme
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            // Set toggle state
+            if (toggle) {
+                toggle.checked = savedTheme === 'dark';
+            }
+        }
+
+        function toggleDarkMode() {
+            const toggle = document.getElementById('darkModeToggle');
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            // Apply new theme
+            document.documentElement.setAttribute('data-theme', newTheme);
+            
+            // Save to localStorage
+            localStorage.setItem('theme', newTheme);
+            
+            // Update icon in the toggle container
+            const themeIcon = document.querySelector('.theme-toggle-container .mat-list-icon');
+            if (themeIcon) {
+                themeIcon.textContent = newTheme === 'dark' ? 'light_mode' : 'dark_mode';
+            }
+        }
+
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+        });
+    </script>
 </body>
 </html>
 
-<!-- Sidebar Fragment -->
-<div th:fragment="sidebar" class="sidebar">
-    <div class="sidebar-brand">
-        <h4><i class="bi bi-server"></i> BuildFarm</h4>
-    </div>
-    <nav class="sidebar-nav">
-        <div class="nav-item">
-            <a class="nav-link" th:class="${activePage == 'dashboard' ? 'nav-link active' : 'nav-link'}" href="/dashboard">
-                <i class="bi bi-speedometer2" style="margin-right: 8px;"></i>
-                Dashboard
-            </a>
-            <a class="nav-link" th:class="${activePage == 'queues' ? 'nav-link active' : 'nav-link'}" href="/queues">
-                <i class="bi bi-list-ul" style="margin-right: 8px;"></i>
-                Queue
-            </a>
-            <a class="nav-link" th:class="${activePage == 'prequeue' ? 'nav-link active' : 'nav-link'}" href="/prequeue">
-                <i class="bi bi-clock-history" style="margin-right: 8px;"></i>
-                Prequeue
-            </a>
-            <a class="nav-link" th:class="${activePage == 'dispatched' ? 'nav-link active' : 'nav-link'}" href="/dispatched">
-                <i class="bi bi-send" style="margin-right: 8px;"></i>
-                Dispatch
-            </a>
+<!-- Material Navigation Drawer (Sidebar) -->
+<div th:fragment="sidebar" class="mat-sidenav mat-elevation-8">
+    <!-- Sidenav Header -->
+    <div class="mat-sidenav-header">
+        <div class="d-flex align-items-center">
+            <span class="material-icons-round mat-icon me-3">developer_board</span>
+            <h5 class="mat-headline-6 mb-0">BuildFarm</h5>
         </div>
+        <button class="mat-icon-button d-lg-none ms-auto" onclick="toggleSidebar()">
+            <span class="material-icons">close</span>
+        </button>
+    </div>
+    
+    <!-- Navigation List -->
+    <nav class="mat-nav-list">
+        <a class="mat-list-item" th:class="${activePage == 'dashboard' ? 'mat-list-item mat-list-item-active' : 'mat-list-item'}" href="/dashboard">
+            <div class="mat-list-item-content">
+                <span class="material-icons-outlined mat-list-icon">dashboard</span>
+                <span class="mat-list-text">Dashboard</span>
+            </div>
+            <div class="mat-ripple-surface"></div>
+        </a>
+        
+        <a class="mat-list-item" th:class="${activePage == 'queues' ? 'mat-list-item mat-list-item-active' : 'mat-list-item'}" href="/queues">
+            <div class="mat-list-item-content">
+                <span class="material-icons-outlined mat-list-icon">queue</span>
+                <span class="mat-list-text">Queue</span>
+            </div>
+            <div class="mat-ripple-surface"></div>
+        </a>
+        
+        <a class="mat-list-item" th:class="${activePage == 'prequeue' ? 'mat-list-item mat-list-item-active' : 'mat-list-item'}" href="/prequeue">
+            <div class="mat-list-item-content">
+                <span class="material-icons-outlined mat-list-icon">pending_actions</span>
+                <span class="mat-list-text">Prequeue</span>
+            </div>
+            <div class="mat-ripple-surface"></div>
+        </a>
+        
+        <a class="mat-list-item" th:class="${activePage == 'dispatched' ? 'mat-list-item mat-list-item-active' : 'mat-list-item'}" href="/dispatched">
+            <div class="mat-list-item-content">
+                <span class="material-icons-outlined mat-list-icon">send</span>
+                <span class="mat-list-text">Dispatch</span>
+            </div>
+            <div class="mat-ripple-surface"></div>
+        </a>
     </nav>
+    
+    <!-- Theme Toggle -->
+    <div class="theme-toggle-container mt-auto p-3 border-top">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <span class="material-icons-outlined mat-list-icon">dark_mode</span>
+                <span class="mat-list-text ms-2">Dark Mode</span>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Header Fragment -->
-<div th:fragment="header" class="header">
-    <div class="header-title">
-        <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
-    </div>
-    <div class="header-actions">
-        <button class="btn btn-refresh" onclick="window.location.reload()">
-            <i class="bi bi-arrow-clockwise"></i> Refresh
+<!-- Material App Bar (Header) -->
+<div th:fragment="header" class="mat-toolbar mat-elevation-4">
+    <div class="mat-toolbar-row">
+        <!-- Mobile menu button -->
+        <button class="mat-icon-button d-lg-none me-3" onclick="toggleSidebar()">
+            <span class="material-icons">menu</span>
         </button>
+        
+        <!-- Page title -->
+        <div class="mat-toolbar-title">
+            <h1 class="mat-headline-5 mb-0">
+                <span th:if="${activePage == 'dashboard'}">
+                    <span class="material-icons-outlined me-2 align-text-bottom">dashboard</span>
+                    Dashboard
+                </span>
+                <span th:if="${activePage == 'queues'}">
+                    <span class="material-icons-outlined me-2 align-text-bottom">queue</span>
+                    Queue Management
+                </span>
+                <span th:if="${activePage == 'prequeue'}">
+                    <span class="material-icons-outlined me-2 align-text-bottom">pending_actions</span>
+                    Prequeue
+                </span>
+                <span th:if="${activePage == 'dispatched'}">
+                    <span class="material-icons-outlined me-2 align-text-bottom">send</span>
+                    Dispatch
+                </span>
+            </h1>
+        </div>
+        
+        <!-- Spacer -->
+        <div class="flex-grow-1"></div>
+        
+        <!-- Actions -->
+        <div class="mat-toolbar-actions">
+            <button class="mat-raised-button mat-primary" onclick="window.location.reload()">
+                <span class="material-icons-outlined me-2">refresh</span>
+                Refresh
+            </button>
+        </div>
     </div>
 </div>

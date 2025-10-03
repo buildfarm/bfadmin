@@ -8,44 +8,51 @@
 <body>
     <div id="content">
         <!-- Prequeued Operations Header -->
-        <div class="card fade-in">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <span><i class="bi bi-clock-history"></i> Prequeued Operations</span>
-                    <span class="status-badge status-warning" id="operationCount">
-                        <div class="spinner-border spinner-border-sm me-1" role="status">
+        <div class="mat-card mat-fade-in">
+            <div class="mat-card-header">
+                <h3 class="mat-card-title">
+                    <span class="d-flex align-items-center">
+                        <span class="material-icons-outlined me-2">hourglass_empty</span>
+                        Prequeued Operations
+                    </span>
+                    <span class="mat-chip status-warning" id="operationCount">
+                        <div class="mat-progress-spinner me-1" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         Loading...
                     </span>
-                </h5>
+                </h3>
             </div>
-            <div class="card-body">
+            <div class="mat-card-content">
                 <div class="row align-items-center mb-3">
                     <div class="col-md-12">
-                        <span class="text-muted">Showing operations from the prequeue waiting for processing</span>
+                        <p class="mat-body-large text-muted mb-0">Showing operations from the prequeue waiting for processing</p>
                     </div>
                 </div>
                 
-                <div class="alert alert-info d-none" id="emptyPrequeueAlert">
-                    <i class="bi bi-info-circle"></i> No prequeued operations found
+                <div class="mat-alert mat-alert-info d-none" id="emptyPrequeueAlert">
+                    <span class="material-icons">info</span>
+                    <span>No prequeued operations found</span>
                 </div>
             </div>
         </div>
 
         <!-- Operations Table -->
-        <div class="card fade-in">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <span><i class="bi bi-list-task"></i> Prequeued Operations</span>
-                </h5>
+        <div class="mat-card mat-fade-in">
+            <div class="mat-card-header">
+                <h3 class="mat-card-title">
+                    <span class="d-flex align-items-center">
+                        <span class="material-icons-outlined me-2">format_list_bulleted</span>
+                        Prequeued Operations
+                    </span>
+                </h3>
             </div>
-            <div class="card-body p-0">
-                <div class="text-center py-4" id="prequeueLoading">
-                    <div class="spinner-border text-primary" role="status">
+            <div class="mat-card-content p-0">
+                <div class="text-center py-5" id="prequeueLoading">
+                    <div class="mat-progress-spinner mx-auto mb-3" style="width: 40px; height: 40px;" role="status">
                         <span class="visually-hidden">Loading prequeue operations...</span>
                     </div>
-                    <p class="mt-2 text-muted">Loading prequeue operations...</p>
+                    <p class="mat-body-large text-muted">Loading prequeue operations...</p>
                 </div>
                 
                 <div class="table-responsive d-none" id="prequeueTableContainer">
@@ -53,11 +60,21 @@
                         <thead>
                             <tr>
                                 <th class="sortable-header" data-column="index">#</th>
-                                <th class="sortable-header" data-column="operationName"><i class="bi bi-file-text"></i> Operation</th>
-                                <th class="sortable-header" data-column="priority"><i class="bi bi-arrow-up"></i> Priority</th>
-                                <th class="sortable-header" data-column="stage"><i class="bi bi-diagram-3"></i> Stage</th>
-                                <th class="sortable-header" data-column="queuedAt"><i class="bi bi-clock"></i> Queued At</th>
-                                <th><i class="bi bi-trash"></i> Actions</th>
+                                <th class="sortable-header" data-column="operationName">
+                                    <span class="material-icons-outlined me-2">description</span>Operation
+                                </th>
+                                <th class="sortable-header" data-column="priority">
+                                    <span class="material-icons-outlined me-2">priority_high</span>Priority
+                                </th>
+                                <th class="sortable-header" data-column="stage">
+                                    <span class="material-icons-outlined me-2">account_tree</span>Stage
+                                </th>
+                                <th class="sortable-header" data-column="queuedAt">
+                                    <span class="material-icons-outlined me-2">schedule</span>Queued At
+                                </th>
+                                <th>
+                                    <span class="material-icons-outlined me-2">manage_accounts</span>Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -66,8 +83,9 @@
                     </table>
                 </div>
                 
-                <div class="alert alert-info m-3 d-none" id="noPrequeueOperationsAlert">
-                    <i class="bi bi-info-circle"></i> No prequeued operations found
+                <div class="mat-alert mat-alert-info m-3 d-none" id="noPrequeueOperationsAlert">
+                    <span class="material-icons">info</span>
+                    <span>No prequeued operations found</span>
                 </div>
             </div>
         </div>
@@ -78,7 +96,10 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="operationModalLabel">Operation Details</h5>
+                    <h5 class="modal-title" id="operationModalLabel">
+                        <span class="material-icons-outlined me-2">info</span>
+                        Operation Details
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">

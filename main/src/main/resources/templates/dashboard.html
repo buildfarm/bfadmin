@@ -6,17 +6,17 @@
 </head>
 <body>
     <div id="content">
-        <!-- Welcome Message -->
-        <div class="card fade-in">
-            <div class="card-body">
+        <!-- Welcome Card with Material Design -->
+        <div class="mat-card mat-fade-in">
+            <div class="mat-card-content">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <h5 class="mb-1">Welcome to Build Farm Admin</h5>
-                        <p class="text-muted mb-0" th:text="${helloMessage}">System monitoring dashboard</p>
+                        <h2 class="mat-headline-6 mb-2">Welcome to Build Farm Admin</h2>
+                        <p class="mat-body-large text-muted mb-0" th:text="${helloMessage}">System monitoring dashboard</p>
                     </div>
                     <div class="d-flex align-items-center">
-                        <span class="status-badge status-warning" id="systemHealthBadge">
-                            <div class="spinner-border spinner-border-sm me-2" role="status">
+                        <span class="mat-chip status-warning" id="systemHealthBadge">
+                            <div class="mat-progress-spinner me-2" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
                             Loading...
@@ -26,111 +26,124 @@
             </div>
         </div>
 
-        <!-- System Status Grid -->
+        <!-- System Status Grid with Material Cards -->
         <div class="status-grid" id="systemStatusGrid">
-            <!-- Loading state for status cards -->
-            <div class="card stats-card fade-in">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stats-icon">
-                            <i class="bi bi-database"></i>
+            <!-- Valkey Cluster Card -->
+            <div class="mat-stats-card stats-card purple mat-fade-in">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon me-3">
+                        <span class="material-icons">storage</span>
+                    </div>
+                    <div class="stats-content">
+                        <div class="placeholder-glow" id="valkeyStatusPlaceholder">
+                            <span class="placeholder col-6"></span>
                         </div>
-                        <div class="ms-3 stats-content">
-                            <div class="placeholder-glow">
-                                <span class="placeholder col-6"></span>
-                            </div>
-                            <p>Valkey Cluster</p>
-                        </div>
+                        <p class="mat-body-medium">Valkey Cluster</p>
                     </div>
                 </div>
             </div>
 
-            <div class="card stats-card fade-in">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stats-icon">
-                            <i class="bi bi-cpu"></i>
+            <!-- Execute Workers Card -->
+            <div class="mat-stats-card stats-card blue mat-fade-in">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon me-3">
+                        <span class="material-icons">precision_manufacturing</span>
+                    </div>
+                    <div class="stats-content">
+                        <div class="placeholder-glow" id="executeWorkersPlaceholder">
+                            <span class="placeholder col-4"></span>
                         </div>
-                        <div class="ms-3 stats-content">
-                            <div class="placeholder-glow">
-                                <span class="placeholder col-4"></span>
-                            </div>
-                            <p>Execute Workers</p>
-                        </div>
+                        <p class="mat-body-medium">Execute Workers</p>
                     </div>
                 </div>
             </div>
 
-            <div class="card stats-card fade-in">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stats-icon">
-                            <i class="bi bi-hdd"></i>
+            <!-- Storage Workers Card -->
+            <div class="mat-stats-card stats-card green mat-fade-in">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon me-3">
+                        <span class="material-icons">inventory_2</span>
+                    </div>
+                    <div class="stats-content">
+                        <div class="placeholder-glow" id="storageWorkersPlaceholder">
+                            <span class="placeholder col-4"></span>
                         </div>
-                        <div class="ms-3 stats-content">
-                            <div class="placeholder-glow">
-                                <span class="placeholder col-4"></span>
-                            </div>
-                            <p>Storage Workers</p>
-                        </div>
+                        <p class="mat-body-medium">Storage Workers</p>
                     </div>
                 </div>
             </div>
 
-            <div class="card stats-card fade-in">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stats-icon">
-                            <i class="bi bi-server"></i>
+            <!-- Servers Card -->
+            <div class="mat-stats-card stats-card orange mat-fade-in">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon me-3">
+                        <span class="material-icons">dns</span>
+                    </div>
+                    <div class="stats-content">
+                        <div class="placeholder-glow" id="serversPlaceholder">
+                            <span class="placeholder col-4"></span>
                         </div>
-                        <div class="ms-3 stats-content">
-                            <div class="placeholder-glow">
-                                <span class="placeholder col-4"></span>
-                            </div>
-                            <p>Servers</p>
-                        </div>
+                        <p class="mat-body-medium">Servers</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Error Alert (hidden initially) -->
-        <div class="alert alert-danger fade-in d-none" id="errorAlert">
-            <i class="bi bi-exclamation-triangle"></i>
-            <span id="errorMessage">Error message</span>
+        <div class="mat-alert mat-alert-error mat-fade-in d-none" id="errorAlert">
+            <span class="material-icons">error_outline</span>
+            <div>
+                <strong>Error</strong>
+                <span id="errorMessage">Error message</span>
+            </div>
         </div>
 
         <!-- Execute Workers Table -->
-        <div class="card fade-in">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <span><i class="bi bi-cpu"></i> Execute Workers</span>
-                    <span class="status-badge status-info" id="executeWorkerCount">
-                        <div class="spinner-border spinner-border-sm me-1" role="status">
+        <div class="mat-card mat-fade-in">
+            <div class="mat-card-header">
+                <h3 class="mat-card-title">
+                    <span class="d-flex align-items-center">
+                        <span class="material-icons-outlined me-2">precision_manufacturing</span>
+                        Execute Workers
+                    </span>
+                    <span class="mat-chip status-info" id="executeWorkerCount">
+                        <div class="mat-progress-spinner me-1" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         Loading...
                     </span>
-                </h5>
+                </h3>
             </div>
-            <div class="card-body p-0">
-                <div class="text-center py-4" id="executeWorkersLoading">
-                    <div class="spinner-border text-primary" role="status">
+            <div class="mat-card-content p-0">
+                <div class="text-center py-5" id="executeWorkersLoading">
+                    <div class="mat-progress-spinner mx-auto mb-3" style="width: 40px; height: 40px;" role="status">
                         <span class="visually-hidden">Loading execute workers...</span>
                     </div>
-                    <p class="mt-2 text-muted">Loading execute workers...</p>
+                    <p class="mat-body-large text-muted">Loading execute workers...</p>
                 </div>
                 
                 <div class="table-responsive d-none" id="executeWorkersTableContainer">
                     <table class="table table-hover mb-0" id="executeWorkerTable">
                         <thead>
                             <tr>
-                                <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
-                                <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
-                                <th class="sortable-header" data-column="workerType"><i class="bi bi-gear"></i> Type</th>
-                                <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
-                                <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Last Seen</th>
-                                <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
+                                <th class="sortable-header" data-column="groupName">
+                                    <span class="material-icons-outlined me-2">group_work</span>Group
+                                </th>
+                                <th class="sortable-header" data-column="endpoint">
+                                    <span class="material-icons-outlined me-2">link</span>Endpoint
+                                </th>
+                                <th class="sortable-header" data-column="workerType">
+                                    <span class="material-icons-outlined me-2">settings</span>Type
+                                </th>
+                                <th class="sortable-header" data-column="status">
+                                    <span class="material-icons-outlined me-2">monitor_heart</span>Status
+                                </th>
+                                <th class="sortable-header" data-column="expireAt">
+                                    <span class="material-icons-outlined me-2">schedule</span>Last Seen
+                                </th>
+                                <th class="sortable-header" data-column="firstRegisteredAt">
+                                    <span class="material-icons-outlined me-2">event</span>Registered
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -139,43 +152,59 @@
                     </table>
                 </div>
                 
-                <div class="alert alert-info m-3 d-none" id="executeWorkersEmptyMessage">
-                    <i class="bi bi-info-circle"></i> No execute workers found
+                <div class="mat-alert mat-alert-info m-3 d-none" id="executeWorkersEmptyMessage">
+                    <span class="material-icons">info</span>
+                    <span>No execute workers found</span>
                 </div>
             </div>
         </div>
 
         <!-- Storage Workers Table -->
-        <div class="card fade-in">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <span><i class="bi bi-hdd"></i> Storage Workers</span>
-                    <span class="status-badge status-info" id="storageWorkerCount">
-                        <div class="spinner-border spinner-border-sm me-1" role="status">
+        <div class="mat-card mat-fade-in">
+            <div class="mat-card-header">
+                <h3 class="mat-card-title">
+                    <span class="d-flex align-items-center">
+                        <span class="material-icons-outlined me-2">inventory_2</span>
+                        Storage Workers
+                    </span>
+                    <span class="mat-chip status-info" id="storageWorkerCount">
+                        <div class="mat-progress-spinner me-1" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         Loading...
                     </span>
-                </h5>
+                </h3>
             </div>
-            <div class="card-body p-0">
-                <div class="text-center py-4" id="storageWorkersLoading">
-                    <div class="spinner-border text-primary" role="status">
+            <div class="mat-card-content p-0">
+                <div class="text-center py-5" id="storageWorkersLoading">
+                    <div class="mat-progress-spinner mx-auto mb-3" style="width: 40px; height: 40px;" role="status">
                         <span class="visually-hidden">Loading storage workers...</span>
                     </div>
-                    <p class="mt-2 text-muted">Loading storage workers...</p>
+                    <p class="mat-body-large text-muted">Loading storage workers...</p>
                 </div>
                 
                 <div class="table-responsive d-none" id="storageWorkersTableContainer">
                     <table class="table table-hover mb-0" id="storageWorkerTable">
                         <thead>
                             <tr>
-                                <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
-                                <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
-                                <th class="sortable-header" data-column="workerType"><i class="bi bi-gear"></i> Type</th>
-                                <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
-                                <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Last Seen</th>
-                                <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
+                                <th class="sortable-header" data-column="groupName">
+                                    <span class="material-icons-outlined me-2">group_work</span>Group
+                                </th>
+                                <th class="sortable-header" data-column="endpoint">
+                                    <span class="material-icons-outlined me-2">link</span>Endpoint
+                                </th>
+                                <th class="sortable-header" data-column="workerType">
+                                    <span class="material-icons-outlined me-2">settings</span>Type
+                                </th>
+                                <th class="sortable-header" data-column="status">
+                                    <span class="material-icons-outlined me-2">monitor_heart</span>Status
+                                </th>
+                                <th class="sortable-header" data-column="expireAt">
+                                    <span class="material-icons-outlined me-2">schedule</span>Last Seen
+                                </th>
+                                <th class="sortable-header" data-column="firstRegisteredAt">
+                                    <span class="material-icons-outlined me-2">event</span>Registered
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -184,43 +213,59 @@
                     </table>
                 </div>
                 
-                <div class="alert alert-info m-3 d-none" id="storageWorkersEmptyMessage">
-                    <i class="bi bi-info-circle"></i> No storage workers found
+                <div class="mat-alert mat-alert-info m-3 d-none" id="storageWorkersEmptyMessage">
+                    <span class="material-icons">info</span>
+                    <span>No storage workers found</span>
                 </div>
             </div>
         </div>
 
         <!-- Servers Table -->
-        <div class="card fade-in">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <span><i class="bi bi-server"></i> Servers</span>
-                    <span class="status-badge status-info" id="serversCount">
-                        <div class="spinner-border spinner-border-sm me-1" role="status">
+        <div class="mat-card mat-fade-in">
+            <div class="mat-card-header">
+                <h3 class="mat-card-title">
+                    <span class="d-flex align-items-center">
+                        <span class="material-icons-outlined me-2">dns</span>
+                        Servers
+                    </span>
+                    <span class="mat-chip status-info" id="serversCount">
+                        <div class="mat-progress-spinner me-1" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         Loading...
                     </span>
-                </h5>
+                </h3>
             </div>
-            <div class="card-body p-0">
-                <div class="text-center py-4" id="serversLoading">
-                    <div class="spinner-border text-primary" role="status">
+            <div class="mat-card-content p-0">
+                <div class="text-center py-5" id="serversLoading">
+                    <div class="mat-progress-spinner mx-auto mb-3" style="width: 40px; height: 40px;" role="status">
                         <span class="visually-hidden">Loading servers...</span>
                     </div>
-                    <p class="mt-2 text-muted">Loading servers...</p>
+                    <p class="mat-body-large text-muted">Loading servers...</p>
                 </div>
                 
                 <div class="table-responsive d-none" id="serversTableContainer">
                     <table class="table table-hover mb-0" id="serversTable">
                         <thead>
                             <tr>
-                                <th class="sortable-header" data-column="groupName"><i class="bi bi-collection"></i> Group</th>
-                                <th class="sortable-header" data-column="endpoint"><i class="bi bi-globe"></i> Endpoint</th>
-                                <th class="sortable-header" data-column="serverType"><i class="bi bi-gear"></i> Type</th>
-                                <th class="sortable-header" data-column="status"><i class="bi bi-activity"></i> Status</th>
-                                <th class="sortable-header" data-column="expireAt"><i class="bi bi-clock"></i> Last Seen</th>
-                                <th class="sortable-header" data-column="firstRegisteredAt"><i class="bi bi-calendar-plus"></i> Registered</th>
+                                <th class="sortable-header" data-column="groupName">
+                                    <span class="material-icons-outlined me-2">group_work</span>Group
+                                </th>
+                                <th class="sortable-header" data-column="endpoint">
+                                    <span class="material-icons-outlined me-2">link</span>Endpoint
+                                </th>
+                                <th class="sortable-header" data-column="serverType">
+                                    <span class="material-icons-outlined me-2">settings</span>Type
+                                </th>
+                                <th class="sortable-header" data-column="status">
+                                    <span class="material-icons-outlined me-2">monitor_heart</span>Status
+                                </th>
+                                <th class="sortable-header" data-column="expireAt">
+                                    <span class="material-icons-outlined me-2">schedule</span>Last Seen
+                                </th>
+                                <th class="sortable-header" data-column="firstRegisteredAt">
+                                    <span class="material-icons-outlined me-2">event</span>Registered
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -229,8 +274,9 @@
                     </table>
                 </div>
                 
-                <div class="alert alert-info m-3 d-none" id="serversEmptyMessage">
-                    <i class="bi bi-info-circle"></i> No servers found
+                <div class="mat-alert mat-alert-info m-3 d-none" id="serversEmptyMessage">
+                    <span class="material-icons">info</span>
+                    <span>No servers found</span>
                 </div>
             </div>
         </div>

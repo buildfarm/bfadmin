@@ -1,55 +1,77 @@
-/* Table Styles for BuildFarm Dashboard */
+/* Bootstrap Table Styles with Material UI Enhancement */
 
-/* Tables */
-.table {
-    background: transparent;
-    color: var(--text-primary);
-    margin: 0;
-    border-collapse: separate;
-    border-spacing: 0;
-}
-
-.table thead th {
-    background: var(--dark-bg);
-    color: var(--text-primary);
-    border: none;
-    font-weight: 600;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 16px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.table tbody td {
-    border-top: 1px solid var(--border-color);
-    padding: 16px;
-    vertical-align: middle;
-    background: var(--surface-bg);
-}
-
-.table tbody tr:hover {
-    background: rgba(139, 92, 246, 0.05);
-}
-
-.table tbody tr:hover td {
-    background: rgba(139, 92, 246, 0.05);
-}
-
+/* Table Container */
 .table-responsive {
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid #dee2e6;
+    background: #ffffff;
 }
 
-.table-info {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
+/* Main Table */
+.table {
+    background: transparent;
+    color: #212529;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Table Header */
+.table thead th {
+    background: #f8f9fa;
+    color: #495057;
+    border: none;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 500;
+    font-size: 14px;
     padding: 12px 16px;
-    border-top: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+/* Table Header Content Alignment */
+.table thead th {
+    display: table-cell;
+}
+
+.table thead th > * {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.table thead th .material-icons-outlined {
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+/* Table Body */
+.table tbody td {
+    border-top: 1px solid #dee2e6;
+    padding: 12px 16px;
+    vertical-align: middle;
+    background: #ffffff;
+    color: #212529;
+    font-size: 12px;
+}
+
+/* Table Rows */
+.table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.table tbody tr:hover td {
+    background-color: transparent;
 }
 
 /* Sorting Styles */
@@ -58,65 +80,234 @@
     user-select: none;
     position: relative;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.sortable-header .material-icons-outlined {
+    vertical-align: middle;
+    flex-shrink: 0;
 }
 
 .sortable-header:hover {
-    color: var(--accent-blue);
-    transform: translateY(-1px);
+    background-color: rgba(0, 123, 255, 0.1);
 }
 
 .sortable-header.sorted-asc::after {
     content: " ↑";
-    color: var(--accent-blue);
-    font-weight: bold;
+    color: #007bff;
+    font-weight: 600;
 }
 
 .sortable-header.sorted-desc::after {
     content: " ↓";
-    color: var(--accent-blue);
-    font-weight: bold;
+    color: #007bff;
+    font-weight: 600;
 }
 
-/* Table integration with cards */
-.card .table-responsive {
+/* Material Cards Integration */
+.mat-card .table-responsive {
     margin: 0;
     border-radius: 0;
     border: none;
     box-shadow: none;
+    border-top: 1px solid #dee2e6;
 }
 
-.card .table thead th {
-    border-bottom: 2px solid var(--border-color);
+.mat-card .table thead th {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
 }
 
-.card .table tbody tr:last-child td {
+.mat-card .table tbody tr:last-child td {
     border-bottom: none;
 }
 
-/* Empty state styling */
+/* Status Chips - Bootstrap Colors */
+.table .mat-chip,
+.table .status-badge,
+.table .server-type {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mat-chip.status-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.mat-chip.status-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.mat-chip.status-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.mat-chip.status-secondary {
+    background-color: #e2e3e5;
+    color: #383d41;
+    border: 1px solid #d6d8db;
+}
+
+.mat-chip.status-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Loading States */
+.mat-progress-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #dee2e6;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Empty State */
 .alert.m-3 {
     margin: 1.5rem !important;
     border-radius: 8px;
-    border: 1px solid var(--border-color);
+    border: 1px solid #dee2e6;
 }
 
-/* Status badge improvements for tables */
-.table .status-badge {
-    font-size: 0.75rem;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 500;
-}
-
-/* Action button styling in tables */
+/* Action Buttons */
 .table .btn-sm {
     padding: 4px 8px;
-    font-size: 0.75rem;
+    font-size: 12px;
     border-radius: 4px;
     transition: all 0.2s ease;
 }
 
 .table .btn-sm:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Dark Theme Support */
+[data-theme="dark"] .table-responsive {
+    background: var(--md-sys-color-surface-container);
+    border-color: var(--md-sys-color-outline-variant);
+}
+
+[data-theme="dark"] .table {
+    --bs-table-bg: var(--md-sys-color-surface-container);
+    --bs-table-color: var(--md-sys-color-on-surface);
+    --bs-table-border-color: var(--md-sys-color-outline-variant);
+    --bs-table-striped-bg: var(--md-sys-color-surface-container-low);
+    --bs-table-hover-bg: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+}
+
+[data-theme="dark"] .table thead th {
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+    border-bottom-color: var(--md-sys-color-outline-variant);
+}
+
+[data-theme="dark"] .table tbody td {
+    border-top-color: var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+}
+
+[data-theme="dark"] .table tbody tr:hover {
+    background-color: var(--md-sys-color-surface-container-high);
+}
+
+[data-theme="dark"] .table tbody tr:hover td {
+    background-color: transparent;
+}
+
+[data-theme="dark"] .sortable-header:hover {
+    background-color: rgba(144, 202, 249, 0.16);
+}
+
+[data-theme="dark"] .mat-card .table-responsive {
+    border-top-color: var(--md-sys-color-outline-variant);
+}
+
+[data-theme="dark"] .mat-card .table thead th {
+    background: var(--md-sys-color-surface-container-high);
+    border-bottom-color: var(--md-sys-color-outline-variant);
+}
+
+/* Dark theme chip colors in tables */
+[data-theme="dark"] .table .mat-chip,
+[data-theme="dark"] .table .status-badge,
+[data-theme="dark"] .table .server-type {
+    font-size: 12px;
+}
+
+[data-theme="dark"] .table .mat-chip.status-success {
+    background-color: rgba(165, 214, 167, 0.16);
+    color: #a5d6a7;
+    border-color: rgba(165, 214, 167, 0.3);
+}
+
+[data-theme="dark"] .table .mat-chip.status-warning {
+    background-color: rgba(255, 204, 2, 0.16);
+    color: #ffcc02;
+    border-color: rgba(255, 204, 2, 0.3);
+}
+
+[data-theme="dark"] .table .mat-chip.status-info {
+    background-color: rgba(129, 212, 250, 0.16);
+    color: #81d4fa;
+    border-color: rgba(129, 212, 250, 0.3);
+}
+
+[data-theme="dark"] .table .mat-chip.status-secondary {
+    background-color: rgba(147, 143, 150, 0.16);
+    color: #938f96;
+    border-color: rgba(147, 143, 150, 0.3);
+}
+
+[data-theme="dark"] .table .mat-chip.status-danger {
+    background-color: rgba(244, 143, 177, 0.16);
+    color: #f48fb1;
+    border-color: rgba(244, 143, 177, 0.3);
+}
+
+[data-theme="dark"] .mat-progress-spinner {
+    border-color: var(--md-sys-color-outline-variant);
+    border-top-color: var(--md-sys-color-primary);
+}
+
+[data-theme="dark"] .alert.m-3 {
+    background-color: var(--md-sys-color-surface-container);
+    border-color: var(--md-sys-color-outline-variant);
+    color: var(--md-sys-color-on-surface);
+}
+
+[data-theme="dark"] .table .btn-sm {
+    background-color: var(--md-sys-color-surface-container-high);
+    border-color: var(--md-sys-color-outline);
+    color: var(--md-sys-color-on-surface);
+}
+
+[data-theme="dark"] .table .btn-sm:hover {
+    background-color: var(--md-sys-color-primary-container);
+    border-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary-container);
 }

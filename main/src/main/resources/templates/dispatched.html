@@ -8,44 +8,51 @@
 <body>
     <div id="content">
         <!-- Dispatched Operations Header -->
-        <div class="card fade-in">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <span><i class="bi bi-send"></i> Dispatched Operations</span>
-                    <span class="status-badge status-info" id="dispatchedCount">
-                        <div class="spinner-border spinner-border-sm me-1" role="status">
+        <div class="mat-card mat-fade-in">
+            <div class="mat-card-header">
+                <h3 class="mat-card-title">
+                    <span class="d-flex align-items-center">
+                        <span class="material-icons-outlined me-2">send</span>
+                        Dispatched Operations
+                    </span>
+                    <span class="mat-chip status-info" id="dispatchedCount">
+                        <div class="mat-progress-spinner me-1" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         Loading...
                     </span>
-                </h5>
+                </h3>
             </div>
-            <div class="card-body">
+            <div class="mat-card-content">
                 <div class="row align-items-center mb-3">
                     <div class="col-md-12">
-                        <span class="text-muted">Operations currently dispatched for execution</span>
+                        <p class="mat-body-large text-muted mb-0">Operations currently dispatched for execution</p>
                     </div>
                 </div>
                 
-                <div class="alert alert-info d-none" id="emptyDispatchedAlert">
-                    <i class="bi bi-info-circle"></i> No dispatched operations currently
+                <div class="mat-alert mat-alert-info d-none" id="emptyDispatchedAlert">
+                    <span class="material-icons">info</span>
+                    <span>No dispatched operations currently</span>
                 </div>
             </div>
         </div>
 
         <!-- Dispatched Operations Table -->
-        <div class="card fade-in">
-            <div class="card-header">
-                <h5 class="card-title">
-                    <span><i class="bi bi-gear-fill"></i> Dispatched Operations</span>
-                </h5>
+        <div class="mat-card mat-fade-in">
+            <div class="mat-card-header">
+                <h3 class="mat-card-title">
+                    <span class="d-flex align-items-center">
+                        <span class="material-icons-outlined me-2">settings</span>
+                        Dispatched Operations
+                    </span>
+                </h3>
             </div>
-            <div class="card-body p-0">
-                <div class="text-center py-4" id="dispatchedLoading">
-                    <div class="spinner-border text-primary" role="status">
+            <div class="mat-card-content p-0">
+                <div class="text-center py-5" id="dispatchedLoading">
+                    <div class="mat-progress-spinner mx-auto mb-3" style="width: 40px; height: 40px;" role="status">
                         <span class="visually-hidden">Loading dispatched operations...</span>
                     </div>
-                    <p class="mt-2 text-muted">Loading dispatched operations...</p>
+                    <p class="mat-body-large text-muted">Loading dispatched operations...</p>
                 </div>
                 
                 <div class="table-responsive d-none" id="dispatchedTableContainer">
@@ -53,12 +60,24 @@
                         <thead>
                             <tr>
                                 <th class="sortable-header" data-column="index">#</th>
-                                <th class="sortable-header" data-column="operationName"><i class="bi bi-gear"></i> Operation Name</th>
-                                <th class="sortable-header" data-column="workerName"><i class="bi bi-cpu"></i> Worker</th>
-                                <th class="sortable-header" data-column="status"><i class="bi bi-diagram-3"></i> Status</th>
-                                <th class="sortable-header" data-column="dispatchedAt"><i class="bi bi-clock"></i> Dispatched At</th>
-                                <th class="sortable-header" data-column="completedAt"><i class="bi bi-check-circle"></i> Completed At</th>
-                                <th><i class="bi bi-trash"></i> Actions</th>
+                                <th class="sortable-header" data-column="operationName">
+                                    <span class="material-icons-outlined me-2">settings</span>Operation Name
+                                </th>
+                                <th class="sortable-header" data-column="workerName">
+                                    <span class="material-icons-outlined me-2">precision_manufacturing</span>Worker
+                                </th>
+                                <th class="sortable-header" data-column="status">
+                                    <span class="material-icons-outlined me-2">account_tree</span>Status
+                                </th>
+                                <th class="sortable-header" data-column="dispatchedAt">
+                                    <span class="material-icons-outlined me-2">schedule</span>Dispatched At
+                                </th>
+                                <th class="sortable-header" data-column="completedAt">
+                                    <span class="material-icons-outlined me-2">check_circle</span>Completed At
+                                </th>
+                                <th>
+                                    <span class="material-icons-outlined me-2">manage_accounts</span>Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -67,8 +86,9 @@
                     </table>
                 </div>
                 
-                <div class="alert alert-info m-3 d-none" id="noDispatchedOperationsAlert">
-                    <i class="bi bi-info-circle"></i> No dispatched operations found
+                <div class="mat-alert mat-alert-info m-3 d-none" id="noDispatchedOperationsAlert">
+                    <span class="material-icons">info</span>
+                    <span>No dispatched operations found</span>
                 </div>
             </div>
         </div>
@@ -79,7 +99,10 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="dispatchedOperationModalLabel">Dispatched Operation Details</h5>
+                    <h5 class="modal-title" id="dispatchedOperationModalLabel">
+                        <span class="material-icons-outlined me-2">info</span>
+                        Dispatched Operation Details
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">

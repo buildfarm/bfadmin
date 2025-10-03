@@ -1,20 +1,140 @@
-/* CSS Variables for BuildFarm Dashboard Theme */
+/* Material Design 3 Variables for BuildFarm Dashboard - Light Theme */
 :root {
-    --dark-bg: #0d1117;
-    --card-bg: #161b22;
-    --border-color: #30363d;
-    --text-primary: #f0f6fc;
-    --text-secondary: #8b949e;
-    --accent-purple: #8b5cf6;
-    --accent-blue: #0ea5e9;
-    --accent-green: #10b981;
-    --accent-orange: #f59e0b;
-    --accent-red: #ef4444;
-    --sidebar-width: 250px;
-    --header-height: 70px;
+    /* Material Design 3 Color Tokens - Light Theme */
+    --md-sys-color-primary: #1976d2;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-primary-container: #bbdefb;
+    --md-sys-color-on-primary-container: #0d47a1;
     
-    /* Override Bootstrap dark colors for better visibility */
-    --bs-dark: #6c757d;  /* Lighter than default #212529 */
+    --md-sys-color-secondary: #7b1fa2;
+    --md-sys-color-on-secondary: #ffffff;
+    --md-sys-color-secondary-container: #e1bee7;
+    --md-sys-color-on-secondary-container: #4a148c;
+    
+    --md-sys-color-tertiary: #388e3c;
+    --md-sys-color-on-tertiary: #ffffff;
+    --md-sys-color-tertiary-container: #c8e6c9;
+    --md-sys-color-on-tertiary-container: #1b5e20;
+    
+    --md-sys-color-error: #d32f2f;
+    --md-sys-color-on-error: #ffffff;
+    --md-sys-color-error-container: #ffebee;
+    --md-sys-color-on-error-container: #b71c1c;
+    
+    --md-sys-color-surface-dim: #e7e0ec;
+    --md-sys-color-surface: #ffffff;
+    --md-sys-color-surface-bright: #ffffff;
+    --md-sys-color-on-surface: #1c1b1f;
+    --md-sys-color-on-surface-variant: #49454f;
+    --md-sys-color-surface-variant: #f4eff4;
+    --md-sys-color-surface-container-lowest: #ffffff;
+    --md-sys-color-surface-container-low: #fef7ff;
+    --md-sys-color-surface-container: #f8f9fa;
+    --md-sys-color-surface-container-high: #ececec;
+    --md-sys-color-surface-container-highest: #e6e1e5;
+    
+    --md-sys-color-outline: #79747e;
+    --md-sys-color-outline-variant: #cac4d0;
+    
+    /* Legacy variables for backward compatibility */
+    --dark-bg: #343a40;
+    --card-bg: #ffffff;
+    --border-color: #dee2e6;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --accent-purple: #7b1fa2;
+    --accent-blue: #007bff;
+    --accent-green: #28a745;
+    --accent-orange: #fd7e14;
+    --accent-red: #dc3545;
+    
+    /* Layout dimensions */
+    --sidebar-width: 280px;
+    --header-height: 64px;
+    
+    /* Material Design 3 Elevation Levels */
+    --md-elevation-1: 0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+    --md-elevation-2: 0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15);
+    --md-elevation-3: 0px 4px 8px 3px rgba(0, 0, 0, 0.15), 0px 1px 3px 0px rgba(0, 0, 0, 0.3);
+    --md-elevation-4: 0px 6px 10px 4px rgba(0, 0, 0, 0.15), 0px 2px 3px 0px rgba(0, 0, 0, 0.3);
+    --md-elevation-5: 0px 8px 12px 6px rgba(0, 0, 0, 0.15), 0px 4px 4px 0px rgba(0, 0, 0, 0.3);
+    
+    /* Material Design 3 Typography Scale */
+    --md-sys-typescale-display-large-font: 'Roboto', sans-serif;
+    --md-sys-typescale-display-large-size: 57px;
+    --md-sys-typescale-display-large-line-height: 64px;
+    --md-sys-typescale-display-large-weight: 400;
+    
+    --md-sys-typescale-headline-large-font: 'Roboto', sans-serif;
+    --md-sys-typescale-headline-large-size: 32px;
+    --md-sys-typescale-headline-large-line-height: 40px;
+    --md-sys-typescale-headline-large-weight: 400;
+    
+    --md-sys-typescale-title-large-font: 'Roboto', sans-serif;
+    --md-sys-typescale-title-large-size: 22px;
+    --md-sys-typescale-title-large-line-height: 28px;
+    --md-sys-typescale-title-large-weight: 500;
+    
+    --md-sys-typescale-title-medium-font: 'Roboto', sans-serif;
+    --md-sys-typescale-title-medium-size: 16px;
+    --md-sys-typescale-title-medium-line-height: 24px;
+    --md-sys-typescale-title-medium-weight: 500;
+    
+    --md-sys-typescale-title-small-font: 'Roboto', sans-serif;
+    --md-sys-typescale-title-small-size: 14px;
+    --md-sys-typescale-title-small-line-height: 20px;
+    --md-sys-typescale-title-small-weight: 500;
+    
+    --md-sys-typescale-body-large-font: 'Roboto', sans-serif;
+    --md-sys-typescale-body-large-size: 16px;
+    --md-sys-typescale-body-large-line-height: 24px;
+    --md-sys-typescale-body-large-weight: 400;
+    
+    --md-sys-typescale-body-medium-font: 'Roboto', sans-serif;
+    --md-sys-typescale-body-medium-size: 14px;
+    --md-sys-typescale-body-medium-line-height: 20px;
+    --md-sys-typescale-body-medium-weight: 400;
+    
+    --md-sys-typescale-body-small-font: 'Roboto', sans-serif;
+    --md-sys-typescale-body-small-size: 12px;
+    --md-sys-typescale-body-small-line-height: 16px;
+    --md-sys-typescale-body-small-weight: 400;
+    
+    --md-sys-typescale-label-large-font: 'Roboto', sans-serif;
+    --md-sys-typescale-label-large-size: 14px;
+    --md-sys-typescale-label-large-line-height: 20px;
+    --md-sys-typescale-label-large-weight: 500;
+    
+    --md-sys-typescale-label-medium-font: 'Roboto', sans-serif;
+    --md-sys-typescale-label-medium-size: 12px;
+    --md-sys-typescale-label-medium-line-height: 16px;
+    --md-sys-typescale-label-medium-weight: 500;
+    
+    --md-sys-typescale-label-small-font: 'Roboto', sans-serif;
+    --md-sys-typescale-label-small-size: 11px;
+    --md-sys-typescale-label-small-line-height: 16px;
+    --md-sys-typescale-label-small-weight: 500;
+    
+    /* Material Design 3 Shape Scale */
+    --md-shape-corner-none: 0px;
+    --md-shape-corner-extra-small: 4px;
+    --md-shape-corner-small: 8px;
+    --md-shape-corner-medium: 12px;
+    --md-shape-corner-large: 16px;
+    --md-shape-corner-extra-large: 28px;
+    --md-shape-corner-full: 1000px;
+    
+    /* Override Bootstrap variables */
+    --bs-primary: #007bff;
+    --bs-secondary: #6c757d;
+    --bs-success: #28a745;
+    --bs-danger: #dc3545;
+    --bs-warning: #ffc107;
+    --bs-info: #17a2b8;
+    --bs-dark: #343a40;
+    --bs-body-bg: #ffffff;
+    --bs-body-color: #212529;
+    --bs-border-color: #dee2e6;
 }
 
 /* Global Styles */
@@ -25,49 +145,205 @@
 }
 
 body {
-    font-family: 'Inter', sans-serif;
-    background: var(--dark-bg);
-    color: var(--text-primary);
+    font-family: 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
     overflow-x: hidden;
+    line-height: 1.5;
 }
 
-/* Typography */
+/* Typography Scale - Used Classes Only */
+.mat-headline-6 { font-size: 20px; font-weight: 500; line-height: 1.4; }
+.mat-headline-5 { font-size: 24px; font-weight: 400; line-height: 1.33; }
+.mat-body-large { font-size: 16px; font-weight: 400; line-height: 1.5; }
+.mat-body-medium { font-size: 14px; font-weight: 400; line-height: 1.43; }
+
+/* Material Elevation Classes - Used Only */
+.mat-elevation-0 { box-shadow: none; }
+.mat-elevation-4 { box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.2), 0px 4px 5px 0px rgba(0, 0, 0, 0.14), 0px 1px 10px 0px rgba(0, 0, 0, 0.12); }
+.mat-elevation-8 { box-shadow: 0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12); }
+
+/* Material Surface Tints - Bootstrap Style */
+.mat-app-background {
+    background-color: #ffffff;
+    color: #212529;
+}
+
+/* Override Bootstrap styles for Material Design */
 h1, h2, h3, h4, h5, h6,
 .h1, .h2, .h3, .h4, .h5, .h6 {
-    color: var(--text-primary) !important;
+    color: var(--md-sys-color-on-surface) !important;
+    font-family: 'Roboto', sans-serif;
 }
 
-p {
-    color: var(--text-secondary);
-}
-
-/* Make muted text lighter and more visible */
 .text-muted {
-    color: var(--text-secondary) !important;
+    color: #6c757d !important;
 }
 
-/* Override Bootstrap dark colors for better visibility */
-.text-dark,
-.bg-dark {
-    color: var(--text-secondary) !important;
+.border {
+    border-color: #dee2e6 !important;
 }
 
-.bg-dark {
-    background-color: var(--card-bg) !important;
+/* Dark Theme Variables */
+[data-theme="dark"] {
+    /* Material Design 3 Color Tokens - Dark Theme */
+    --md-sys-color-primary: #90caf9;
+    --md-sys-color-on-primary: #1e3a8a;
+    --md-sys-color-primary-container: #1976d2;
+    --md-sys-color-on-primary-container: #ffffff;
+    
+    --md-sys-color-secondary: #ce93d8;
+    --md-sys-color-on-secondary: #4a148c;
+    --md-sys-color-secondary-container: #7b1fa2;
+    --md-sys-color-on-secondary-container: #ffffff;
+    
+    --md-sys-color-tertiary: #a5d6a7;
+    --md-sys-color-on-tertiary: #1b5e20;
+    --md-sys-color-tertiary-container: #388e3c;
+    --md-sys-color-on-tertiary-container: #ffffff;
+    
+    --md-sys-color-error: #f48fb1;
+    --md-sys-color-on-error: #b71c1c;
+    --md-sys-color-error-container: #d32f2f;
+    --md-sys-color-on-error-container: #ffffff;
+    
+    --md-sys-color-surface-dim: #1c1b1f;
+    --md-sys-color-surface: #121212;
+    --md-sys-color-surface-bright: #3b3b3b;
+    --md-sys-color-on-surface: #e6e1e5;
+    --md-sys-color-on-surface-variant: #cac4d0;
+    --md-sys-color-surface-variant: #2b2930;
+    --md-sys-color-surface-container-lowest: #0f0e11;
+    --md-sys-color-surface-container-low: #1c1b1f;
+    --md-sys-color-surface-container: #201f23;
+    --md-sys-color-surface-container-high: #2b2930;
+    --md-sys-color-surface-container-highest: #36343b;
+    
+    --md-sys-color-outline: #938f96;
+    --md-sys-color-outline-variant: #49454f;
+    
+    /* Override Bootstrap variables for dark theme */
+    --bs-body-bg: #121212;
+    --bs-body-color: #e6e1e5;
+    --bs-border-color: #49454f;
+    --bs-primary: #90caf9;
+    --bs-secondary: #938f96;
+    --bs-success: #a5d6a7;
+    --bs-danger: #f48fb1;
+    --bs-warning: #ffcc02;
+    --bs-info: #81d4fa;
+    --bs-dark: #36343b;
+    
+    /* Dark theme elevation shadows */
+    --md-elevation-1: 0px 1px 2px 0px rgba(0, 0, 0, 0.6), 0px 1px 3px 1px rgba(0, 0, 0, 0.3);
+    --md-elevation-2: 0px 1px 2px 0px rgba(0, 0, 0, 0.6), 0px 2px 6px 2px rgba(0, 0, 0, 0.3);
+    --md-elevation-3: 0px 4px 8px 3px rgba(0, 0, 0, 0.3), 0px 1px 3px 0px rgba(0, 0, 0, 0.6);
+    --md-elevation-4: 0px 6px 10px 4px rgba(0, 0, 0, 0.3), 0px 2px 3px 0px rgba(0, 0, 0, 0.6);
+    --md-elevation-5: 0px 8px 12px 6px rgba(0, 0, 0, 0.3), 0px 4px 4px 0px rgba(0, 0, 0, 0.6);
 }
 
-.border-dark {
-    border-color: var(--border-color) !important;
+/* Dark Theme Specific Styles */
+[data-theme="dark"] body {
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
 }
 
-/* Fix Bootstrap buttons */
-.btn-dark {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: var(--text-primary);
+[data-theme="dark"] .mat-elevation-4 {
+    box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.6), 0px 4px 5px 0px rgba(0, 0, 0, 0.4), 0px 1px 10px 0px rgba(0, 0, 0, 0.3);
 }
 
-.btn-dark:hover {
-    background-color: #5a6268;
-    border-color: #545b62;
+[data-theme="dark"] .mat-elevation-8 {
+    box-shadow: 0px 5px 5px -3px rgba(0, 0, 0, 0.6), 0px 8px 10px 1px rgba(0, 0, 0, 0.4), 0px 3px 14px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .mat-app-background {
+    background-color: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+}
+
+[data-theme="dark"] h1, 
+[data-theme="dark"] h2, 
+[data-theme="dark"] h3, 
+[data-theme="dark"] h4, 
+[data-theme="dark"] h5, 
+[data-theme="dark"] h6,
+[data-theme="dark"] .h1, 
+[data-theme="dark"] .h2, 
+[data-theme="dark"] .h3, 
+[data-theme="dark"] .h4, 
+[data-theme="dark"] .h5, 
+[data-theme="dark"] .h6 {
+    color: var(--md-sys-color-on-surface) !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: var(--md-sys-color-on-surface-variant) !important;
+}
+
+[data-theme="dark"] .border {
+    border-color: var(--md-sys-color-outline-variant) !important;
+}
+
+[data-theme="dark"] .table {
+    --bs-table-bg: var(--md-sys-color-surface-container);
+    --bs-table-color: var(--md-sys-color-on-surface);
+    --bs-table-border-color: var(--md-sys-color-outline-variant);
+    --bs-table-striped-bg: var(--md-sys-color-surface-container-low);
+    --bs-table-hover-bg: var(--md-sys-color-surface-container-high);
+}
+
+[data-theme="dark"] .table .mat-chip,
+[data-theme="dark"] .table .status-badge,
+[data-theme="dark"] .table .server-type {
+    font-size: 12px;
+}
+
+[data-theme="dark"] .card {
+    background-color: var(--md-sys-color-surface-container);
+    border-color: var(--md-sys-color-outline-variant);
+    color: var(--md-sys-color-on-surface);
+}
+
+[data-theme="dark"] .form-control {
+    background-color: var(--md-sys-color-surface-container);
+    border-color: var(--md-sys-color-outline);
+    color: var(--md-sys-color-on-surface);
+}
+
+[data-theme="dark"] .form-control:focus {
+    background-color: var(--md-sys-color-surface-container);
+    border-color: var(--md-sys-color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(144, 202, 249, 0.25);
+    color: var(--md-sys-color-on-surface);
+}
+
+/* Theme Toggle Styles */
+.theme-toggle-container {
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    margin-top: auto;
+}
+
+[data-theme="dark"] .theme-toggle-container {
+    border-top-color: var(--md-sys-color-outline-variant);
+}
+
+.theme-toggle-container .mat-list-icon {
+    color: var(--md-sys-color-on-surface-variant);
+    transition: color 0.2s ease;
+}
+
+.theme-toggle-container .mat-list-text {
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.form-check-input:checked {
+    background-color: var(--md-sys-color-primary);
+    border-color: var(--md-sys-color-primary);
+}
+
+[data-theme="dark"] .form-check-input:checked {
+    background-color: var(--md-sys-color-primary);
+    border-color: var(--md-sys-color-primary);
 }
