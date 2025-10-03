@@ -1,0 +1,25 @@
+# Bazel build artifacts
+bazel-*
+.bazelrc.detected-host
+
+# Maven build artifacts (for hybrid approach)
+main/target/classes/
+main/target/generated-*/
+main/target/maven-*/
+main/target/test-classes/
+main/target/*.original
+main/target/**/BUILD
+
+# IDE and editor files
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*.bak

@@ -86,10 +86,31 @@
 
 	<build>
 		<finalName>bfadmin</finalName>
+		
+		<!-- Exclude Bazel BUILD files from Maven resource processing -->
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<excludes>
+					<exclude>**/BUILD</exclude>
+				</excludes>
+			</resource>
+		</resources>
+		
+		<!-- Additional plugin configuration to exclude BUILD files -->
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>*</groupId>
+							<artifactId>*</artifactId>
+							<classifier>BUILD</classifier>
+						</exclude>
+					</excludes>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
